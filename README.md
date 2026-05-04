@@ -34,6 +34,12 @@ The repository is organised in three layers:
   `d²/ds² ρ(x + s·v)|₀ = ρ · (⟨x, v⟩²/(4τ²) − ‖v‖²/(2τ))`;
 - `backwardHeatEquation_euclidean` — heat equation in coordinates on
   `EuclideanSpace ℝ (Fin n)`, `∂_t ρ + Σᵢ ∂²ᵢ ρ = 0`;
+- `iteratedDeriv_two_along_eq_iteratedFDeriv_two` — generic bridge between line
+  second derivatives and `iteratedFDeriv ℝ 2 f x ![v, v]` for `C²` functions;
+- `contDiff_backwardHeatKernel` — `x ↦ ρ(x, t)` is `C^∞` for `t < t₀`;
+- `laplacian_backwardHeatKernel` — `Δρ x = ρ · (‖x‖²/(4τ²) − n/(2τ))`;
+- `backwardHeatEquation_laplacian` — heat equation in mathlib's coordinate-free
+  Laplacian form on `EuclideanSpace ℝ (Fin n)`, `∂_t ρ + Δρ = 0`;
 - `integral_backwardHeatKernel` — total mass `∫_V ρ(x, t) dx = 1` over any
   finite-dimensional inner product space `V` with `Module.finrank ℝ V = n`.
 

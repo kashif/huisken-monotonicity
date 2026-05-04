@@ -12,6 +12,8 @@ normalisation used in Huisken (1990), J. Differential Geom. 31, 285–299.
 -/
 
 import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.InnerProductSpace.Laplacian
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.SpecialFunctions.Exp
@@ -339,6 +341,50 @@ theorem iteratedDeriv_two_backwardHeatKernel_along {t : ℝ} (hτ : t < t₀) (x
 
 end Derivatives
 
+/-! ## Bridge: line second derivative ↔ iterated Fréchet derivative
+
+For a `C²` real-valued function `f` on a real normed space `V`, the second derivative of
+the curve `s ↦ f(x + s · v)` at `s = 0` equals the iterated Fréchet derivative
+`(D²f)(x)` applied to the pair `(v, v)`. This generic fact is the link between our
+line-based computation (`iteratedDeriv_two_backwardHeatKernel_along`) and mathlib's
+abstract Laplacian (`InnerProductSpace.laplacian`), which is built on
+`iteratedFDeriv ℝ 2 f x ![eᵢ, eᵢ]`. -/
+
+section LaplacianBridge
+
+/-- For a `C²` function `f : V → F`, the second derivative of `s ↦ f(x + s·v)` at
+`s = 0` equals `iteratedFDeriv ℝ 2 f x` applied to `(v, v)`. -/
+theorem iteratedDeriv_two_along_eq_iteratedFDeriv_two
+    {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
+    (f : V → F) (hf : ContDiff ℝ 2 f) (x v : V) :
+    iteratedDeriv 2 (fun s : ℝ => f (x + s • v)) 0 =
+      iteratedFDeriv ℝ 2 f x ![v, v] := by
+  -- Line map S : ℝ →L[ℝ] V, s ↦ s • v.
+  let S : ℝ →L[ℝ] V := (1 : ℝ →L[ℝ] ℝ).smulRight v
+  have hS_apply : ∀ s : ℝ, S s = s • v := fun s => by simp [S]
+  have hS_zero : S 0 = 0 := by simp [hS_apply]
+  have hS_one : S 1 = v := by simp [hS_apply]
+  -- The shifted function g(z) = f(x + z) is `C²` if `f` is.
+  have h_shift_contDiff : ContDiff ℝ 2 (fun z : V => f (x + z)) :=
+    hf.comp (contDiff_const.add contDiff_id)
+  -- Rewrite the curve as `(g) ∘ S`.
+  have h_curve_eq : (fun s : ℝ => f (x + s • v)) = (fun z : V => f (x + z)) ∘ S := by
+    funext s
+    change f (x + s • v) = f (x + S s)
+    rw [hS_apply]
+  -- Unfold `iteratedDeriv 2 = iteratedFDeriv ℝ 2 ... applied at (1, 1)`.
+  rw [h_curve_eq, iteratedDeriv_eq_iteratedFDeriv,
+      ContinuousLinearMap.iteratedFDeriv_comp_right S h_shift_contDiff 0 le_rfl,
+      ContinuousMultilinearMap.compContinuousLinearMap_apply,
+      iteratedFDeriv_comp_add_left, hS_zero, add_zero]
+  -- Goal: `(iteratedFDeriv ℝ 2 f x) (fun i => S 1) = (iteratedFDeriv ℝ 2 f x) ![v, v]`.
+  congr 1
+  funext i
+  fin_cases i <;> simp [hS_one]
+
+end LaplacianBridge
+
 /-! ## Backward heat equation in coordinates
 
 Combining the time and second-directional-derivative identities, we show that on
@@ -346,9 +392,9 @@ Combining the time and second-directional-derivative identities, we show that on
 
   `∂_t ρ + Σᵢ ∂²ᵢ ρ = 0`,
 
-where the spatial sum runs over the standard orthonormal basis. This is the heat
-equation in coordinates; matching it up with mathlib's coordinate-free Laplacian
-(`InnerProductSpace.laplacian`) is left for follow-up work. -/
+where the spatial sum runs over the standard orthonormal basis. With the bridge
+lemma above, this can also be stated as `∂_t ρ + Δρ = 0` against mathlib's
+coordinate-free Laplacian. -/
 
 section HeatEquation
 
@@ -395,7 +441,85 @@ theorem backwardHeatEquation_euclidean
   field_simp
   ring
 
+/-- Smoothness of the kernel in the spatial variable: for any inner product space `V`
+and any `t < t₀`, `x ↦ ρ(x, t)` is `C^∞`. Used to invoke the bridge lemma. -/
+theorem contDiff_backwardHeatKernel
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    (n : ℕ) (t₀ : ℝ) {t : ℝ} (_hτ : t < t₀) :
+    ContDiff ℝ ⊤ (fun x : V => backwardHeatKernel n t₀ t x) := by
+  unfold backwardHeatKernel
+  -- (4πτ)^(-n/2) · exp(-‖x‖²/(4τ)) — constant times an exp of a smooth function.
+  exact contDiff_const.mul
+    (Real.contDiff_exp.comp (((contDiff_norm_sq ℝ).neg).div_const _))
+
 end HeatEquation
+
+/-! ## Backward heat equation against mathlib's Laplacian
+
+Bridging the coordinate computation above to mathlib's coordinate-free
+`InnerProductSpace.laplacian Δ`. -/
+
+section LaplacianForm
+
+open InnerProductSpace
+open scoped InnerProductSpace
+
+/-- The Laplacian of the backward heat kernel on `EuclideanSpace ℝ (Fin n)`. -/
+theorem laplacian_backwardHeatKernel
+    {n : ℕ} {t₀ t : ℝ} (hτ : t < t₀) (x : EuclideanSpace ℝ (Fin n)) :
+    Laplacian.laplacian (fun y : EuclideanSpace ℝ (Fin n) => backwardHeatKernel n t₀ t y) x =
+      backwardHeatKernel n t₀ t x *
+        (‖x‖ ^ 2 / (4 * (t₀ - t) ^ 2) - (n : ℝ) / (2 * (t₀ - t))) := by
+  have hτ_pos : (0 : ℝ) < t₀ - t := sub_pos.mpr hτ
+  have hτ_ne : (t₀ - t) ≠ 0 := ne_of_gt hτ_pos
+  -- Express Δ via the orthonormal basis formula, using the standard basis of EuclideanSpace.
+  rw [show Laplacian.laplacian (fun y : EuclideanSpace ℝ (Fin n) => backwardHeatKernel n t₀ t y) x
+        = ∑ i,
+            iteratedFDeriv ℝ 2
+              (fun y : EuclideanSpace ℝ (Fin n) => backwardHeatKernel n t₀ t y) x
+              ![EuclideanSpace.basisFun (Fin n) ℝ i,
+                EuclideanSpace.basisFun (Fin n) ℝ i] from
+      congrFun (laplacian_eq_iteratedFDeriv_orthonormalBasis _
+        (EuclideanSpace.basisFun (Fin n) ℝ)) x]
+  -- Each term: bridge to the line second derivative, then phase 2 + simplification.
+  have h_term : ∀ i : Fin n,
+      iteratedFDeriv ℝ 2 (fun y : EuclideanSpace ℝ (Fin n) => backwardHeatKernel n t₀ t y)
+          x ![EuclideanSpace.basisFun (Fin n) ℝ i, EuclideanSpace.basisFun (Fin n) ℝ i] =
+        backwardHeatKernel n t₀ t x *
+          ((x i) ^ 2 / (4 * (t₀ - t) ^ 2) - 1 / (2 * (t₀ - t))) := by
+    intro i
+    have hbasis : (EuclideanSpace.basisFun (Fin n) ℝ i : EuclideanSpace ℝ (Fin n)) =
+        EuclideanSpace.single i (1 : ℝ) := by simp
+    rw [hbasis]
+    rw [← iteratedDeriv_two_along_eq_iteratedFDeriv_two _
+          ((contDiff_backwardHeatKernel n t₀ hτ).of_le (by exact_mod_cast le_top)) x
+          (EuclideanSpace.single i (1 : ℝ))]
+    rw [iteratedDeriv_two_backwardHeatKernel_along n t₀ hτ x
+          (EuclideanSpace.single i (1 : ℝ))]
+    have h_inner : @inner ℝ _ _ x (EuclideanSpace.single i (1 : ℝ)) = x i := by
+      simpa using (EuclideanSpace.inner_single_right (𝕜 := ℝ) i 1 x)
+    have h_norm_sq : ‖EuclideanSpace.single i (1 : ℝ)‖ ^ 2 = 1 := by simp
+    rw [h_inner, h_norm_sq]
+  rw [Finset.sum_congr rfl (fun i _ => h_term i)]
+  -- Same algebra as `backwardHeatEquation_euclidean`: collapse Σᵢ xᵢ² = ‖x‖² and Σᵢ 1 = n.
+  rw [← Finset.mul_sum, Finset.sum_sub_distrib, ← Finset.sum_div, ← Finset.sum_div,
+      Finset.sum_const, Finset.card_univ, Fintype.card_fin]
+  rw [show ∑ i : Fin n, (x i) ^ 2 = ‖x‖ ^ 2 from (EuclideanSpace.real_norm_sq_eq x).symm]
+  field_simp
+  ring
+
+/-- **Backward heat equation** in mathlib's `Δ` form:
+`∂_t ρ + Δρ = 0` on `EuclideanSpace ℝ (Fin n)` for `t < t₀`. -/
+theorem backwardHeatEquation_laplacian
+    {n : ℕ} {t₀ t : ℝ} (hτ : t < t₀) (x : EuclideanSpace ℝ (Fin n)) :
+    deriv (fun t' : ℝ => backwardHeatKernel n t₀ t' x) t +
+      Laplacian.laplacian (fun y : EuclideanSpace ℝ (Fin n) => backwardHeatKernel n t₀ t y) x
+      = 0 := by
+  rw [(hasDerivAt_backwardHeatKernel_time n t₀ hτ x).deriv,
+      laplacian_backwardHeatKernel hτ]
+  ring
+
+end LaplacianForm
 
 section Normalisation
 
