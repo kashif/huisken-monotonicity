@@ -28,7 +28,14 @@ The repository is organised in three layers:
 - `backwardHeatKernel_pos`, `backwardHeatKernel_ne_zero` — positivity for `t < t₀`;
 - `hasDerivAt_backwardHeatKernel_time` — `∂_t ρ = ρ · (n/(2τ) − ‖x‖²/(4τ²))`;
 - `hasDerivAt_backwardHeatKernel_dir` — directional derivative at `0`,
-  `d/ds ρ(x + s·v)|₀ = -ρ/(2τ) · ⟨x, v⟩`.
+  `d/ds ρ(x + s·v)|₀ = -ρ/(2τ) · ⟨x, v⟩`;
+- `hasDerivAt_backwardHeatKernel_along` — same, at any point `s` along the line;
+- `iteratedDeriv_two_backwardHeatKernel_along` — second directional derivative at `0`,
+  `d²/ds² ρ(x + s·v)|₀ = ρ · (⟨x, v⟩²/(4τ²) − ‖v‖²/(2τ))`;
+- `backwardHeatEquation_euclidean` — heat equation in coordinates on
+  `EuclideanSpace ℝ (Fin n)`, `∂_t ρ + Σᵢ ∂²ᵢ ρ = 0`;
+- `integral_backwardHeatKernel` — total mass `∫_V ρ(x, t) dx = 1` over any
+  finite-dimensional inner product space `V` with `Module.finrank ℝ V = n`.
 
 These statements stand on their own and are candidates for upstreaming to mathlib
 (`Mathlib.Analysis.SpecialFunctions.Gaussian.HeatKernel`).
@@ -37,16 +44,24 @@ These statements stand on their own and are candidates for upstreaming to mathli
 
 mathlib (v4.30.0-rc2) does *not* yet contain the second fundamental form, the mean
 curvature vector, the induced volume measure on an immersion, or the first variation
-of area. `Flow.lean` therefore defines `ImmersionFamily`, an opaque
-`IsMeanCurvatureFlow` predicate, and a placeholder `SurfaceMeasure`, so that the
-statement of Huisken's theorem can be written; these are interfaces to be filled in
-once the underlying geometry lands in mathlib.
+of area. `Flow.lean` therefore defines `ImmersionFamily` and a placeholder
+`SurfaceMeasure`, so that the statement of Huisken's theorem can be written; these are
+interfaces to be filled in once the underlying geometry lands in mathlib.
+
+`IsMeanCurvatureFlow F H` is a real predicate asserting `∂/∂s F(p, s)|_{s = t} = H(p, t)`
+for every `p` and every `t ∈ [0, T)`. Because mean curvature itself is not yet in
+mathlib, the velocity field `H : M → ℝ → E` is taken as **explicit data** rather than
+derived from `F`; the geometric content (that `H` actually equals the mean curvature
+vector of `F(·, t)(M)`) is the caller's responsibility until the second fundamental
+form lands.
 
 ### Monotonicity — statement only
 
-`huisken_monotonicity` is stated in terms of opaque geometric data
-(`MonotonicityData`), with the proof left as `sorry`. The intended proof structure
-follows Huisken §3:
+`huisken_monotonicity` takes an `ImmersionFamily F`, geometric data
+`MonotonicityData F` (surface measure, mean curvature vector field, normal-position
+projection), and an explicit hypothesis `IsMeanCurvatureFlow F data.meanCurvature`
+linking the two. The proof is left as `sorry`. The intended proof structure follows
+Huisken §3:
 
 1. evolution of the area element `(d/dt) dμ_t = -‖H‖² dμ_t`;
 2. chain rule for `(d/dt) ρ(F(p, t), t) = ∂_t ρ + ⟨H, ∇_x ρ⟩`;
