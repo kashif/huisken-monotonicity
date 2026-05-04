@@ -56,6 +56,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
   \uses{def:backward-heat-kernel}
   For every $t < t_0$ and every $x$, $\rho(x, t) > 0$.
 \end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{lemma}[time derivative]
   \label{lem:rho-dt}
@@ -68,6 +69,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
       \left(\frac{n}{2(t_0 - t)} - \frac{\|x\|^2}{4(t_0 - t)^2}\right).
   \]
 \end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{lemma}[directional spatial derivative]
   \label{lem:rho-dx}
@@ -81,6 +83,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
   \]
   Equivalently, $\nabla_x \rho(x, t) = -\rho(x, t)\,x / (2(t_0 - t))$.
 \end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{lemma}[second directional derivative along a line]
   \label{lem:rho-dxx}
@@ -95,6 +98,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
           - \frac{\|v\|^2}{2(t_0 - t)}\right).
   \]
 \end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{theorem}[backward heat equation in coordinates]
   \label{thm:rho-heat-coord}
@@ -109,6 +113,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
     \qquad \text{for } t < t_0.
   \]
 \end{theorem}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{theorem}[backward heat equation, Laplacian form]
   \label{thm:rho-heat-laplacian}
@@ -119,6 +124,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
   $\partial_t \rho + \Delta \rho = 0$ on
   $\mathrm{EuclideanSpace}\,\mathbb{R}\,(\mathrm{Fin}\,n)$.
 \end{theorem}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{theorem}[total mass]
   \label{thm:rho-integral}
@@ -131,6 +137,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
     \int_V \rho(x, t)\,dx = 1.
   \]
 \end{theorem}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \chapter{Mean curvature flow}
 
@@ -211,6 +218,7 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
          \Big(n - \tfrac{\|F - F^\perp\|^2}{2\tau} + \langle H, F\rangle\Big).
   \end{align*}
 \end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{theorem}[Huisken's monotonicity formula]
   \label{thm:huisken-monotonicity}
@@ -270,6 +278,12 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
   The proof reuses Lemma~\ref{lem:huisken-pointwise} specialised at
   $\tau = 1/2$: the factors $1/(2\tau)$ and $4\tau^2$ collapse to $1$.
 \end{theorem}
+\begin{proof}\leanok
+  \uses{lem:huisken-pointwise}
+  Same skeleton as Theorem~\ref{thm:huisken-monotonicity}: apply the
+  pointwise identity at $\tau = 1/2$, integrate, and use the rescaled
+  first-variation hypothesis to zero out the residue.
+\end{proof}
 
 \chapter{Sanity-check examples}
 
