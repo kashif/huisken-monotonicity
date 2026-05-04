@@ -120,15 +120,17 @@ For `t < t₀ < T`,
 
 The two analytic hypotheses (`hChainRule`, `hFirstVar`) package the moving-measure
 chain rule for our specific integrand and the first variation formula for the test
-field `Y = ρ F / τ`, respectively. They will be discharged for any actual MCF once
-mathlib has the underlying geometric infrastructure. -/
+field `Y = ρ F / τ`, respectively. The MCF assumption `∂_t F = H` is encoded in
+the form of `hChainRule`, where `H = data.meanCurvature` appears as the velocity
+in the chain-rule integrand; no separate `IsMeanCurvatureFlow` hypothesis is
+needed. The hypotheses will be discharged for any actual MCF once mathlib has
+the underlying geometric infrastructure. -/
 theorem huisken_monotonicity
     (n : ℕ)
     {M E : Type*} [TopologicalSpace M] [MeasurableSpace M]
     [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     (F : ImmersionFamily M E)
     (data : MonotonicityData F)
-    (_hMCF : IsMeanCurvatureFlow F data.meanCurvature)
     (t₀ : ℝ) {t : ℝ} (hτ : t < t₀) (_ht : 0 ≤ t) (_htT : t < F.T)
     (hChainRule :
       HasDerivAt
@@ -212,7 +214,6 @@ theorem huisken_monotonicity_rescaled
     [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     (Ft : ImmersionFamily M E)
     (data : MonotonicityData Ft)
-    (_hMCF : IsRescaledMeanCurvatureFlow Ft data.meanCurvature)
     {s : ℝ} (_hs : 0 ≤ s) (_hsT : s < Ft.T)
     (hChainRule :
       HasDerivAt

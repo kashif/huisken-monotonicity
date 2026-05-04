@@ -372,6 +372,31 @@ hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
   and $H$ is the scalar mean curvature.
 \end{definition}
 
+\begin{lemma}[time derivative of the graph position]
+  \label{lem:graph-position-deriv}
+  \lean{HuiskenMonotonicity.hasDerivAt_graphPosition_of_isCoordMCF}
+  \leanok
+  \uses{def:graph-position, def:coord-graph-mcf}
+  Under coordinate graphical MCF, the time derivative of $X_f(x) = (x, f(t,x))$
+  along a fixed base point $x$ is the vertical vector
+  $(0, v \cdot H)$, where $v$ and $H$ are evaluated at $(t, x)$.
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
+\begin{theorem}[graphical MCF projects to the geometric mean curvature]
+  \label{thm:graph-velocity-proj-mc}
+  \lean{HuiskenMonotonicity.graphNormalProjection_velocity_eq_meanCurvatureVector}
+  \leanok
+  \uses{lem:graph-position-deriv, lem:vertical-mcf-normal}
+  Under coordinate graphical MCF, the orthogonal projection of the time
+  derivative of the graph position onto the unit-normal line equals the
+  geometric mean curvature vector $\vec{H}$. Combining the previous two
+  results, this is the precise sense in which the scalar PDE
+  $\partial_t f = v H$ is a faithful parametrisation of mean curvature
+  flow on the graph hypersurface.
+\end{theorem}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
 \begin{theorem}[monotonicity data for a coordinate graph]
   \label{thm:coord-graph-monotonicity-data}
   \lean{HuiskenMonotonicity.coordinateGraphMonotonicityData}

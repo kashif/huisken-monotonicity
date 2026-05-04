@@ -279,6 +279,60 @@ def IsCoordinateGraphMeanCurvatureFlow {n : ℕ}
     HasDerivAt (fun s => f s x)
       (graphAreaFactor (f t) x * meanCurvatureGraph (f t) x) t
 
+/-- Differentiating `s ↦ graphVector u (g s)` at fixed base `u`: the result is a
+purely vertical vector with last coordinate `g'`, the time derivative of `g`. -/
+lemma hasDerivAt_graphVector_const_height {n : ℕ} (u : GraphBase n)
+    {g : ℝ → ℝ} {g' t : ℝ} (hg : HasDerivAt g g' t) :
+    HasDerivAt (fun s => graphVector u (g s)) (graphVerticalVector (n := n) g') t := by
+  -- The Pi-version: derivative of `s ↦ Fin.snoc (constant) (g s)` is `Fin.snoc 0 g'`.
+  set u' : Fin n → ℝ := EuclideanSpace.equiv (Fin n) ℝ u with _hu'_def
+  have h_pi : HasDerivAt
+      (fun s : ℝ => (Fin.snoc u' (g s) : Fin (n + 1) → ℝ))
+      (Fin.snoc (0 : Fin n → ℝ) g') t := by
+    rw [hasDerivAt_pi]
+    intro i
+    rcases i.eq_castSucc_or_eq_last with ⟨j, rfl⟩ | rfl
+    · simpa using hasDerivAt_const t (u' j)
+    · simpa using hg
+  -- Wrap with the continuous linear equiv `(EuclideanSpace.equiv).symm` via `clm_apply`.
+  have h_const : HasDerivAt
+      (fun _ : ℝ => (EuclideanSpace.equiv (Fin (n + 1)) ℝ).symm.toContinuousLinearMap)
+      (0 : (Fin (n + 1) → ℝ) →L[ℝ] EuclideanSpace ℝ (Fin (n + 1))) t :=
+    hasDerivAt_const _ _
+  have h := h_const.clm_apply h_pi
+  -- Clean up the value: the constant-derivative term collapses.
+  simp only [ContinuousLinearMap.zero_apply, zero_add] at h
+  -- `graphVector u (g s)` unfolds to `(E.equiv).symm (Fin.snoc (E.equiv u) (g s))`,
+  -- and `graphVerticalVector g' = graphVector 0 g'` to `(E.equiv).symm (Fin.snoc 0 g')`
+  -- via `map_zero`; `convert ... using 1` resolves the definitional differences.
+  convert h using 1
+
+/-- Under graphical MCF (`∂_t f = v · H`), the time derivative of the graph
+position is a *vertical* vector with magnitude `v · H`. The normal projection
+of this velocity is the geometric mean curvature vector
+(see `graphNormalProjection_vertical_mcfVelocity`). -/
+lemma hasDerivAt_graphPosition_of_isCoordMCF {n : ℕ}
+    (f : ℝ → GraphBase n → ℝ) (T : ℝ) (hf : IsCoordinateGraphMeanCurvatureFlow f T)
+    (x : GraphBase n) {t : ℝ} (ht : 0 ≤ t) (htT : t < T) :
+    HasDerivAt (fun s => graphPosition (f s) x)
+      (graphVerticalVector (n := n)
+        (graphAreaFactor (f t) x * meanCurvatureGraph (f t) x)) t :=
+  hasDerivAt_graphVector_const_height x (hf x t ht htT)
+
+/-- Combined connection: under graphical MCF, the *normal projection* of the time
+derivative of the graph position equals the geometric mean curvature vector.
+This is the precise sense in which the scalar PDE `∂_t f = v H` is a faithful
+parametrisation of mean curvature flow. -/
+theorem graphNormalProjection_velocity_eq_meanCurvatureVector {n : ℕ}
+    (f : ℝ → GraphBase n → ℝ) (T : ℝ) (hf : IsCoordinateGraphMeanCurvatureFlow f T)
+    (x : GraphBase n) {t : ℝ} (ht : 0 ≤ t) (htT : t < T)
+    {v : GraphAmbient n}
+    (hv : HasDerivAt (fun s => graphPosition (f s) x) v t) :
+    graphNormalProjection (f t) x v = graphMeanCurvatureVector (f t) x := by
+  have h_unique := (hasDerivAt_graphPosition_of_isCoordMCF f T hf x ht htT).unique hv
+  rw [← h_unique]
+  exact graphNormalProjection_vertical_mcfVelocity (f t) x
+
 /-- Concrete `MonotonicityData` for a coordinate graph family.
 
 This discharges the two geometric coherence axioms in `MonotonicityData`.  The
