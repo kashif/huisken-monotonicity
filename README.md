@@ -19,7 +19,8 @@ The repository is organised in three layers:
 | --- | --- |
 | [`HuiskenMonotonicity.HeatKernel`](HuiskenMonotonicity/HeatKernel.lean) | proved |
 | [`HuiskenMonotonicity.Flow`](HuiskenMonotonicity/Flow.lean) | scaffolding |
-| [`HuiskenMonotonicity.Monotonicity`](HuiskenMonotonicity/Monotonicity.lean) | statement only |
+| [`HuiskenMonotonicity.Monotonicity`](HuiskenMonotonicity/Monotonicity.lean) | proved (axiom-conditional) |
+| [`HuiskenMonotonicity.GraphMeanCurvature`](HuiskenMonotonicity/GraphMeanCurvature.lean) | definition |
 
 ### Heat kernel — proved
 
@@ -61,19 +62,28 @@ derived from `F`; the geometric content (that `H` actually equals the mean curva
 vector of `F(·, t)(M)`) is the caller's responsibility until the second fundamental
 form lands.
 
-### Monotonicity — statement only
+### Monotonicity — proved, axiom-conditional
 
-`huisken_monotonicity` takes an `ImmersionFamily F`, geometric data
-`MonotonicityData F` (surface measure, mean curvature vector field, normal-position
-projection), and an explicit hypothesis `IsMeanCurvatureFlow F data.meanCurvature`
-linking the two. The proof is left as `sorry`. The intended proof structure follows
-Huisken §3:
+`huisken_monotonicity` is **proved**, conditional on four axioms covering the
+geometric primitives mathlib still lacks:
 
-1. evolution of the area element `(d/dt) dμ_t = -‖H‖² dμ_t`;
-2. chain rule for `(d/dt) ρ(F(p, t), t) = ∂_t ρ + ⟨H, ∇_x ρ⟩`;
-3. first variation formula on `Mₜ` to absorb the cross term `⟨F, H⟩/(2τ)`.
+- **Geometric coherence** (fields of `MonotonicityData`):
+  - `posDecomp` — orthogonal decomposition `⟨F − F^⊥, F^⊥⟩ = 0`.
+  - `meanCurvature_normal` — `H ⟂ F^T`, i.e. `⟨H, F − F^⊥⟩ = 0`.
+- **Analytic** (theorem hypotheses):
+  - `hChainRule` — packages the moving-measure chain rule with the kernel's
+    `∂_t ρ` and `∇_x ρ` formulas, giving `(d/dt) ∫ ρ ∂μ_s` as a single
+    integral over the chain-rule expansion.
+  - `hFirstVar` — the first variation formula applied to `Y = ρ F / τ`,
+    `∫ ρ · [n − ‖F^T‖²/(2τ) + ⟨H, F⟩] dμ_t = 0`.
 
-All three primitives are presently outside mathlib.
+Given those, the proof is the pointwise algebraic identity
+`huisken_pointwise_identity` plus integral linearity. When mathlib gains the
+surface measure of an immersion, the moving-measure chain rule, and the first
+variation formula, the analytic hypotheses can be discharged for any genuine
+MCF, recovering Huisken's theorem unconditionally.
+
+`lake build` passes with **zero `sorry`**.
 
 ## Build
 
