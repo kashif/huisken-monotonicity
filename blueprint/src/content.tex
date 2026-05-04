@@ -1,0 +1,292 @@
+\chapter{Introduction}
+
+This blueprint documents a Lean 4 / mathlib formalization of Huisken's monotonicity
+formula for mean curvature flow~\cite{huisken1990}, together with the analytical
+infrastructure (the backward heat kernel and its derivative identities) underpinning
+its proof.
+
+The target is Theorem~\ref{thm:huisken-monotonicity}: for a hypersurface family
+$M_t \subset \mathbb{R}^{n+1}$ evolving by mean curvature, and the backward heat
+kernel
+\[
+  \rho(x, t) = (4\pi(t_0 - t))^{-n/2}\,\exp\!\left(-\frac{\|x\|^2}{4(t_0 - t)}\right),
+\]
+the integral $\int_{M_t} \rho\,d\mu_t$ is monotonically decreasing in $t$, with
+explicit rate given by the squared-norm formula
+\[
+  \frac{d}{dt}\int_{M_t} \rho\,d\mu_t = -\int_{M_t} \rho\,
+    \left\| H + \frac{F^\perp}{2(t_0 - t)} \right\|^2 d\mu_t.
+\]
+
+\section*{Formalization status}
+
+Mathlib v4.30.0-rc2 does not yet contain the second fundamental form, the surface
+measure of an immersion, the moving-measure chain rule, or the first variation
+formula. Rather than build all four, the formalization \emph{axiomatises} them at
+the level needed for this single application: two purely geometric coherence axioms
+on the data structure (orthogonality of $F^T$ and $F^\perp$; $H \perp F^T$), and
+two analytic hypotheses on the theorem itself (the chain-rule expansion of
+$(d/dt) \int \rho\,d\mu_s$, and the integrated first-variation identity for the
+test field $Y = \rho F / \tau$).
+
+Given those axioms, Theorem~\ref{thm:huisken-monotonicity} is fully proved
+(\texttt{lake build} reports zero \texttt{sorry}). When mathlib gains the missing
+geometric primitives, the analytic hypotheses can be discharged for any genuine
+mean curvature flow, recovering Huisken's theorem unconditionally.
+
+\chapter{The backward heat kernel}
+
+\begin{definition}[backward heat kernel]
+  \label{def:backward-heat-kernel}
+  \lean{HuiskenMonotonicity.backwardHeatKernel}
+  \leanok
+  For a hypersurface dimension $n \in \mathbb{N}$, base time $t_0 \in \mathbb{R}$,
+  current time $t \in \mathbb{R}$, and ambient point $x$ in a (semi)normed real
+  inner product space, the \emph{backward heat kernel} is
+  \[
+    \rho(x, t) = (4\pi(t_0 - t))^{-n/2}\,
+      \exp\!\left(-\frac{\|x\|^2}{4(t_0 - t)}\right).
+  \]
+\end{definition}
+
+\begin{lemma}[positivity]
+  \label{lem:rho-pos}
+  \lean{HuiskenMonotonicity.backwardHeatKernel_pos}
+  \leanok
+  \uses{def:backward-heat-kernel}
+  For every $t < t_0$ and every $x$, $\rho(x, t) > 0$.
+\end{lemma}
+
+\begin{lemma}[time derivative]
+  \label{lem:rho-dt}
+  \lean{HuiskenMonotonicity.hasDerivAt_backwardHeatKernel_time}
+  \leanok
+  \uses{def:backward-heat-kernel}
+  For every $t < t_0$ and every $x$,
+  \[
+    \frac{\partial \rho}{\partial t}(x, t) = \rho(x, t)
+      \left(\frac{n}{2(t_0 - t)} - \frac{\|x\|^2}{4(t_0 - t)^2}\right).
+  \]
+\end{lemma}
+
+\begin{lemma}[directional spatial derivative]
+  \label{lem:rho-dx}
+  \lean{HuiskenMonotonicity.hasDerivAt_backwardHeatKernel_dir}
+  \leanok
+  \uses{def:backward-heat-kernel}
+  For every $t < t_0$, every $x, v$, and every $s$,
+  \[
+    \left.\frac{d}{ds'}\right|_{s' = 0} \rho(x + s' v, t)
+      = -\frac{\rho(x, t)}{2(t_0 - t)}\,\langle x, v\rangle.
+  \]
+  Equivalently, $\nabla_x \rho(x, t) = -\rho(x, t)\,x / (2(t_0 - t))$.
+\end{lemma}
+
+\begin{lemma}[second directional derivative along a line]
+  \label{lem:rho-dxx}
+  \lean{HuiskenMonotonicity.iteratedDeriv_two_backwardHeatKernel_along}
+  \leanok
+  \uses{lem:rho-dx}
+  For every $t < t_0$, every $x, v$,
+  \[
+    \frac{d^2}{ds^2}\bigg|_{s=0} \rho(x + s v, t)
+      = \rho(x, t)
+        \left(\frac{\langle x, v\rangle^2}{4(t_0 - t)^2}
+          - \frac{\|v\|^2}{2(t_0 - t)}\right).
+  \]
+\end{lemma}
+
+\begin{theorem}[backward heat equation in coordinates]
+  \label{thm:rho-heat-coord}
+  \lean{HuiskenMonotonicity.backwardHeatEquation_euclidean}
+  \leanok
+  \uses{lem:rho-dt, lem:rho-dxx}
+  On $\mathrm{EuclideanSpace}\,\mathbb{R}\,(\mathrm{Fin}\,n)$, the backward heat
+  kernel satisfies
+  \[
+    \frac{\partial \rho}{\partial t}(x, t)
+      + \sum_{i=1}^{n} \frac{\partial^2 \rho}{\partial x_i^2}(x, t) = 0
+    \qquad \text{for } t < t_0.
+  \]
+\end{theorem}
+
+\begin{theorem}[backward heat equation, Laplacian form]
+  \label{thm:rho-heat-laplacian}
+  \lean{HuiskenMonotonicity.backwardHeatEquation_laplacian}
+  \leanok
+  \uses{thm:rho-heat-coord}
+  Equivalently, against mathlib's coordinate-free Laplacian $\Delta$,
+  $\partial_t \rho + \Delta \rho = 0$ on
+  $\mathrm{EuclideanSpace}\,\mathbb{R}\,(\mathrm{Fin}\,n)$.
+\end{theorem}
+
+\begin{theorem}[total mass]
+  \label{thm:rho-integral}
+  \lean{HuiskenMonotonicity.integral_backwardHeatKernel}
+  \leanok
+  \uses{def:backward-heat-kernel}
+  For any finite-dimensional real inner product space $V$ with
+  $\dim_{\mathbb{R}} V = n$ and any $t < t_0$,
+  \[
+    \int_V \rho(x, t)\,dx = 1.
+  \]
+\end{theorem}
+
+\chapter{Mean curvature flow}
+
+\begin{definition}[immersion family]
+  \label{def:immersion-family}
+  \lean{HuiskenMonotonicity.ImmersionFamily}
+  \leanok
+  An \emph{immersion family} of a fixed parameter space $M$ into a real inner
+  product space $E$ is a triple $(T, F, \mathrm{cont})$ consisting of a positive
+  maximal time $T \in \mathbb{R}_{>0}$, a map $F : M \times \mathbb{R} \to E$,
+  and a proof that $F$ is jointly continuous in $(p, t)$.
+\end{definition}
+
+\begin{definition}[mean curvature flow]
+  \label{def:mcf}
+  \lean{HuiskenMonotonicity.IsMeanCurvatureFlow}
+  \leanok
+  \uses{def:immersion-family}
+  An immersion family $F$ \emph{solves the mean curvature flow with prescribed
+  velocity field $H : M \to \mathbb{R} \to E$} if, for every $p \in M$ and every
+  $t \in [0, T)$,
+  \[
+    \left.\frac{\partial}{\partial s}\right|_{s = t} F(p, s) = H(p, t).
+  \]
+  Geometrically $H(p, t)$ is the mean curvature vector of the hypersurface
+  $F(\cdot, t)(M)$ at $F(p, t)$. Because the second fundamental form is missing
+  from mathlib, $H$ is taken as explicit data rather than derived from $F$.
+\end{definition}
+
+\begin{definition}[rescaled mean curvature flow]
+  \label{def:rescaled-mcf}
+  \lean{HuiskenMonotonicity.IsRescaledMeanCurvatureFlow}
+  \leanok
+  \uses{def:immersion-family}
+  Under the parabolic rescaling
+  $\widetilde{F}(p, s) = (2(T - t))^{-1/2} F(p, t)$, $s = -\tfrac{1}{2}\log(T - t)$,
+  the rescaled family satisfies
+  \[
+    \left.\frac{\partial}{\partial s'}\right|_{s' = s}
+      \widetilde{F}(p, s') = \widetilde{H}(p, s) + \widetilde{F}(p, s),
+  \]
+  with the extra $\widetilde{F}$ term arising from the time-dependent rescaling
+  factor.
+\end{definition}
+
+\begin{definition}[monotonicity data]
+  \label{def:monotonicity-data}
+  \lean{HuiskenMonotonicity.MonotonicityData}
+  \leanok
+  \uses{def:immersion-family}
+  A \emph{monotonicity data structure} for an immersion family $F$ bundles a
+  surface measure $\mu_t$ on the parameter space $M$, a mean curvature vector
+  field $H$, a normal-position projection $F^\perp$, and the two coherence
+  axioms
+  \[
+    \langle F(p, t) - F^\perp(p, t),\, F^\perp(p, t)\rangle = 0,
+    \qquad
+    \langle H(p, t),\, F(p, t) - F^\perp(p, t)\rangle = 0.
+  \]
+  These say that $F = F^T + F^\perp$ is an orthogonal decomposition and that
+  $H$ is normal to the tangential component.
+\end{definition}
+
+\chapter{Huisken's monotonicity formula}
+
+\begin{lemma}[pointwise algebraic identity]
+  \label{lem:huisken-pointwise}
+  \lean{HuiskenMonotonicity.huisken_pointwise_identity}
+  \leanok
+  Pure algebra in a real inner product space. Let $\tau \neq 0$, and suppose
+  $\langle F - F^\perp,\, F^\perp\rangle = 0$ and
+  $\langle H,\, F - F^\perp\rangle = 0$. Then for any scalar $\rho$,
+  \begin{align*}
+    \rho \cdot \Big(\tfrac{n}{2\tau} &- \tfrac{\|F\|^2}{4\tau^2}
+        - \tfrac{\langle F, H\rangle}{2\tau} - \|H\|^2\Big) \\
+    &= -\rho\,\Big\|H + \tfrac{F^\perp}{2\tau}\Big\|^2
+       + \tfrac{1}{2\tau} \cdot \rho \cdot
+         \Big(n - \tfrac{\|F - F^\perp\|^2}{2\tau} + \langle H, F\rangle\Big).
+  \end{align*}
+\end{lemma}
+
+\begin{theorem}[Huisken's monotonicity formula]
+  \label{thm:huisken-monotonicity}
+  \lean{HuiskenMonotonicity.huisken_monotonicity}
+  \leanok
+  \uses{def:backward-heat-kernel, def:mcf, def:monotonicity-data,
+        lem:rho-dt, lem:rho-dx, lem:huisken-pointwise}
+  Let $F$ be an immersion family with monotonicity data $(\mu_t, H, F^\perp)$
+  satisfying $\partial_t F = H$ (Definition~\ref{def:mcf}). Suppose moreover the
+  two analytic hypotheses
+
+  \begin{enumerate}
+    \item (\emph{moving-measure chain rule}) the time derivative of
+      $\int_M \rho(F(p, s), s)\,d\mu_s(p)$ at $s = t$ equals
+      \[
+        \int_M \rho \cdot
+          \left(\tfrac{n}{2\tau} - \tfrac{\|F\|^2}{4\tau^2}
+            - \tfrac{\langle F, H\rangle}{2\tau} - \|H\|^2\right) d\mu_t,
+      \]
+    \item (\emph{first variation identity}) for the test field
+      $Y = \rho F / \tau$,
+      \[
+        \int_M \rho \cdot
+          \left(n - \tfrac{\|F^T\|^2}{2\tau} + \langle H, F\rangle\right)
+          d\mu_t = 0,
+      \]
+  \end{enumerate}
+  hold (with $\tau = t_0 - t$). Then for every $t < t_0$,
+  \[
+    \frac{d}{dt}\int_M \rho(F(p, t), t)\,d\mu_t(p)
+      = - \int_M \rho \cdot \Big\|H + \tfrac{F^\perp}{2\tau}\Big\|^2 d\mu_t.
+  \]
+\end{theorem}
+
+\begin{proof}\leanok
+  \uses{lem:huisken-pointwise}
+  By Lemma~\ref{lem:huisken-pointwise}, the chain-rule integrand from~(1)
+  equals the negated squared-norm integrand plus $\frac{1}{2\tau}$ times the
+  first-variation integrand from~(2). Integrating both sides and applying
+  hypothesis~(2) zeros out the first-variation contribution, leaving
+  exactly $-\int \rho\,\|H + F^\perp/(2\tau)\|^2 d\mu_t$.
+\end{proof}
+
+\begin{theorem}[rescaled monotonicity formula]
+  \label{thm:huisken-monotonicity-rescaled}
+  \lean{HuiskenMonotonicity.huisken_monotonicity_rescaled}
+  \leanok
+  \uses{def:rescaled-mcf, def:monotonicity-data, lem:huisken-pointwise}
+  In the rescaled setup of Definition~\ref{def:rescaled-mcf}, with rescaled
+  kernel $\widetilde{\rho}(x) = \exp(-\|x\|^2/2)$ (no time-dependent prefactor)
+  and the analogous chain-rule and first-variation hypotheses,
+  \[
+    \frac{d}{ds}\int_M \widetilde{\rho}(\widetilde{F}(p, s))\,d\widetilde{\mu}_s(p)
+      = - \int_M \widetilde{\rho} \cdot
+        \Big\|\widetilde{H} + \widetilde{F}^\perp\Big\|^2 d\widetilde{\mu}_s.
+  \]
+  The proof reuses Lemma~\ref{lem:huisken-pointwise} specialised at
+  $\tau = 1/2$: the factors $1/(2\tau)$ and $4\tau^2$ collapse to $1$.
+\end{theorem}
+
+\chapter{Sanity-check examples}
+
+\begin{example}[stationary hyperplane]
+  \label{ex:hyperplane}
+  \lean{HuiskenMonotonicity.Hyperplane.data}
+  \leanok
+  \uses{def:monotonicity-data, def:mcf}
+  The stationary $n$-dimensional hyperplane through the origin in
+  $\mathbb{R}^{n+1}$, embedded as $(p_1, \ldots, p_n) \mapsto
+  (p_1, \ldots, p_n, 0)$, has $H \equiv 0$ and $F^\perp \equiv 0$.
+  Both coherence axioms hold trivially, and the surface satisfies
+  $\partial_t F = 0 = H$.
+\end{example}
+
+\begin{thebibliography}{99}
+  \bibitem{huisken1990} G.\ Huisken, \emph{Asymptotic behavior for
+  singularities of the mean curvature flow}, J.\ Differential Geom.\ \textbf{31}
+  (1990), no.\ 1, 285--299.
+\end{thebibliography}

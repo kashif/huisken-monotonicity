@@ -100,6 +100,20 @@ lake build
 
 Requires the toolchain pinned in [`lean-toolchain`](lean-toolchain).
 
+## Blueprint
+
+A LaTeX/HTML blueprint mixing prose math with Lean references is in
+[`blueprint/src/content.tex`](blueprint/src/content.tex). Each statement carries
+`\lean{...}` and `\leanok` macros tying it to the corresponding Lean declaration;
+`leanblueprint checkdecls` verifies every reference resolves.
+
+```sh
+pip install leanblueprint  # one-time, plus a graphviz system install
+leanblueprint pdf          # builds blueprint/print/print.pdf
+leanblueprint web          # builds blueprint/web/ HTML site
+leanblueprint checkdecls   # verifies every \lean{...} ref exists in the build
+```
+
 ## Reference
 
 Gerhard Huisken, *Asymptotic behavior for singularities of the mean curvature flow*,
