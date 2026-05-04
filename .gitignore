@@ -1,3 +1,5 @@
 /.lake
 /blueprint/print/
 /blueprint/web/
+**/.DS_Store
+*.paux

@@ -13,7 +13,7 @@ evolving by mean curvature, and the backward heat kernel
 d/dt ∫_{Mₜ} ρ(x, t) dμ_t  =  -∫_{Mₜ} ρ(x, t) · ‖H + F^⊥/(2τ)‖² dμ_t.
 ```
 
-The repository is organised in three layers:
+The repository is organised around these modules:
 
 | Module | Status |
 | --- | --- |
@@ -21,6 +21,8 @@ The repository is organised in three layers:
 | [`HuiskenMonotonicity.Flow`](HuiskenMonotonicity/Flow.lean) | scaffolding |
 | [`HuiskenMonotonicity.Monotonicity`](HuiskenMonotonicity/Monotonicity.lean) | proved (axiom-conditional) |
 | [`HuiskenMonotonicity.GraphMeanCurvature`](HuiskenMonotonicity/GraphMeanCurvature.lean) | definition |
+| [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved (geometric axioms discharged) |
+| [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved graph geometry |
 
 ### Heat kernel — proved
 
@@ -46,6 +48,28 @@ The repository is organised in three layers:
 
 These statements stand on their own and are candidates for upstreaming to mathlib
 (`Mathlib.Analysis.SpecialFunctions.Gaussian.HeatKernel`).
+
+### Coordinate hypersurfaces — graph geometry
+
+`CoordinateHypersurface.lean` starts replacing abstract geometric assumptions with
+concrete graph calculations for `X_f(x) = (x, f x)`.
+
+- `graphPosition`, `graphNormalVector`, `graphUnitNormal` define the graph embedding,
+  lower normal `(∇f, -1)`, and unit normal.
+- `norm_graphNormalVector`, `norm_graphUnitNormal` prove the normal has length
+  `sqrt(1 + ‖∇f‖²)` and the normalized normal has length `1`.
+- `graphTangentVector`, `graphNormalVector_orthogonal_tangent`,
+  `graphUnitNormal_orthogonal_tangent` prove the coordinate tangent vectors are
+  orthogonal to the normal.
+- `graphNormalProjection`, `graphMeanCurvatureVector`,
+  `graphNormalProjection_posDecomp`, and `graphMeanCurvatureVector_normal`
+  discharge the two geometric coherence axioms required by `MonotonicityData`.
+- `coordinateGraphMonotonicityData` packages the graph surface measure
+  `sqrt(1 + ‖∇f‖²) dx`, mean-curvature vector, and normal projection for a
+  time-dependent graph family.
+- `graphNormalProjection_vertical_mcfVelocity` proves that the scalar graph MCF
+  equation `∂ₜ f = sqrt(1 + ‖∇f‖²) · meanCurvatureGraph f` has normal velocity equal
+  to the graph mean-curvature vector.
 
 ### Flow — abstract scaffolding
 

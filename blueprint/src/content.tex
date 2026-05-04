@@ -299,6 +299,102 @@ mean curvature flow, recovering Huisken's theorem unconditionally.
   $\partial_t F = 0 = H$.
 \end{example}
 
+\chapter{Coordinate hypersurfaces}
+
+The abstract \texttt{MonotonicityData} structure axiomatises the orthogonal
+decomposition $F = F^T + F^\perp$ and the normality $H \perp F^T$. For a
+hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
+\emph{constructively} satisfied via explicit coordinate calculations.
+
+\begin{definition}[graph position]
+  \label{def:graph-position}
+  \lean{HuiskenMonotonicity.graphPosition}
+  \leanok
+  For $f : \mathbb{R}^n \to \mathbb{R}$, the graph immersion is
+  $X_f(x) = (x, f(x)) \in \mathbb{R}^{n+1}$.
+\end{definition}
+
+\begin{definition}[graph mean curvature]
+  \label{def:graph-mc-scalar}
+  \lean{HuiskenMonotonicity.meanCurvatureGraph}
+  \leanok
+  Lower-normal scalar mean curvature
+  $H(x) = \mathrm{div}(\nabla f / \sqrt{1 + \|\nabla f\|^2})$ at $x$.
+\end{definition}
+
+\begin{definition}[graph unit normal]
+  \label{def:graph-unit-normal}
+  \lean{HuiskenMonotonicity.graphUnitNormal}
+  \leanok
+  \uses{def:graph-position}
+  Lower unit normal $\nu = (\nabla f, -1) / \sqrt{1 + \|\nabla f\|^2}$.
+  Norm verified to equal $1$.
+\end{definition}
+
+\begin{definition}[graph mean curvature vector]
+  \label{def:graph-mc-vector}
+  \lean{HuiskenMonotonicity.graphMeanCurvatureVector}
+  \leanok
+  \uses{def:graph-mc-scalar, def:graph-unit-normal}
+  Mean curvature vector $\vec{H} = -H \cdot \nu$ along the unit normal.
+\end{definition}
+
+\begin{lemma}[graph mean curvature is normal]
+  \label{lem:graph-mc-normal}
+  \lean{HuiskenMonotonicity.graphMeanCurvatureVector_normal}
+  \leanok
+  \uses{def:graph-mc-vector}
+  For any ambient vector $Y$, $\langle \vec{H},\, Y - \pi_\nu(Y)\rangle = 0$,
+  where $\pi_\nu$ is orthogonal projection onto the line spanned by $\nu$.
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
+\begin{lemma}[normal projection of vertical velocity]
+  \label{lem:vertical-mcf-normal}
+  \lean{HuiskenMonotonicity.graphNormalProjection_vertical_mcfVelocity}
+  \leanok
+  \uses{def:graph-mc-vector}
+  Let $v = \sqrt{1 + \|\nabla f\|^2}$. The normal projection of the purely
+  vertical vector $(0, vH)$ equals $\vec{H}$. Equivalently, the scalar
+  graphical MCF equation $\partial_t f = vH$ produces a vertical velocity
+  whose normal component is exactly the mean curvature vector.
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
+\begin{definition}[coordinate graphical MCF]
+  \label{def:coord-graph-mcf}
+  \lean{HuiskenMonotonicity.IsCoordinateGraphMeanCurvatureFlow}
+  \leanok
+  \uses{def:graph-mc-scalar}
+  A time-dependent height $f : \mathbb{R} \to \mathbb{R}^n \to \mathbb{R}$
+  satisfies \emph{coordinate graphical MCF} if, for each $x$ and each $t$,
+  $\partial_t f(t, x) = v(t, x) \cdot H(t, x)$, where $v$ is the area factor
+  and $H$ is the scalar mean curvature.
+\end{definition}
+
+\begin{theorem}[monotonicity data for a coordinate graph]
+  \label{thm:coord-graph-monotonicity-data}
+  \lean{HuiskenMonotonicity.coordinateGraphMonotonicityData}
+  \leanok
+  \uses{def:graph-position, def:graph-mc-vector, def:monotonicity-data,
+        lem:graph-mc-normal}
+  For any time-dependent height function $f$, the graph immersion family
+  carries a complete \texttt{MonotonicityData} structure: the surface
+  measure is Lebesgue weighted by the area factor $v$, the mean curvature
+  is the geometric vector $\vec{H}$, and the normal-position projection is
+  the orthogonal projection of $X_f(x)$ onto the unit-normal line.
+  Both coherence axioms (orthogonal decomposition and $\vec{H} \perp F^T$)
+  hold by construction.
+\end{theorem}
+\begin{proof}\leanok
+  \uses{lem:graph-mc-normal}
+  Both axioms reduce to general orthogonality lemmas for the projection
+  $\pi_\nu$ onto a non-zero direction $\nu$: the difference $Y - \pi_\nu(Y)$
+  is orthogonal to $\pi_\nu(Y)$ (proving \texttt{posDecomp}), and any scalar
+  multiple of $\nu$ is orthogonal to $Y - \pi_\nu(Y)$ (proving
+  \texttt{meanCurvature\_normal}). Verified in Lean.
+\end{proof}
+
 \begin{thebibliography}{99}
   \bibitem{huisken1990} G.\ Huisken, \emph{Asymptotic behavior for
   singularities of the mean curvature flow}, J.\ Differential Geom.\ \textbf{31}

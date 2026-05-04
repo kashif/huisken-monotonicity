@@ -2,4 +2,5 @@ import HuiskenMonotonicity.HeatKernel
 import HuiskenMonotonicity.Flow
 import HuiskenMonotonicity.GraphMeanCurvature
 import HuiskenMonotonicity.Monotonicity
+import HuiskenMonotonicity.CoordinateHypersurface
 import HuiskenMonotonicity.Examples.Hyperplane
