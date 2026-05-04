@@ -83,6 +83,13 @@ surface measure of an immersion, the moving-measure chain rule, and the first
 variation formula, the analytic hypotheses can be discharged for any genuine
 MCF, recovering Huisken's theorem unconditionally.
 
+`huisken_monotonicity_rescaled` (Cor 3.2) is proved in the same axiom-conditional
+style. Under the parabolic rescaling `F̃ = (2(T-t))^(-1/2) F`, the surfaces
+satisfy `∂_s F̃ = H̃ + F̃` (`IsRescaledMeanCurvatureFlow`) and the simpler formula
+`(d/ds) ∫ ρ̃ dμ̃_s = -∫ ρ̃ · ‖H̃ + F̃^⊥‖² dμ̃_s`, where the rescaled kernel
+`ρ̃(x) = exp(-‖x‖²/2)` carries no `(4πτ)^(-n/2)` prefactor. The proof reuses
+the unrescaled algebra by specialising `huisken_pointwise_identity` at τ = 1/2.
+
 `lake build` passes with **zero `sorry`**.
 
 ## Build
