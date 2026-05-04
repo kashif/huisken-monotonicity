@@ -10,11 +10,15 @@ Riemannian geometry, but it does **not** yet define:
   * the induced volume measure on the image of an immersion;
   * the first variation of area / divergence theorem on a submanifold.
 
-So we cannot yet write `MeanCurvatureFlow F` as the literal PDE `∂_t F = H`. What we do
-here is set up the **interface** that the statement of Huisken's monotonicity theorem can
-use, with each missing geometric primitive marked as a field to be discharged later.
+We can still write the MCF equation `∂_t F = H` literally, by *parameterising* the
+predicate `IsMeanCurvatureFlow F H` over both the family `F` and an externally supplied
+velocity field `H : M → ℝ → E`. The geometric content — that `H(p, t)` actually equals
+the mean curvature vector of `F(·, t)(M)` at `F(p, t)` — is left to the caller until
+mathlib gains the second fundamental form. Other missing primitives (surface measure,
+divergence theorem) appear here as further placeholder fields.
 -/
 
+import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Measure.MeasureSpace
 
@@ -45,22 +49,22 @@ instance : CoeFun (ImmersionFamily M E) (fun _ => M → ℝ → E) := ⟨Immersi
 
 end ImmersionFamily
 
-/-- Predicate that an `ImmersionFamily F` solves mean curvature flow.
+/-- An `ImmersionFamily F` solves mean curvature flow with prescribed velocity field
+`H : M → ℝ → E` if for every point `p` and every interior time `t ∈ [0, T)`,
 
-The intended statement is
+  `∂/∂s F(p, s) ∣_{s = t} = H(p, t)`.
 
-  ∀ p ∈ M, ∀ t ∈ [0, T),  ∂_t F(p, t) = H(p, t),
-
-where `H(p, t)` is the mean curvature vector of `F(·, t)` at `p`. Defining `H`
-requires the second fundamental form of an isometric immersion, which is not yet in
-mathlib. We therefore axiomatise the predicate so that downstream statements (Huisken's
-monotonicity formula) can be written. When mean curvature lands in mathlib, replace
-this by the literal PDE. -/
-class IsMeanCurvatureFlow
+Geometrically `H(p, t)` is the mean curvature vector of the hypersurface
+`F(·, t)(M)` at the image point `F(p, t)`. Mathlib does not yet construct that
+vector from `F` alone (the second fundamental form and the induced volume of an
+isometric immersion are missing), so the predicate takes `H` as explicit data:
+the caller supplies the mean curvature vector field, and `IsMeanCurvatureFlow F H`
+asserts that `F` evolves with that velocity. Once mean curvature lands in mathlib,
+this can be specialised to the unique geometric `H`. -/
+def IsMeanCurvatureFlow
     {M E : Type*} [TopologicalSpace M] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-    (F : ImmersionFamily M E) : Prop where
-  /-- Witness that the family solves the mean curvature flow. Currently opaque. -/
-  out : True
+    (F : ImmersionFamily M E) (H : M → ℝ → E) : Prop :=
+  ∀ p : M, ∀ t : ℝ, 0 ≤ t → t < F.T → HasDerivAt (fun s => F p s) (H p t) t
 
 /-- Placeholder for the surface measure on `F(·, t)(M)`.
 

@@ -1,4 +1,3 @@
-import HuiskenMonotonicity.Basic
 import HuiskenMonotonicity.HeatKernel
 import HuiskenMonotonicity.Flow
 import HuiskenMonotonicity.Monotonicity

@@ -61,8 +61,9 @@ theorem huisken_monotonicity
     (n : ℕ)
     {M E : Type*} [TopologicalSpace M] [MeasurableSpace M]
     [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-    (F : ImmersionFamily M E) [IsMeanCurvatureFlow F]
+    (F : ImmersionFamily M E)
     (data : MonotonicityData F)
+    (_hMCF : IsMeanCurvatureFlow F data.meanCurvature)
     (t₀ : ℝ) {t : ℝ} (_hτ : t < t₀) (_ht : 0 ≤ t) (_htT : t < F.T) :
     HasDerivAt
       (fun s => ∫ p, backwardHeatKernel n t₀ s (F p s) ∂(data.surface.μ s))
