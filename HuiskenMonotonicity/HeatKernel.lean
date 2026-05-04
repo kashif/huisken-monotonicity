@@ -233,16 +233,169 @@ theorem hasDerivAt_backwardHeatKernel_dir {t : ℝ} (hτ : t < t₀) (x v : E) :
   unfold backwardHeatKernel
   field_simp
 
+/-- First derivative of `ρ` along the line `s' ↦ x + s'•v`, evaluated at *any* point
+`s`, not just `s = 0`. The value at the base point shifts to `x + s•v`, but the formula
+is otherwise identical to `hasDerivAt_backwardHeatKernel_dir`. Obtained from the latter
+by reparametrising `s' ↦ s' - s`. -/
+theorem hasDerivAt_backwardHeatKernel_along {t : ℝ} (hτ : t < t₀) (x v : E) (s : ℝ) :
+    HasDerivAt (fun s' : ℝ => backwardHeatKernel n t₀ t (x + s' • v))
+      (- (backwardHeatKernel n t₀ t (x + s • v) / (2 * (t₀ - t))) *
+        @inner ℝ E _ (x + s • v) v) s := by
+  -- Apply the at-zero lemma at the translated base point `x + s • v`.
+  have h := hasDerivAt_backwardHeatKernel_dir n t₀ hτ (x + s • v) v
+  -- Reparametrise: `s' ↦ s' - s` has derivative 1 at `s` and maps `s` to `0`.
+  have h_sub : HasDerivAt (fun s' : ℝ => s' - s) 1 s :=
+    (hasDerivAt_id s).sub_const s
+  have h_comp := HasDerivAt.comp_of_eq s h h_sub (sub_self s).symm
+  -- `(x + s•v) + (s' - s)•v = x + s'•v` — collapse the composed function.
+  have h_fun_eq :
+      (fun s_1 : ℝ => backwardHeatKernel n t₀ t (x + s • v + s_1 • v)) ∘
+          (fun s' : ℝ => s' - s) =
+        fun s' : ℝ => backwardHeatKernel n t₀ t (x + s' • v) := by
+    funext s'
+    change backwardHeatKernel n t₀ t (x + s • v + (s' - s) • v) =
+        backwardHeatKernel n t₀ t (x + s' • v)
+    congr 1
+    rw [sub_smul]
+    abel
+  rw [h_fun_eq, mul_one] at h_comp
+  exact h_comp
+
+/-- Second directional derivative of `ρ` at `s = 0` along the line `s' ↦ x + s'•v`.
+
+Differentiating `s' ↦ ρ(x + s'•v)` twice and evaluating at `0` gives
+
+  `ρ(x) · (⟨x, v⟩² / (4τ²) − ‖v‖² / (2τ))`,
+
+which (when `v` ranges over an orthonormal basis and we sum) is exactly `−Δρ`. The
+proof is the product rule applied to phase-1's first-derivative formula. -/
+theorem iteratedDeriv_two_backwardHeatKernel_along {t : ℝ} (hτ : t < t₀) (x v : E) :
+    iteratedDeriv 2 (fun s' : ℝ => backwardHeatKernel n t₀ t (x + s' • v)) 0 =
+      backwardHeatKernel n t₀ t x *
+        ((@inner ℝ E _ x v) ^ 2 / (4 * (t₀ - t) ^ 2) -
+          ‖v‖ ^ 2 / (2 * (t₀ - t))) := by
+  have hτ_pos : (0 : ℝ) < t₀ - t := sub_pos.mpr hτ
+  have hτ_ne : (t₀ - t) ≠ 0 := ne_of_gt hτ_pos
+  -- Step 1: identify `deriv (fun s' => ρ(x + s'•v))` with the explicit function `G`.
+  set G : ℝ → ℝ := fun s =>
+    -(backwardHeatKernel n t₀ t (x + s • v) / (2 * (t₀ - t))) *
+      @inner ℝ E _ (x + s • v) v with hG_def
+  have h_first_at : ∀ s : ℝ,
+      HasDerivAt (fun s' : ℝ => backwardHeatKernel n t₀ t (x + s' • v)) (G s) s :=
+    fun s => hasDerivAt_backwardHeatKernel_along n t₀ hτ x v s
+  have h_deriv_eq :
+      deriv (fun s' : ℝ => backwardHeatKernel n t₀ t (x + s' • v)) = G :=
+    funext (fun s => (h_first_at s).deriv)
+  -- Step 2: differentiate `G` at `0`. Combine: derivative of `s ↦ ρ(x + s•v)` (phase 1
+  -- at `s = 0`) and derivative of `s ↦ ⟨x + s•v, v⟩` (linear in `s` with slope `‖v‖²`).
+  have h_rho0 :
+      HasDerivAt (fun s : ℝ => backwardHeatKernel n t₀ t (x + s • v))
+        (-(backwardHeatKernel n t₀ t x / (2 * (t₀ - t))) * @inner ℝ E _ x v) 0 :=
+    hasDerivAt_backwardHeatKernel_dir n t₀ hτ x v
+  have h_inner :
+      HasDerivAt (fun s : ℝ => @inner ℝ E _ (x + s • v) v) (‖v‖ ^ 2) 0 := by
+    -- ⟨x + s•v, v⟩ = ⟨x, v⟩ + s · ‖v‖²; derivative of the affine RHS in `s` is `‖v‖²`.
+    have h_lin : HasDerivAt (fun s : ℝ => s * ‖v‖ ^ 2) (‖v‖ ^ 2) 0 := by
+      simpa using (hasDerivAt_id (0 : ℝ)).mul_const (‖v‖ ^ 2)
+    have h_affine :
+        HasDerivAt (fun s : ℝ => @inner ℝ E _ x v + s * ‖v‖ ^ 2) (‖v‖ ^ 2) 0 :=
+      h_lin.const_add (@inner ℝ E _ x v)
+    -- Transport along the pointwise identity.
+    have h_eq :
+        (fun s : ℝ => @inner ℝ E _ x v + s * ‖v‖ ^ 2) =
+          fun s : ℝ => @inner ℝ E _ (x + s • v) v := by
+      funext s
+      rw [inner_add_left, real_inner_smul_left, real_inner_self_eq_norm_sq]
+    rw [h_eq] at h_affine
+    exact h_affine
+  -- Product rule on `s ↦ ρ(x + s•v) · ⟨x + s•v, v⟩`.
+  have h_prod := h_rho0.mul h_inner
+  -- Multiply by the constant `-1/(2(t₀ - t))` to get `G`.
+  have h_G_zero : HasDerivAt G
+      (backwardHeatKernel n t₀ t x *
+        ((@inner ℝ E _ x v) ^ 2 / (4 * (t₀ - t) ^ 2) -
+          ‖v‖ ^ 2 / (2 * (t₀ - t)))) 0 := by
+    have h_factor :
+        G = fun s : ℝ =>
+          (-1 / (2 * (t₀ - t))) *
+            (backwardHeatKernel n t₀ t (x + s • v) * @inner ℝ E _ (x + s • v) v) := by
+      funext s
+      rw [hG_def]
+      ring
+    rw [h_factor]
+    have h_scaled := h_prod.const_mul (-1 / (2 * (t₀ - t)))
+    convert h_scaled using 1
+    -- value at 0: x + 0•v = x.
+    simp only [zero_smul, add_zero]
+    field_simp
+    ring
+  -- Step 3: assemble via `iteratedDeriv 2 = deriv ∘ deriv`.
+  have h_iter :
+      iteratedDeriv 2 (fun s' : ℝ => backwardHeatKernel n t₀ t (x + s' • v)) =
+        deriv (deriv (fun s' : ℝ => backwardHeatKernel n t₀ t (x + s' • v))) := by
+    rw [show (2 : ℕ) = 1 + 1 from rfl, iteratedDeriv_succ, iteratedDeriv_one]
+  rw [h_iter, h_deriv_eq]
+  exact h_G_zero.deriv
+
 end Derivatives
 
-/-- Backward heat equation `∂_t ρ + Δ_x ρ = 0`.
+/-! ## Backward heat equation in coordinates
 
-This follows from the time and directional-derivative identities by computing the
-Hessian and taking the trace. The Laplacian on a general inner product space is not
-available in the current mathlib release; the statement is left at this informal level
-until that scaffolding lands. -/
-example : True := trivial  -- placeholder; replace with the literal heat-equation
-                            -- statement when `Δ_x` is available on inner product spaces
+Combining the time and second-directional-derivative identities, we show that on
+`EuclideanSpace ℝ (Fin n)` the kernel satisfies
+
+  `∂_t ρ + Σᵢ ∂²ᵢ ρ = 0`,
+
+where the spatial sum runs over the standard orthonormal basis. This is the heat
+equation in coordinates; matching it up with mathlib's coordinate-free Laplacian
+(`InnerProductSpace.laplacian`) is left for follow-up work. -/
+
+section HeatEquation
+
+open Finset
+
+/-- Backward heat equation: `∂_t ρ + Σᵢ ∂²ᵢ ρ = 0` on `EuclideanSpace ℝ (Fin n)`,
+where the spatial sum runs over the standard orthonormal basis. -/
+theorem backwardHeatEquation_euclidean
+    {n : ℕ} {t₀ t : ℝ} (hτ : t < t₀) (x : EuclideanSpace ℝ (Fin n)) :
+    deriv (fun t' : ℝ => backwardHeatKernel n t₀ t' x) t +
+        ∑ i : Fin n,
+          iteratedDeriv 2
+            (fun s : ℝ =>
+              backwardHeatKernel n t₀ t (x + s • EuclideanSpace.single i (1 : ℝ)))
+            0 = 0 := by
+  have hτ_pos : (0 : ℝ) < t₀ - t := sub_pos.mpr hτ
+  have hτ_ne : (t₀ - t) ≠ 0 := ne_of_gt hτ_pos
+  -- ∂_t ρ.
+  have h_time :=
+    (hasDerivAt_backwardHeatKernel_time n t₀ hτ x).deriv
+  -- Each second partial along eᵢ: substitute v = single i 1 in phase 2,
+  -- then use ⟨x, eᵢ⟩ = x i and ‖eᵢ‖ = 1.
+  have h_part : ∀ i : Fin n,
+      iteratedDeriv 2
+          (fun s : ℝ =>
+            backwardHeatKernel n t₀ t (x + s • EuclideanSpace.single i (1 : ℝ)))
+          0 =
+        backwardHeatKernel n t₀ t x *
+          ((x i) ^ 2 / (4 * (t₀ - t) ^ 2) - 1 / (2 * (t₀ - t))) := by
+    intro i
+    rw [iteratedDeriv_two_backwardHeatKernel_along n t₀ hτ x
+          (EuclideanSpace.single i (1 : ℝ))]
+    have h_inner : @inner ℝ _ _ x (EuclideanSpace.single i (1 : ℝ)) = x i := by
+      simpa using (EuclideanSpace.inner_single_right (𝕜 := ℝ) i 1 x)
+    have h_norm_sq : ‖EuclideanSpace.single i (1 : ℝ)‖ ^ 2 = 1 := by simp
+    rw [h_inner, h_norm_sq]
+  rw [h_time, sum_congr rfl (fun i _ => h_part i)]
+  -- Pull ρ out of the sum and split into the `xᵢ²/(4τ²)` and `1/(2τ)` pieces.
+  rw [← mul_sum, sum_sub_distrib]
+  -- ∑ᵢ xᵢ²/(4τ²) = (∑ᵢ xᵢ²)/(4τ²) = ‖x‖²/(4τ²);  ∑ᵢ 1/(2τ) = n/(2τ).
+  rw [← sum_div, ← sum_div, sum_const, card_univ, Fintype.card_fin]
+  rw [show ∑ i : Fin n, (x i) ^ 2 = ‖x‖ ^ 2 from (EuclideanSpace.real_norm_sq_eq x).symm]
+  -- Final algebra: ρ · (n/(2τ) − ‖x‖²/(4τ²)) + ρ · (‖x‖²/(4τ²) − n · 1/(2τ)) = 0.
+  field_simp
+  ring
+
+end HeatEquation
 
 section Normalisation
 
