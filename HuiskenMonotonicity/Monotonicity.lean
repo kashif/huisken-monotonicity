@@ -191,16 +191,94 @@ theorem huisken_monotonicity
   rw [h_int] at hChainRule
   exact hChainRule
 
-/-- Rescaled monotonicity (Corollary 3.2). After the parabolic rescaling
-`F̃(p, s) = (2(T-t))^(-1/2) F(p, t)`, `s = -½ log(T-t)`, the surfaces `M̃_s` satisfy
+/-- **Rescaled monotonicity formula** (Huisken Cor 3.2, axiom-conditional).
 
-  (d/ds) ∫ ρ̃ dμ̃_s = - ∫ ρ̃ · ‖H̃ + F̃^⊥‖² dμ̃_s,
+After the parabolic rescaling `Ft(p, s) = (2(T-t))^(-1/2) F(p, t)`, `s = -½ log(T-t)`,
+the rescaled surfaces `M̃_s` satisfy `∂_s Ft = H̃ + Ft` and the simpler formula
 
-where `ρ̃(x) = exp(-‖x‖²/2)`. Stated as a target; relies on `huisken_monotonicity` plus
-the reparameterisation identity. -/
-theorem huisken_monotonicity_rescaled : True := by
-  -- Placeholder — replace with the rescaled statement once `huisken_monotonicity`
-  -- carries a usable proof.
-  trivial
+  (d/ds) ∫_{M̃_s} ρ̃(Ft) dμ̃_s = - ∫_{M̃_s} ρ̃(Ft) · ‖H̃ + Ft^⊥‖² dμ̃_s,
+
+where `ρ̃(x) = exp(-‖x‖²/2)`. The kernel has no `(4πτ)^(-n/2)` prefactor, the
+`1/(2τ)` weight on `Ft^⊥` collapses, and `ρ̃` is time-independent.
+
+Algebraically this is the τ = 1/2 specialisation of `huisken_pointwise_identity`,
+so the proof reuses the unrescaled algebra. The two analytic hypotheses
+(`hChainRule`, `hFirstVar`) package the rescaled-flow chain rule and first
+variation, with the rescaled MCF equation `∂_s Ft = H̃ + Ft` providing the extra
+`-‖Ft‖²` term that compensates for the absence of a time-dependent prefactor. -/
+theorem huisken_monotonicity_rescaled
+    (n : ℕ)
+    {M E : Type*} [TopologicalSpace M] [MeasurableSpace M]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    (Ft : ImmersionFamily M E)
+    (data : MonotonicityData Ft)
+    (_hMCF : IsRescaledMeanCurvatureFlow Ft data.meanCurvature)
+    {s : ℝ} (_hs : 0 ≤ s) (_hsT : s < Ft.T)
+    (hChainRule :
+      HasDerivAt
+        (fun s' => ∫ p, rescaledHeatKernel (Ft p s') ∂(data.surface.μ s'))
+        (∫ p, rescaledHeatKernel (Ft p s) *
+              ((n : ℝ) - ‖Ft p s‖ ^ 2
+                - @inner ℝ E _ (Ft p s) (data.meanCurvature p s)
+                - ‖data.meanCurvature p s‖ ^ 2)
+              ∂(data.surface.μ s)) s)
+    (hFirstVar :
+      ∫ p, rescaledHeatKernel (Ft p s) *
+        ((n : ℝ) - ‖Ft p s - data.normalPos p s‖ ^ 2
+          + @inner ℝ E _ (data.meanCurvature p s) (Ft p s))
+        ∂(data.surface.μ s) = 0)
+    (hIntSqNorm : Integrable
+      (fun p => rescaledHeatKernel (Ft p s) *
+        ‖data.meanCurvature p s + data.normalPos p s‖ ^ 2)
+      (data.surface.μ s))
+    (hIntFirstVar : Integrable
+      (fun p => rescaledHeatKernel (Ft p s) *
+        ((n : ℝ) - ‖Ft p s - data.normalPos p s‖ ^ 2
+          + @inner ℝ E _ (data.meanCurvature p s) (Ft p s))) (data.surface.μ s)) :
+    HasDerivAt
+      (fun s' => ∫ p, rescaledHeatKernel (Ft p s') ∂(data.surface.μ s'))
+      (- ∫ p, rescaledHeatKernel (Ft p s) *
+              ‖data.meanCurvature p s + data.normalPos p s‖ ^ 2
+              ∂(data.surface.μ s)) s := by
+  -- Specialise `huisken_pointwise_identity` at τ = 1/2: the factor `1/(2τ)` becomes 1.
+  have hτ_ne : (1 / 2 : ℝ) ≠ 0 := by norm_num
+  set A : M → ℝ := fun p =>
+    rescaledHeatKernel (Ft p s) *
+      ‖data.meanCurvature p s + data.normalPos p s‖ ^ 2 with _hA_def
+  set B : M → ℝ := fun p =>
+    rescaledHeatKernel (Ft p s) *
+      ((n : ℝ) - ‖Ft p s - data.normalPos p s‖ ^ 2
+        + @inner ℝ E _ (data.meanCurvature p s) (Ft p s)) with _hB_def
+  set C : M → ℝ := fun p =>
+    rescaledHeatKernel (Ft p s) *
+      ((n : ℝ) - ‖Ft p s‖ ^ 2
+        - @inner ℝ E _ (Ft p s) (data.meanCurvature p s)
+        - ‖data.meanCurvature p s‖ ^ 2) with _hC_def
+  -- Pointwise identity at τ = 1/2 (note: `1/(2·(1/2)) = 1` and `4·(1/2)² = 1`).
+  have h_pt : ∀ p, C p = -A p + 1 * B p := by
+    intro p
+    have key := huisken_pointwise_identity n (1 / 2 : ℝ) hτ_ne
+      (Ft p s) (data.normalPos p s) (data.meanCurvature p s)
+      (rescaledHeatKernel (Ft p s)) (data.posDecomp p s) (data.meanCurvature_normal p s)
+    -- key : ρ̃ · (n/(2·1/2) - ‖Ft‖²/(4·(1/2)²) - ⟨Ft,H⟩/(2·(1/2)) - ‖H‖²)
+    --       = -(ρ̃ · ‖H + (1/(2·(1/2)))•F⊥‖²)
+    --         + (1/(2·(1/2))) · (ρ̃ · (n - ‖Ft-F⊥‖²/(2·(1/2)) + ⟨H, Ft⟩))
+    -- Simplify each `2 * (1/2)`-style factor to `1`.
+    simp only [show (2 : ℝ) * (1 / 2) = 1 by norm_num,
+               show (4 : ℝ) * (1 / 2) ^ 2 = 1 by norm_num,
+               div_one, one_smul] at key
+    convert key using 2
+  -- Lift to integrals using linearity (mirrors the unrescaled proof).
+  have h_int : ∫ p, C p ∂(data.surface.μ s) = -∫ p, A p ∂(data.surface.μ s) := by
+    calc ∫ p, C p ∂(data.surface.μ s)
+        = ∫ p, -A p + 1 * B p ∂(data.surface.μ s) :=
+          integral_congr_ae (Filter.Eventually.of_forall h_pt)
+      _ = ∫ p, -A p ∂(data.surface.μ s) + ∫ p, 1 * B p ∂(data.surface.μ s) :=
+          integral_add hIntSqNorm.neg (hIntFirstVar.const_mul _)
+      _ = -∫ p, A p ∂(data.surface.μ s) + 1 * ∫ p, B p ∂(data.surface.μ s) := by
+          rw [integral_neg, integral_const_mul]
+      _ = -∫ p, A p ∂(data.surface.μ s) := by rw [hFirstVar]; ring
+  rw [h_int] at hChainRule
+  exact hChainRule
 
 end HuiskenMonotonicity

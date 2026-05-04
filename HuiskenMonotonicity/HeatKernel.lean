@@ -36,6 +36,13 @@ noncomputable def backwardHeatKernel
     {E : Type*} [SeminormedAddCommGroup E] (n : ℕ) (t₀ t : ℝ) (x : E) : ℝ :=
   (4 * π * (t₀ - t)) ^ (-(n : ℝ) / 2) * Real.exp (-‖x‖ ^ 2 / (4 * (t₀ - t)))
 
+/-- The **rescaled** backward heat kernel `ρ̃(x) = exp(-‖x‖² / 2)` used in the
+rescaled monotonicity formula (Huisken Cor 3.2). Under the parabolic rescaling
+`F̃ = (2τ)^(-1/2) F`, evaluating `backwardHeatKernel n t₀ t` at `F̃` modulo the
+constant prefactor `(2π)^(-n/2)` gives this kernel. -/
+noncomputable def rescaledHeatKernel {E : Type*} [SeminormedAddCommGroup E] (x : E) : ℝ :=
+  Real.exp (-‖x‖ ^ 2 / 2)
+
 /-- Convenience abbreviation for the time-to-go `τ = t₀ - t`. -/
 noncomputable def heatKernelTau (t₀ t : ℝ) : ℝ := t₀ - t
 
