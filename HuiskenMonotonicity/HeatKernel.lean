@@ -15,6 +15,7 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 
@@ -242,5 +243,52 @@ available in the current mathlib release; the statement is left at this informal
 until that scaffolding lands. -/
 example : True := trivial  -- placeholder; replace with the literal heat-equation
                             -- statement when `Δ_x` is available on inner product spaces
+
+section Normalisation
+
+open MeasureTheory
+
+/-- Total mass of the backward heat kernel over an `n`-dimensional inner product space.
+
+For any finite-dimensional real inner product space `V` with `Module.finrank ℝ V = n`,
+
+  `∫ x : V, ρ(x, t) dx = 1`,
+
+i.e. the kernel `ρ(·, t) = (4πτ)^(-n/2) exp(-‖·‖²/(4τ))` is a probability density on `V`
+for every `t < t₀` (with `τ = t₀ - t > 0`). The exponent `-n/2` is precisely the
+normalisation that makes this hold. Reduces to `GaussianFourier.integral_rexp_neg_mul_sq_norm`
+applied with `b = 1/(4τ)`. -/
+theorem integral_backwardHeatKernel
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    [MeasurableSpace V] [BorelSpace V] [FiniteDimensional ℝ V]
+    {n : ℕ} (hn : Module.finrank ℝ V = n)
+    {t₀ t : ℝ} (hτ : t < t₀) :
+    ∫ x : V, backwardHeatKernel n t₀ t x = 1 := by
+  have hτ_pos : (0 : ℝ) < t₀ - t := sub_pos.mpr hτ
+  have hπ_pos : (0 : ℝ) < π := Real.pi_pos
+  have hu_pos : (0 : ℝ) < 4 * π * (t₀ - t) := by positivity
+  have hb_pos : (0 : ℝ) < 1 / (4 * (t₀ - t)) := by positivity
+  -- Pull the constant prefactor out of the integral and normalise the integrand into
+  -- the form `exp(-b * ‖x‖²)` expected by `GaussianFourier.integral_rexp_neg_mul_sq_norm`.
+  have h_integrand :
+      (fun x : V => backwardHeatKernel n t₀ t x) =
+        fun x : V =>
+          (4 * π * (t₀ - t)) ^ (-(n : ℝ) / 2) *
+            Real.exp (-(1 / (4 * (t₀ - t))) * ‖x‖ ^ 2) := by
+    funext x
+    unfold backwardHeatKernel
+    congr 1
+    congr 1
+    field_simp
+  rw [h_integrand, integral_const_mul]
+  -- Mathlib's multidim Gaussian: `∫ exp(-b‖x‖²) = (π/b)^(finrank/2)`.
+  rw [GaussianFourier.integral_rexp_neg_mul_sq_norm hb_pos, hn]
+  -- Simplify `π / (1 / (4(t₀-t))) = 4π(t₀-t)`, then `(4πτ)^(-n/2) · (4πτ)^(n/2) = 1`.
+  have h_div : π / (1 / (4 * (t₀ - t))) = 4 * π * (t₀ - t) := by
+    rw [div_div_eq_mul_div]; ring
+  rw [h_div, ← Real.rpow_add hu_pos]
+  rw [show (-(n : ℝ) / 2 + (n : ℝ) / 2 : ℝ) = 0 by ring, Real.rpow_zero]
+
+end Normalisation
 
 end HuiskenMonotonicity
