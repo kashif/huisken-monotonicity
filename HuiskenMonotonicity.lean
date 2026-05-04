@@ -1,3 +1,4 @@
 import HuiskenMonotonicity.HeatKernel
 import HuiskenMonotonicity.Flow
+import HuiskenMonotonicity.GraphMeanCurvature
 import HuiskenMonotonicity.Monotonicity
