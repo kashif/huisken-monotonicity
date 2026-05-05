@@ -1,5 +1,6 @@
 import HuiskenMonotonicity.HeatKernel
 import HuiskenMonotonicity.Flow
+import HuiskenMonotonicity.InducedMetric
 import HuiskenMonotonicity.GraphMeanCurvature
 import HuiskenMonotonicity.Monotonicity
 import HuiskenMonotonicity.CoordinateHypersurface

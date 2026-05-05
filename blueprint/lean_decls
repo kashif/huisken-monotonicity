@@ -14,6 +14,8 @@ HuiskenMonotonicity.huisken_pointwise_identity
 HuiskenMonotonicity.huisken_monotonicity
 HuiskenMonotonicity.huisken_monotonicity_rescaled
 HuiskenMonotonicity.Hyperplane.data
+HuiskenMonotonicity.inducedMetric
+HuiskenMonotonicity.inducedMetric.self_eq_norm_sq
 HuiskenMonotonicity.graphPosition
 HuiskenMonotonicity.meanCurvatureGraph
 HuiskenMonotonicity.graphUnitNormal

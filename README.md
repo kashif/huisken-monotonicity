@@ -22,6 +22,7 @@ The repository is organised around these modules:
 | [`HuiskenMonotonicity.Monotonicity`](HuiskenMonotonicity/Monotonicity.lean) | proved (axiom-conditional) |
 | [`HuiskenMonotonicity.GraphMeanCurvature`](HuiskenMonotonicity/GraphMeanCurvature.lean) | definition |
 | [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved (geometric axioms discharged) |
+| [`HuiskenMonotonicity.InducedMetric`](HuiskenMonotonicity/InducedMetric.lean) | definition + basic properties |
 | [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved graph geometry |
 
 ### Heat kernel — proved

@@ -306,6 +306,28 @@ decomposition $F = F^T + F^\perp$ and the normality $H \perp F^T$. For a
 hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
 \emph{constructively} satisfied via explicit coordinate calculations.
 
+\begin{definition}[induced (pullback) metric]
+  \label{def:induced-metric}
+  \lean{HuiskenMonotonicity.inducedMetric}
+  \leanok
+  For $F : E_1 \to E_2$ between inner product spaces, the induced bilinear
+  form on $E_1$ at $x$ is $g_x(v, w) := \langle dF_x v,\, dF_x w\rangle_{E_2}$.
+  At immersion points this is positive definite, the metric pulled back from
+  the ambient inner product. The classical Gram matrix
+  $g_{ij}(x) = \langle \partial F/\partial x^i,\, \partial F/\partial x^j\rangle$
+  is `inducedMetricMatrix` evaluated against a chosen basis.
+\end{definition}
+
+\begin{lemma}[induced metric self-eq-norm-sq]
+  \label{lem:induced-metric-self}
+  \lean{HuiskenMonotonicity.inducedMetric.self_eq_norm_sq}
+  \leanok
+  \uses{def:induced-metric}
+  $g_x(v, v) = \|dF_x v\|^2$. In particular $g_x(v, v) \geq 0$ always, and
+  positive when $dF_x$ is injective and $v \neq 0$ (the immersion case).
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
 \begin{definition}[graph position]
   \label{def:graph-position}
   \lean{HuiskenMonotonicity.graphPosition}
