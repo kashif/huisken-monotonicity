@@ -386,6 +386,53 @@ hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
 \end{lemma}
 \begin{proof}\leanok Verified in Lean. \end{proof}
 
+\begin{lemma}[Gram matrix is positive definite at immersion points]
+  \label{lem:induced-gram-matrix-posDef}
+  \lean{HuiskenMonotonicity.inducedGramMatrix_posDef_of_injective}
+  \leanok
+  \uses{def:induced-gram-matrix}
+  When $dF_x$ is injective (the immersion condition at $x$), the partial
+  derivatives $(\partial F/\partial x^i)_i$ are linearly independent, so the
+  Gram matrix is positive definite. Consequently $\det g_{ij}(x) > 0$ and
+  $d\mu_F(x) > 0$.
+\end{lemma}
+\begin{proof}\leanok
+  Standard basis $(e_i)$ is linearly independent; injectivity of $dF_x$ pushes
+  this through to the images $(dF_x e_i) = (\partial F/\partial x^i)$;
+  positive-definiteness then follows from
+  \texttt{Matrix.posDef\_gram\_of\_linearIndependent}. Verified in Lean.
+\end{proof}
+
+\begin{definition}[inverse metric $g^{ij}$]
+  \label{def:induced-inverse-metric}
+  \lean{HuiskenMonotonicity.inducedInverseMetricMatrix}
+  \leanok
+  \uses{def:induced-gram-matrix, lem:induced-gram-matrix-posDef}
+  The matrix inverse $g^{ij}(x) := (g_{ij}(x))^{-1}$. Genuine inverse at
+  immersion points; defaults to the zero matrix off-immersion (mathlib's
+  convention for non-invertible matrices). Used to raise indices on covariant
+  tensors and to take metric traces such as $H = g^{ij} h_{ij}$.
+\end{definition}
+
+\begin{lemma}[$g^{ij}$ is the matrix inverse of $g_{ij}$ at immersion points]
+  \label{lem:induced-inverse-metric-mul}
+  \lean{HuiskenMonotonicity.inducedInverseMetricMatrix_mul_inducedGramMatrix_of_injective}
+  \leanok
+  \uses{def:induced-inverse-metric, lem:induced-gram-matrix-posDef}
+  At an immersion point, $g^{ij} \cdot g_{jk} = \delta^i_k$ (matrix
+  identity).
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
+\begin{lemma}[inverse metric is symmetric]
+  \label{lem:induced-inverse-metric-isSymm}
+  \lean{HuiskenMonotonicity.inducedInverseMetricMatrix_isSymm}
+  \leanok
+  \uses{def:induced-inverse-metric, lem:induced-gram-matrix-isSymm}
+  $g^{ij} = g^{ji}$, since the inverse of a symmetric matrix is symmetric.
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
 \begin{definition}[graph position]
   \label{def:graph-position}
   \lean{HuiskenMonotonicity.graphPosition}

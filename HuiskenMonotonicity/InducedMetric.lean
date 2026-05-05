@@ -225,4 +225,92 @@ lemma inducedVolumeElement_sq {n : ℕ}
     inducedVolumeElement F x ^ 2 = (inducedGramMatrix F x).det :=
   Real.sq_sqrt (inducedGramMatrix_det_nonneg F x)
 
+/-! ## Positivity at immersion points
+
+When `F` is an immersion at `x` (i.e. `fderiv ℝ F x` is injective), the
+partial-derivative vectors `(∂F/∂x^i)_i` are linearly independent. This
+upgrades the Gram matrix from positive semi-definite to positive definite,
+hence its determinant and volume element are strictly positive. -/
+
+/-- The partial-derivative vectors of an immersion are linearly independent. -/
+lemma linearIndependent_fderiv_single_of_injective {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n))
+    (hInj : Function.Injective (fderiv ℝ F x)) :
+    LinearIndependent ℝ
+      (fun i : Fin n => fderiv ℝ F x (EuclideanSpace.single i 1)) := by
+  -- Standard basis of `EuclideanSpace ℝ (Fin n)` is linearly independent;
+  -- inject through the linear map `fderiv ℝ F x`.
+  have h_basis : LinearIndependent ℝ
+      (fun i : Fin n => EuclideanSpace.single i (1 : ℝ)) := by
+    have h := (EuclideanSpace.basisFun (Fin n) ℝ).toBasis.linearIndependent
+    convert h using 1
+    funext i
+    simp
+  have h_ker : LinearMap.ker (fderiv ℝ F x).toLinearMap = ⊥ :=
+    LinearMap.ker_eq_bot.mpr hInj
+  exact h_basis.map' (fderiv ℝ F x).toLinearMap h_ker
+
+/-- At an immersion point, the induced Gram matrix is positive definite. -/
+lemma inducedGramMatrix_posDef_of_injective {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n))
+    (hInj : Function.Injective (fderiv ℝ F x)) :
+    (inducedGramMatrix F x).PosDef := by
+  rw [inducedGramMatrix_eq_gram]
+  exact Matrix.posDef_gram_of_linearIndependent
+    (linearIndependent_fderiv_single_of_injective F x hInj)
+
+/-- At an immersion point, `det g_ij > 0`. -/
+lemma inducedGramMatrix_det_pos_of_injective {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n))
+    (hInj : Function.Injective (fderiv ℝ F x)) :
+    0 < (inducedGramMatrix F x).det :=
+  (inducedGramMatrix_posDef_of_injective F x hInj).det_pos
+
+/-- At an immersion point, the volume element is strictly positive. -/
+lemma inducedVolumeElement_pos_of_injective {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n))
+    (hInj : Function.Injective (fderiv ℝ F x)) :
+    0 < inducedVolumeElement F x :=
+  Real.sqrt_pos.mpr (inducedGramMatrix_det_pos_of_injective F x hInj)
+
+/-! ## Inverse metric `g^{ij}`
+
+The inverse of the induced Gram matrix; well-defined as soon as `F` is an
+immersion at `x`. Used to raise indices on covariant tensors and to take
+metric traces (e.g. `H = g^ij h_ij` for the mean curvature scalar). -/
+
+/-- The inverse induced metric matrix `g^{ij}(x)`, i.e. the matrix inverse of
+the induced Gram matrix. Well-defined (and the actual inverse) at immersion
+points; off-immersion the value defaults to zero (mathlib convention for
+`Matrix.inv` on non-invertible matrices). -/
+noncomputable def inducedInverseMetricMatrix {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    Matrix (Fin n) (Fin n) ℝ :=
+  (inducedGramMatrix F x)⁻¹
+
+/-- At an immersion point, `g^{ij}` is the (left) inverse of `g_ij`. -/
+lemma inducedInverseMetricMatrix_mul_inducedGramMatrix_of_injective {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n))
+    (hInj : Function.Injective (fderiv ℝ F x)) :
+    inducedInverseMetricMatrix F x * inducedGramMatrix F x = 1 := by
+  unfold inducedInverseMetricMatrix
+  exact Matrix.nonsing_inv_mul _ <|
+    isUnit_iff_ne_zero.mpr (inducedGramMatrix_det_pos_of_injective F x hInj).ne'
+
+/-- At an immersion point, `g^{ij}` is the (right) inverse of `g_ij`. -/
+lemma inducedGramMatrix_mul_inducedInverseMetricMatrix_of_injective {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n))
+    (hInj : Function.Injective (fderiv ℝ F x)) :
+    inducedGramMatrix F x * inducedInverseMetricMatrix F x = 1 := by
+  unfold inducedInverseMetricMatrix
+  exact Matrix.mul_nonsing_inv _ <|
+    isUnit_iff_ne_zero.mpr (inducedGramMatrix_det_pos_of_injective F x hInj).ne'
+
+/-- The inverse metric matrix is symmetric. -/
+lemma inducedInverseMetricMatrix_isSymm {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    (inducedInverseMetricMatrix F x).IsSymm := by
+  unfold inducedInverseMetricMatrix Matrix.IsSymm
+  rw [Matrix.transpose_nonsing_inv, (inducedGramMatrix_isSymm F x).eq]
+
 end HuiskenMonotonicity
