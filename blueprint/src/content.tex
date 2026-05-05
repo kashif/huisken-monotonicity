@@ -328,6 +328,28 @@ hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
 \end{lemma}
 \begin{proof}\leanok Verified in Lean. \end{proof}
 
+\begin{definition}[induced Gram matrix]
+  \label{def:induced-gram-matrix}
+  \lean{HuiskenMonotonicity.inducedGramMatrix}
+  \leanok
+  \uses{def:induced-metric}
+  Specialising to the standard basis of $\mathrm{EuclideanSpace}\,\mathbb{R}\,(\mathrm{Fin}\,n)$,
+  the induced metric is packaged as a mathlib
+  $\mathrm{Matrix}\,(\mathrm{Fin}\,n)\,(\mathrm{Fin}\,n)\,\mathbb{R}$ with
+  entries $g_{ij}(x) = \langle \partial F/\partial x^i(x),\,
+  \partial F/\partial x^j(x)\rangle$. The matrix layout will be reused for
+  the second fundamental form, which has the same shape and symmetry.
+\end{definition}
+
+\begin{lemma}[Gram matrix is symmetric]
+  \label{lem:induced-gram-matrix-isSymm}
+  \lean{HuiskenMonotonicity.inducedGramMatrix_isSymm}
+  \leanok
+  \uses{def:induced-gram-matrix}
+  $g_{ij} = g_{ji}$, packaged as `Matrix.IsSymm`.
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
 \begin{definition}[graph position]
   \label{def:graph-position}
   \lean{HuiskenMonotonicity.graphPosition}

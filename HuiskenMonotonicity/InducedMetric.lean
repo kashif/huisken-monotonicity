@@ -29,6 +29,7 @@ stabilises (target name something like `Mathlib.Analysis.InnerProductSpace.Pullb
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.Analysis.Calculus.FDeriv.Basic
+import Mathlib.LinearAlgebra.Matrix.Symmetric
 
 namespace HuiskenMonotonicity
 
@@ -130,5 +131,45 @@ lemma diagonal_nonneg (i : ι) : 0 ≤ inducedMetricMatrix F x b i i :=
   inducedMetric.self_nonneg F x (b i)
 
 end inducedMetricMatrix
+
+/-! ## Induced Gram matrix in the standard basis
+
+The classical formula `g_ij(x) = ⟨∂F/∂x^i(x), ∂F/∂x^j(x)⟩` of background.latex
+(eq. 1.12 for graphs) packaged as a mathlib `Matrix (Fin n) (Fin n) ℝ`. This
+specialisation of `inducedMetricMatrix` to the standard basis of
+`EuclideanSpace ℝ (Fin n)` lets us hook into the mathlib matrix API
+(symmetry, determinant, eigenvalues, …) for the metric.
+
+The same matrix-shaped layout will be used for the second fundamental form
+in a follow-up module. -/
+
+/-- The Gram matrix of the induced metric in the standard basis of
+`EuclideanSpace ℝ (Fin n)`:
+  `(inducedGramMatrix F x) i j = ⟨∂F/∂x^i(x), ∂F/∂x^j(x)⟩`. -/
+noncomputable def inducedGramMatrix {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    Matrix (Fin n) (Fin n) ℝ :=
+  fun i j =>
+    inducedMetricMatrix F x (fun k => EuclideanSpace.single k 1) i j
+
+lemma inducedGramMatrix_apply {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) (i j : Fin n) :
+    inducedGramMatrix F x i j =
+      inducedMetric F x (EuclideanSpace.single i 1) (EuclideanSpace.single j 1) :=
+  rfl
+
+/-- The Gram matrix is symmetric: `g_ij = g_ji`. -/
+lemma inducedGramMatrix_isSymm {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    (inducedGramMatrix F x).IsSymm :=
+  Matrix.IsSymm.ext fun i j =>
+    inducedMetricMatrix.symm F x (fun k => EuclideanSpace.single k 1) j i
+
+/-- Diagonal entries of the Gram matrix are non-negative:
+`g_ii = ‖∂F/∂x^i‖² ≥ 0`. -/
+lemma inducedGramMatrix_diagonal_nonneg {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) (i : Fin n) :
+    0 ≤ inducedGramMatrix F x i i :=
+  inducedMetricMatrix.diagonal_nonneg F x (fun k => EuclideanSpace.single k 1) i
 
 end HuiskenMonotonicity
