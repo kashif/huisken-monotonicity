@@ -350,6 +350,42 @@ hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
 \end{lemma}
 \begin{proof}\leanok Verified in Lean. \end{proof}
 
+\begin{lemma}[Gram matrix is positive semidefinite]
+  \label{lem:induced-gram-matrix-posSemidef}
+  \lean{HuiskenMonotonicity.inducedGramMatrix_posSemidef}
+  \leanok
+  \uses{def:induced-gram-matrix}
+  The induced Gram matrix is positive semidefinite, via mathlib's
+  \texttt{Matrix.posSemidef\_gram} applied to the partial-derivative vectors.
+  Consequently $\det(g_{ij}) \geq 0$.
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
+\begin{definition}[induced volume element]
+  \label{def:induced-volume-element}
+  \lean{HuiskenMonotonicity.inducedVolumeElement}
+  \leanok
+  \uses{def:induced-gram-matrix}
+  The classical volume element of an immersion $F : \mathbb{R}^n \to E$ at $x$:
+  \[
+    d\mu_F(x) := \sqrt{\det(g_{ij}(x))} \, dx.
+  \]
+  In the graph case $F(x) = (x, f(x))$ this reduces to
+  $\sqrt{1 + \|\nabla f\|^2} \, dx$ (background.latex eq.~1.13). Always
+  non-negative (lemma~\ref{lem:induced-volume-element-nonneg}); positivity at
+  immersion points (where $dF_x$ is injective, hence the Gram matrix is
+  positive definite) is a follow-up.
+\end{definition}
+
+\begin{lemma}[volume element is non-negative]
+  \label{lem:induced-volume-element-nonneg}
+  \lean{HuiskenMonotonicity.inducedVolumeElement_nonneg}
+  \leanok
+  \uses{def:induced-volume-element}
+  $d\mu_F(x) \geq 0$ for every $x$, by \texttt{Real.sqrt\_nonneg}.
+\end{lemma}
+\begin{proof}\leanok Verified in Lean. \end{proof}
+
 \begin{definition}[graph position]
   \label{def:graph-position}
   \lean{HuiskenMonotonicity.graphPosition}

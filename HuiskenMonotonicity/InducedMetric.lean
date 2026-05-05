@@ -28,6 +28,7 @@ stabilises (target name something like `Mathlib.Analysis.InnerProductSpace.Pullb
 
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Analysis.InnerProductSpace.GramMatrix
 import Mathlib.Analysis.Calculus.FDeriv.Basic
 import Mathlib.LinearAlgebra.Matrix.Symmetric
 
@@ -171,5 +172,57 @@ lemma inducedGramMatrix_diagonal_nonneg {n : ℕ}
     (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) (i : Fin n) :
     0 ≤ inducedGramMatrix F x i i :=
   inducedMetricMatrix.diagonal_nonneg F x (fun k => EuclideanSpace.single k 1) i
+
+/-- The induced Gram matrix is the mathlib `Matrix.gram` of the partial-derivative
+vectors `(∂F/∂x^i)_i`. This makes the mathlib Gram-matrix API (PSD, PosDef under
+linear independence, etc.) available for `inducedGramMatrix`. -/
+lemma inducedGramMatrix_eq_gram {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    inducedGramMatrix F x =
+      Matrix.gram ℝ (fun i : Fin n => fderiv ℝ F x (EuclideanSpace.single i 1)) := by
+  ext i j
+  rfl
+
+/-- The induced Gram matrix is positive semi-definite. -/
+lemma inducedGramMatrix_posSemidef {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    (inducedGramMatrix F x).PosSemidef := by
+  rw [inducedGramMatrix_eq_gram]
+  exact Matrix.posSemidef_gram ℝ _
+
+/-- The Gram-matrix determinant is non-negative. -/
+lemma inducedGramMatrix_det_nonneg {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    0 ≤ (inducedGramMatrix F x).det :=
+  (inducedGramMatrix_posSemidef F x).det_nonneg
+
+/-! ## Volume element
+
+The classical volume element of an immersion `F : ℝⁿ → E` at a point `x` is
+  `√(det g_ij(x))`,
+the Riemannian volume form pulled back through `F`. Integrating against this
+density on `ℝⁿ` yields the surface measure on the image; in the graph case
+`F(x) = (x, f(x))` it reduces to `√(1 + ‖∇f‖²) dx`. -/
+
+/-- The induced volume element of `F : ℝⁿ → E` at `x`, defined as the square
+root of the determinant of the induced Gram matrix:
+  `dμ_F(x) = √(det g_ij(x)) dx`.
+For non-immersion points the determinant can vanish, so the volume element is
+just non-negative in general. Positivity at immersion points (when
+`fderiv ℝ F x` is injective) is a follow-up. -/
+noncomputable def inducedVolumeElement {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) : ℝ :=
+  Real.sqrt (inducedGramMatrix F x).det
+
+@[simp] lemma inducedVolumeElement_nonneg {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    0 ≤ inducedVolumeElement F x :=
+  Real.sqrt_nonneg _
+
+/-- The squared volume element equals the Gram determinant. -/
+lemma inducedVolumeElement_sq {n : ℕ}
+    (F : EuclideanSpace ℝ (Fin n) → E₂) (x : EuclideanSpace ℝ (Fin n)) :
+    inducedVolumeElement F x ^ 2 = (inducedGramMatrix F x).det :=
+  Real.sq_sqrt (inducedGramMatrix_det_nonneg F x)
 
 end HuiskenMonotonicity
