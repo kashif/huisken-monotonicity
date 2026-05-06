@@ -21,9 +21,10 @@ The repository is organised around these modules:
 | [`HuiskenMonotonicity.Flow`](HuiskenMonotonicity/Flow.lean) | scaffolding |
 | [`HuiskenMonotonicity.Monotonicity`](HuiskenMonotonicity/Monotonicity.lean) | proved (axiom-conditional) |
 | [`HuiskenMonotonicity.GraphMeanCurvature`](HuiskenMonotonicity/GraphMeanCurvature.lean) | definition |
-| [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved (geometric axioms discharged) |
+| [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved (graph axioms discharged) |
 | [`HuiskenMonotonicity.InducedMetric`](HuiskenMonotonicity/InducedMetric.lean) | definition + basic properties |
-| [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved graph geometry |
+| [`HuiskenMonotonicity.SecondFundamentalForm`](HuiskenMonotonicity/SecondFundamentalForm.lean) | definition + symmetry |
+| [`HuiskenMonotonicity.Vendored`](HuiskenMonotonicity/Vendored/) | vendored from open mathlib PRs |
 
 ### Heat kernel — proved
 
