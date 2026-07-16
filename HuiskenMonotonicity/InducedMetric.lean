@@ -243,9 +243,13 @@ lemma linearIndependent_fderiv_single_of_injective {n : ℕ}
   have h_basis : LinearIndependent ℝ
       (fun i : Fin n => EuclideanSpace.single i (1 : ℝ)) := by
     have h := (EuclideanSpace.basisFun (Fin n) ℝ).toBasis.linearIndependent
-    convert h using 1
-    funext i
-    simp
+    have h_eq :
+        (fun i : Fin n => EuclideanSpace.single i (1 : ℝ)) =
+          (EuclideanSpace.basisFun (Fin n) ℝ : Fin n → EuclideanSpace ℝ (Fin n)) := by
+      funext i
+      exact (EuclideanSpace.basisFun_apply (Fin n) ℝ i).symm
+    rw [h_eq]
+    simpa only [OrthonormalBasis.coe_toBasis] using h
   have h_ker : LinearMap.ker (fderiv ℝ F x).toLinearMap = ⊥ :=
     LinearMap.ker_eq_bot.mpr hInj
   exact h_basis.map' (fderiv ℝ F x).toLinearMap h_ker

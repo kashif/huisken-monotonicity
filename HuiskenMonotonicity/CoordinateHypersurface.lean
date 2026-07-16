@@ -54,7 +54,7 @@ lemma inner_graphVector_graphVector {n : ℕ} (u v : GraphBase n) (a b : ℝ) :
       @inner ℝ (GraphBase n) _ u v + a * b := by
   rw [PiLp.inner_apply, PiLp.inner_apply]
   rw [Fin.sum_univ_castSucc]
-  simp [graphVector, real_inner_eq_mul]
+  simp [graphVector, mul_comm]
 
 /-- The graph embedding `x ↦ (x, f x)`. -/
 noncomputable def graphPosition {n : ℕ}
@@ -301,11 +301,18 @@ lemma hasDerivAt_graphVector_const_height {n : ℕ} (u : GraphBase n)
     hasDerivAt_const _ _
   have h := h_const.clm_apply h_pi
   -- Clean up the value: the constant-derivative term collapses.
-  simp only [ContinuousLinearMap.zero_apply, zero_add] at h
-  -- `graphVector u (g s)` unfolds to `(E.equiv).symm (Fin.snoc (E.equiv u) (g s))`,
-  -- and `graphVerticalVector g' = graphVector 0 g'` to `(E.equiv).symm (Fin.snoc 0 g')`
-  -- via `map_zero`; `convert ... using 1` resolves the definitional differences.
-  convert h using 1
+  simp only [zero_apply, zero_add] at h
+  have h_fun :
+      (fun y => (EuclideanSpace.equiv (Fin (n + 1)) ℝ).symm (Fin.snoc u' (g y))) =
+        fun s => graphVector u (g s) := by
+    funext s
+    simp [graphVector, _hu'_def]
+  have h_deriv :
+      (EuclideanSpace.equiv (Fin (n + 1)) ℝ).symm (Fin.snoc 0 g') =
+        graphVerticalVector (n := n) g' := by
+    simp [graphVerticalVector, graphVector]
+  rw [← h_fun, ← h_deriv]
+  exact h
 
 /-- Under graphical MCF (`∂_t f = v · H`), the time derivative of the graph
 position is a *vertical* vector with magnitude `v · H`. The normal projection

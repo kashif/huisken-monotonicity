@@ -132,7 +132,7 @@ theorem hasDerivAt_backwardHeatKernel_time {t : ℝ} (hτ : t < t₀) (x : E) :
         (-‖x‖ ^ 2 / (4 * (t₀ - t) ^ 2)) t := by
     have hc' : HasDerivAt (fun _ : ℝ => -‖x‖ ^ 2) (0 : ℝ) t := hasDerivAt_const _ _
     have hd := hc'.div hw hw_ne
-    convert hd using 1
+    convert hd using 1 <;> try rfl
     field_simp
     ring
   -- B(t') = exp(v(t')),  B'(t) = exp(v(t)) · v'(t).
@@ -151,7 +151,7 @@ theorem hasDerivAt_backwardHeatKernel_time {t : ℝ} (hτ : t < t₀) (x : E) :
             Real.exp (-‖x‖ ^ 2 / (4 * (t₀ - t'))) := by
     funext t'; rfl
   rw [h_fun]
-  convert h_prod using 1
+  convert h_prod using 1 <;> try rfl
   -- Reduce `(4π(t₀-t))^(c-1)` to `(4π(t₀-t))^c / (4π(t₀-t))`.
   have h_pow :
       (4 * π * (t₀ - t)) ^ (c - 1) =
@@ -207,8 +207,11 @@ theorem hasDerivAt_backwardHeatKernel_dir {t : ℝ} (hτ : t < t₀) (x v : E) :
         hasDerivAt_pow 2 0
       have := hp.const_mul (-‖v‖ ^ 2 / (4 * (t₀ - t)))
       simpa using this
-    have := (h_const.add h_lin).add h_quad
-    simpa using this
+    convert (h_const.add h_lin).add h_quad using 1
+    all_goals
+      try rfl
+      try simp only [Pi.add_apply]
+      try ring
   -- Step 2: compose with exp.
   have h_exp :
       HasDerivAt (fun s : ℝ => Real.exp (-‖x + s • v‖ ^ 2 / (4 * (t₀ - t))))
@@ -333,7 +336,7 @@ theorem iteratedDeriv_two_backwardHeatKernel_along {t : ℝ} (hτ : t < t₀) (x
       ring
     rw [h_factor]
     have h_scaled := h_prod.const_mul (-1 / (2 * (t₀ - t)))
-    convert h_scaled using 1
+    convert h_scaled using 1 <;> try rfl
     -- value at 0: x + 0•v = x.
     simp only [zero_smul, add_zero]
     field_simp
