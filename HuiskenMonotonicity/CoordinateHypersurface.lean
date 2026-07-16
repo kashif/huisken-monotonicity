@@ -7,6 +7,7 @@ Authors: Kashif Rasul
 import HuiskenMonotonicity.GraphMeanCurvature
 import HuiskenMonotonicity.Monotonicity
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.MeasureTheory.Measure.WithDensity
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 import Mathlib.Tactic.FieldSimp
@@ -154,6 +155,56 @@ theorem graphMetricMatrix_mul_graphInverseMetricMatrix {n : ℕ}
     ite_mul, one_mul, zero_mul, Finset.sum_ite_eq, hsum]
   field_simp [hdenom]
   ring_nf
+
+/-- The explicit inverse graph metric is a left inverse of the graph metric. -/
+theorem graphInverseMetricMatrix_mul_graphMetricMatrix {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    graphInverseMetricMatrix f x * graphMetricMatrix f x = 1 :=
+  mul_eq_one_comm.mp (graphMetricMatrix_mul_graphInverseMetricMatrix f x)
+
+/-- The explicit graph inverse metric agrees with mathlib's matrix inverse. -/
+theorem graphMetricMatrix_inv {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    (graphMetricMatrix f x)⁻¹ = graphInverseMetricMatrix f x :=
+  Matrix.inv_eq_right_inv (graphMetricMatrix_mul_graphInverseMetricMatrix f x)
+
+/-- The graph metric matrix has nonzero determinant. -/
+theorem graphMetricMatrix_det_ne_zero {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    (graphMetricMatrix f x).det ≠ 0 := by
+  have hdet :
+      (graphMetricMatrix f x).det * (graphInverseMetricMatrix f x).det = 1 := by
+    simpa only [Matrix.det_mul, Matrix.det_one] using
+      congrArg Matrix.det (graphMetricMatrix_mul_graphInverseMetricMatrix f x)
+  intro hzero
+  rw [hzero, zero_mul] at hdet
+  norm_num at hdet
+
+/-- The graph metric is the identity plus the rank-one matrix `(∇f)(∇f)ᵀ`. -/
+theorem graphMetricMatrix_eq_one_add_vecMulVec {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    graphMetricMatrix f x =
+      1 + Matrix.vecMulVec (fun i : Fin n => (∇ f x) i) (fun i : Fin n => (∇ f x) i) := by
+  ext i j
+  simp [Matrix.one_apply, Matrix.vecMulVec_apply]
+
+/-- The determinant of the graph metric is `1 + ‖∇f‖²`. -/
+theorem graphMetricMatrix_det {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    (graphMetricMatrix f x).det = 1 + ‖∇ f x‖ ^ 2 := by
+  rw [graphMetricMatrix_eq_one_add_vecMulVec, Matrix.vecMulVec_eq Unit]
+  rw [Matrix.det_one_add_replicateCol_mul_replicateRow]
+  congr 1
+  simpa only [dotProduct, pow_two] using sum_sq_gradient f x
+
+/-- The determinant of the graph metric is the square of the graph area factor. -/
+theorem graphMetricMatrix_det_eq_graphAreaFactor_sq {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    (graphMetricMatrix f x).det = graphAreaFactor f x ^ 2 := by
+  rw [graphMetricMatrix_det]
+  unfold graphAreaFactor
+  rw [Real.sq_sqrt]
+  positivity
 
 lemma graphAreaFactor_pos {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
     0 < graphAreaFactor f x := by
