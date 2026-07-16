@@ -206,6 +206,19 @@ theorem graphMetricMatrix_det_eq_graphAreaFactor_sq {n : ℕ}
   rw [Real.sq_sqrt]
   positivity
 
+/-- The volume density defined by the graph metric matrix. -/
+noncomputable def graphMetricVolumeElement {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) : ℝ :=
+  Real.sqrt (graphMetricMatrix f x).det
+
+/-- The metric volume density of a graph is its explicit area factor. -/
+theorem graphMetricVolumeElement_eq_graphAreaFactor {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    graphMetricVolumeElement f x = graphAreaFactor f x := by
+  rw [graphMetricVolumeElement, graphMetricMatrix_det_eq_graphAreaFactor_sq]
+  apply Real.sqrt_sq
+  exact Real.sqrt_nonneg _
+
 lemma graphAreaFactor_pos {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
     0 < graphAreaFactor f x := by
   unfold graphAreaFactor
