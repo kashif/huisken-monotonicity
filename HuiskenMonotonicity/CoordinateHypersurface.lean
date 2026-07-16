@@ -1,14 +1,7 @@
 /-
-Coordinate hypersurfaces in Euclidean space.
-
-This file starts the concrete hypersurface layer for graphs
-
-  `X_f(x) = (x, f x) : ℝⁿ → ℝⁿ⁺¹`.
-
-The goal is deliberately modest: define the basic geometric terms that occur in
-Huisken's formula for coordinate graphs, and prove the orthogonality lemmas needed
-by `MonotonicityData`.  This gives a first route for replacing the abstract
-geometric axioms in `Monotonicity.lean` by actual coordinate calculations.
+Copyright (c) 2026 Kashif Rasul. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kashif Rasul
 -/
 
 import HuiskenMonotonicity.GraphMeanCurvature
@@ -16,7 +9,24 @@ import HuiskenMonotonicity.Monotonicity
 import Mathlib.Analysis.InnerProductSpace.PiL2
 import Mathlib.MeasureTheory.Measure.WithDensity
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
-import Mathlib.Tactic
+import Mathlib.Tactic.FieldSimp
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Ring
+
+/-!
+# Coordinate hypersurfaces in Euclidean space
+
+This file starts the concrete hypersurface layer for graphs
+
+`X_f(x) = (x, f x) : ℝⁿ → ℝⁿ⁺¹`.
+
+The goal is deliberately modest: define the basic geometric terms that occur in Huisken's formula
+for coordinate graphs, and prove the orthogonality lemmas needed by `MonotonicityData`. This gives a
+first route for replacing the abstract geometric axioms in `Monotonicity.lean` by actual coordinate
+calculations.
+-/
 
 namespace HuiskenMonotonicity
 
@@ -28,11 +38,6 @@ abbrev GraphBase (n : ℕ) := EuclideanSpace ℝ (Fin n)
 
 /-- Ambient coordinates for a graph hypersurface. -/
 abbrev GraphAmbient (n : ℕ) := EuclideanSpace ℝ (Fin (n + 1))
-
-private lemma real_inner_eq_mul (a b : ℝ) : @inner ℝ ℝ _ a b = a * b := by
-  calc
-    @inner ℝ ℝ _ a b = b * (starRingEnd ℝ) a := RCLike.inner_apply a b
-    _ = a * b := by simp [mul_comm]
 
 /-- Append a height coordinate to a base vector. -/
 noncomputable def graphVector {n : ℕ} (u : GraphBase n) (a : ℝ) : GraphAmbient n :=
@@ -70,6 +75,85 @@ noncomputable def graphNormalVector {n : ℕ}
 noncomputable def graphTangentVector {n : ℕ}
     (f : GraphBase n → ℝ) (x v : GraphBase n) : GraphAmbient n :=
   graphVector v (@inner ℝ (GraphBase n) _ (∇ f x) v)
+
+/-- The metric induced on a graph by its coordinate tangent vectors. -/
+lemma inner_graphTangentVector_graphTangentVector {n : ℕ}
+    (f : GraphBase n → ℝ) (x v w : GraphBase n) :
+    @inner ℝ (GraphAmbient n) _
+        (graphTangentVector f x v) (graphTangentVector f x w) =
+      @inner ℝ (GraphBase n) _ v w +
+        @inner ℝ (GraphBase n) _ (∇ f x) v * @inner ℝ (GraphBase n) _ (∇ f x) w := by
+  simp [graphTangentVector, inner_graphVector_graphVector]
+
+/-- In the standard basis, the graph metric is
+`g_ij = delta_ij + (partial_i f) * (partial_j f)`. -/
+lemma inner_graphTangentVector_single {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) (i j : Fin n) :
+    @inner ℝ (GraphAmbient n) _
+        (graphTangentVector f x (EuclideanSpace.single i 1))
+        (graphTangentVector f x (EuclideanSpace.single j 1)) =
+      (if i = j then 1 else 0) + (∇ f x) i * (∇ f x) j := by
+  rw [inner_graphTangentVector_graphTangentVector]
+  rw [EuclideanSpace.inner_single_left, EuclideanSpace.inner_single_right,
+    EuclideanSpace.inner_single_right]
+  simp only [conj_trivial, PiLp.single_apply, mul_ite, mul_one, mul_zero, one_mul]
+
+/-- The matrix of the metric induced on the graph in standard coordinates. -/
+noncomputable def graphMetricMatrix {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    Matrix (Fin n) (Fin n) ℝ :=
+  fun i j =>
+    @inner ℝ (GraphAmbient n) _
+      (graphTangentVector f x (EuclideanSpace.single i 1))
+      (graphTangentVector f x (EuclideanSpace.single j 1))
+
+@[simp] lemma graphMetricMatrix_apply {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) (i j : Fin n) :
+    graphMetricMatrix f x i j =
+      (if i = j then 1 else 0) + (∇ f x) i * (∇ f x) j := by
+  exact inner_graphTangentVector_single f x i j
+
+/-- The explicit candidate inverse of the graph metric matrix. -/
+noncomputable def graphInverseMetricMatrix {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    Matrix (Fin n) (Fin n) ℝ :=
+  fun i j =>
+    (if i = j then 1 else 0) -
+      (∇ f x) i * (∇ f x) j / (1 + ‖∇ f x‖ ^ 2)
+
+/-- The squared Euclidean norm of the gradient is the sum of its squared coordinates. -/
+lemma sum_sq_gradient {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    ∑ j : Fin n, (∇ f x j) ^ 2 = ‖∇ f x‖ ^ 2 := by
+  rw [← real_inner_self_eq_norm_sq]
+  rw [PiLp.inner_apply]
+  simp [pow_two]
+
+/-- The explicit inverse graph metric is a right inverse of the graph metric. -/
+theorem graphMetricMatrix_mul_graphInverseMetricMatrix {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    graphMetricMatrix f x * graphInverseMetricMatrix f x = 1 := by
+  ext i k
+  have hsum :
+      (∑ j : Fin n, (∇ f x) i * (∇ f x) j *
+          ((∇ f x) j * (∇ f x) k / (1 + ‖∇ f x‖ ^ 2))) =
+        ((∇ f x) i * (∇ f x) k / (1 + ‖∇ f x‖ ^ 2)) * ‖∇ f x‖ ^ 2 := by
+    calc
+      _ = ∑ j : Fin n,
+          ((∇ f x) i * (∇ f x) k / (1 + ‖∇ f x‖ ^ 2)) * (∇ f x j) ^ 2 := by
+            apply Finset.sum_congr rfl
+            intro j _
+            ring
+      _ = ((∇ f x) i * (∇ f x) k / (1 + ‖∇ f x‖ ^ 2)) *
+          ∑ j : Fin n, (∇ f x j) ^ 2 := by rw [Finset.mul_sum]
+      _ = _ := by rw [sum_sq_gradient]
+  have hdenom : 1 + ‖∇ f x‖ ^ 2 ≠ 0 := by positivity
+  simp only [Matrix.mul_apply, graphMetricMatrix_apply, graphInverseMetricMatrix,
+    Matrix.one_apply, add_mul, mul_sub, Finset.sum_add_distrib, Finset.sum_sub_distrib]
+  simp only [mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, reduceIte,
+    ite_mul, one_mul, zero_mul, Finset.sum_ite_eq, hsum]
+  field_simp [hdenom]
+  ring_nf
 
 lemma graphAreaFactor_pos {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
     0 < graphAreaFactor f x := by
