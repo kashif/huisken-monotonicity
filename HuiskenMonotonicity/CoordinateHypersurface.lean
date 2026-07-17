@@ -5,8 +5,11 @@ Authors: Kashif Rasul
 -/
 
 import HuiskenMonotonicity.GraphMeanCurvature
+import HuiskenMonotonicity.InducedMetric
 import HuiskenMonotonicity.Monotonicity
+import HuiskenMonotonicity.SecondFundamentalForm
 import Mathlib.Analysis.InnerProductSpace.PiL2
+import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.LinearAlgebra.Matrix.SchurComplement
 import Mathlib.MeasureTheory.Measure.WithDensity
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
@@ -76,6 +79,124 @@ noncomputable def graphNormalVector {n : ℕ}
 noncomputable def graphTangentVector {n : ℕ}
     (f : GraphBase n → ℝ) (x v : GraphBase n) : GraphAmbient n :=
   graphVector v (@inner ℝ (GraphBase n) _ (∇ f x) v)
+
+/-- The continuous linear inclusion `v ↦ (v, 0)` into graph ambient coordinates. -/
+noncomputable def graphBaseInclusion {n : ℕ} : GraphBase n →L[ℝ] GraphAmbient n := by
+  let inclusion : GraphBase n →ₗ[ℝ] GraphAmbient n :=
+    { toFun := fun v => graphVector v 0
+      map_add' := by
+        intro u v
+        ext i
+        refine Fin.lastCases ?_ (fun j => ?_) i <;> simp [graphVector]
+      map_smul' := by
+        intro c v
+        ext i
+        refine Fin.lastCases ?_ (fun j => ?_) i <;> simp [graphVector] }
+  exact ⟨inclusion, inclusion.continuous_of_finiteDimensional⟩
+
+/-- The continuous linear inclusion `a ↦ (0, a)` into graph ambient coordinates. -/
+noncomputable def graphHeightInclusion {n : ℕ} : ℝ →L[ℝ] GraphAmbient n := by
+  let inclusion : ℝ →ₗ[ℝ] GraphAmbient n :=
+    { toFun := fun a => graphVector 0 a
+      map_add' := by
+        intro a b
+        ext i
+        refine Fin.lastCases ?_ (fun j => ?_) i <;> simp [graphVector]
+      map_smul' := by
+        intro c a
+        ext i
+        refine Fin.lastCases ?_ (fun j => ?_) i <;> simp [graphVector] }
+  exact ⟨inclusion, inclusion.continuous_of_finiteDimensional⟩
+
+/-- The graph position splits into its base and height inclusions. -/
+lemma graphPosition_eq_inclusions {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
+    graphPosition f x = graphBaseInclusion x + graphHeightInclusion (f x) := by
+  ext i
+  refine Fin.lastCases ?_ (fun j => ?_) i <;>
+    simp [graphPosition, graphBaseInclusion, graphHeightInclusion, graphVector]
+
+/-- The derivative of the graph position is the sum of its base inclusion and differentiated
+height inclusion. -/
+theorem hasFDerivAt_graphPosition {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n)
+    (hf : DifferentiableAt ℝ f x) :
+    HasFDerivAt (graphPosition f)
+      (graphBaseInclusion + graphHeightInclusion.comp
+        (InnerProductSpace.toDual ℝ (GraphBase n) (∇ f x))) x := by
+  have hfun : graphPosition f =
+      (fun y => graphBaseInclusion y) + ((@graphHeightInclusion n) ∘ f) := by
+    funext y
+    simpa only [Pi.add_apply, Function.comp_apply] using graphPosition_eq_inclusions f y
+  rw [hfun]
+  exact graphBaseInclusion.hasFDerivAt.add
+    (graphHeightInclusion.hasFDerivAt.comp x hf.hasGradientAt.hasFDerivAt)
+
+/-- The derivative of the graph position sends a base vector to its graph tangent vector. -/
+theorem fderiv_graphPosition_apply {n : ℕ} (f : GraphBase n → ℝ) (x v : GraphBase n)
+    (hf : DifferentiableAt ℝ f x) :
+    fderiv ℝ (graphPosition f) x v = graphTangentVector f x v := by
+  rw [(hasFDerivAt_graphPosition f x hf).fderiv]
+  simp only [toDual_gradient, add_apply, ContinuousLinearMap.comp_apply]
+  ext i
+  refine Fin.lastCases ?_ (fun j => ?_) i <;>
+    simp [graphBaseInclusion, graphHeightInclusion, graphTangentVector, graphVector]
+
+/-- The second derivative of a graph position has only a height component. -/
+theorem secondDerivative_graphPosition {n : ℕ} (f : GraphBase n → ℝ)
+    (hf : ContDiff ℝ 2 f) (x v w : GraphBase n) :
+    secondDerivative (graphPosition f) x v w = graphVector 0 (secondDerivative f x v w) := by
+  have hfun : graphPosition f =
+      (fun y => graphBaseInclusion y) + ((@graphHeightInclusion n) ∘ f) := by
+    funext y
+    simpa only [Pi.add_apply, Function.comp_apply] using graphPosition_eq_inclusions f y
+  have hbase : ContDiff ℝ 2 (fun y : GraphBase n => graphBaseInclusion y) :=
+    graphBaseInclusion.contDiff
+  have hheight : ContDiff ℝ 2 ((@graphHeightInclusion n) ∘ f) :=
+    (@graphHeightInclusion n).contDiff.comp hf
+  have hbaseFDeriv :
+      fderiv ℝ (@graphBaseInclusion n) = fun _ => @graphBaseInclusion n := by
+    funext y
+    exact (@graphBaseInclusion n).fderiv
+  have hbaseZero :
+      (iteratedFDeriv ℝ 2 (fun y : GraphBase n => graphBaseInclusion y) x) ![v, w] = 0 := by
+    rw [iteratedFDeriv_two_apply]
+    change (fderiv ℝ (fderiv ℝ (@graphBaseInclusion n)) x v) w = 0
+    rw [hbaseFDeriv]
+    simp
+  unfold secondDerivative
+  rw [hfun, iteratedFDeriv_add_apply hbase.contDiffAt hheight.contDiffAt]
+  rw [(@graphHeightInclusion n).iteratedFDeriv_comp_left hf.contDiffAt (by norm_num)]
+  simp [hbaseZero, graphHeightInclusion]
+
+/-- The derivative of the gradient is the dual identification applied to the second Fréchet
+derivative. -/
+theorem hasFDerivAt_gradient {n : ℕ} (f : GraphBase n → ℝ) (hf : ContDiff ℝ 2 f)
+    (x : GraphBase n) :
+    HasFDerivAt (∇ f)
+      (ContinuousLinearMap.comp
+        (ContinuousLinearEquiv.toContinuousLinearMap
+          (InnerProductSpace.toDual ℝ (GraphBase n)).symm.toContinuousLinearEquiv)
+        (fderiv ℝ (fderiv ℝ f) x)) x := by
+  let dualInv : StrongDual ℝ (GraphBase n) →L[ℝ] GraphBase n :=
+    (InnerProductSpace.toDual ℝ (GraphBase n)).symm.toContinuousLinearEquiv.toContinuousLinearMap
+  have hfderivCont : ContDiff ℝ 1 (fderiv ℝ f) :=
+    (contDiff_succ_iff_fderiv.mp hf).2.2
+  have hfderiv : DifferentiableAt ℝ (fderiv ℝ f) x :=
+    (hfderivCont.differentiable (by norm_num)) x
+  have hgrad : ∇ f = dualInv ∘ fderiv ℝ f := by
+    rfl
+  have hcomp := dualInv.hasFDerivAt.comp x hfderiv.hasFDerivAt
+  rw [hgrad]
+  exact hcomp
+
+/-- Differentiating the gradient recovers the scalar Hessian under the inner-product
+identification with the dual. -/
+theorem inner_fderiv_gradient {n : ℕ} (f : GraphBase n → ℝ) (hf : ContDiff ℝ 2 f)
+    (x v w : GraphBase n) :
+    @inner ℝ (GraphBase n) _ (fderiv ℝ (∇ f) x v) w = secondDerivative f x v w := by
+  rw [(hasFDerivAt_gradient f hf x).fderiv]
+  unfold secondDerivative
+  rw [iteratedFDeriv_two_apply]
+  simp
 
 /-- The metric induced on a graph by its coordinate tangent vectors. -/
 lemma inner_graphTangentVector_graphTangentVector {n : ℕ}
@@ -219,6 +340,43 @@ theorem graphMetricVolumeElement_eq_graphAreaFactor {n : ℕ}
   apply Real.sqrt_sq
   exact Real.sqrt_nonneg _
 
+/-- If the coordinate derivatives of the graph position are the graph tangent vectors, then its
+generic induced Gram matrix is the explicit graph metric matrix. -/
+theorem inducedGramMatrix_graphPosition_of_fderiv_single {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n)
+    (hFDeriv : ∀ i : Fin n,
+      fderiv ℝ (graphPosition f) x (EuclideanSpace.single i 1) =
+        graphTangentVector f x (EuclideanSpace.single i 1)) :
+    inducedGramMatrix (graphPosition f) x = graphMetricMatrix f x := by
+  ext i j
+  simp only [inducedGramMatrix_apply, inducedMetric, graphMetricMatrix]
+  rw [hFDeriv i, hFDeriv j]
+
+/-- Under the coordinate derivative formula, the generic induced volume element of a graph is its
+explicit area factor. -/
+theorem inducedVolumeElement_graphPosition_of_fderiv_single {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n)
+    (hFDeriv : ∀ i : Fin n,
+      fderiv ℝ (graphPosition f) x (EuclideanSpace.single i 1) =
+        graphTangentVector f x (EuclideanSpace.single i 1)) :
+    inducedVolumeElement (graphPosition f) x = graphAreaFactor f x := by
+  rw [inducedVolumeElement, inducedGramMatrix_graphPosition_of_fderiv_single f x hFDeriv]
+  exact graphMetricVolumeElement_eq_graphAreaFactor f x
+
+/-- For a differentiable graph, the generic induced Gram matrix is its explicit graph metric. -/
+theorem inducedGramMatrix_graphPosition {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) (hf : DifferentiableAt ℝ f x) :
+    inducedGramMatrix (graphPosition f) x = graphMetricMatrix f x :=
+  inducedGramMatrix_graphPosition_of_fderiv_single f x fun i =>
+    fderiv_graphPosition_apply f x (EuclideanSpace.single i 1) hf
+
+/-- For a differentiable graph, the generic induced volume element is its explicit area factor. -/
+theorem inducedVolumeElement_graphPosition {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) (hf : DifferentiableAt ℝ f x) :
+    inducedVolumeElement (graphPosition f) x = graphAreaFactor f x :=
+  inducedVolumeElement_graphPosition_of_fderiv_single f x fun i =>
+    fderiv_graphPosition_apply f x (EuclideanSpace.single i 1) hf
+
 lemma graphAreaFactor_pos {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
     0 < graphAreaFactor f x := by
   unfold graphAreaFactor
@@ -227,6 +385,89 @@ lemma graphAreaFactor_pos {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) 
 lemma graphAreaFactor_ne_zero {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
     graphAreaFactor f x ≠ 0 :=
   ne_of_gt (graphAreaFactor_pos f x)
+
+/-- Directional derivative of `v = sqrt (1 + ‖∇f‖²)`. -/
+theorem fderiv_graphAreaFactor_apply {n : ℕ} (f : GraphBase n → ℝ)
+    (hf : ContDiff ℝ 2 f) (x v : GraphBase n) :
+    fderiv ℝ (graphAreaFactor f) x v =
+      @inner ℝ (GraphBase n) _ (∇ f x) (fderiv ℝ (∇ f) x v) /
+        graphAreaFactor f x := by
+  have hnorm := (hasFDerivAt_gradient f hf x).norm_sq
+  have hinside := hnorm.const_add (1 : ℝ)
+  have hsqrt := hinside.sqrt (by positivity)
+  have hderiv := hsqrt.fderiv
+  change fderiv ℝ (fun y => Real.sqrt (1 + ‖∇ f y‖ ^ 2)) x v = _
+  rw [hderiv]
+  rw [(hasFDerivAt_gradient f hf x).fderiv]
+  simp only [smul_apply, smul_eq_mul, ContinuousLinearMap.comp_apply, innerSL_apply_apply]
+  rw [show Real.sqrt (1 + ‖∇ f x‖ ^ 2) = graphAreaFactor f x from rfl]
+  rw [two_smul]
+  field_simp [graphAreaFactor_ne_zero f x]
+  ring
+
+/-- Coordinate quotient rule for the vector field `∇f / v`. -/
+theorem gradient_gradient_div_graphAreaFactor_apply {n : ℕ} (f : GraphBase n → ℝ)
+    (hf : ContDiff ℝ 2 f) (x : GraphBase n) (i k : Fin n) :
+    (∇ (fun y : GraphBase n => (∇ f y) i / graphAreaFactor f y) x) k =
+      secondDerivative f x (EuclideanSpace.single k 1) (EuclideanSpace.single i 1) /
+          graphAreaFactor f x -
+        (∇ f x) i *
+          @inner ℝ (GraphBase n) _ (∇ f x)
+            (fderiv ℝ (∇ f) x (EuclideanSpace.single k 1)) /
+          graphAreaFactor f x ^ 3 := by
+  let e : GraphBase n := EuclideanSpace.single k 1
+  let numerator : GraphBase n → ℝ := fun y => (∇ f y) i
+  let area : GraphBase n → ℝ := graphAreaFactor f
+  let gradDeriv : GraphBase n →L[ℝ] GraphBase n :=
+    ContinuousLinearMap.comp
+      (ContinuousLinearEquiv.toContinuousLinearMap
+        (InnerProductSpace.toDual ℝ (GraphBase n)).symm.toContinuousLinearEquiv)
+      (fderiv ℝ (fderiv ℝ f) x)
+  have hgrad : HasFDerivAt (∇ f) gradDeriv x := hasFDerivAt_gradient f hf x
+  let numDeriv : GraphBase n →L[ℝ] ℝ := (EuclideanSpace.proj i).comp gradDeriv
+  have hnum : HasFDerivAt numerator numDeriv x := by
+    simpa [numerator, Function.comp_def, numDeriv] using
+      (EuclideanSpace.proj i).hasFDerivAt.comp x hgrad
+  have harea : DifferentiableAt ℝ area x := by
+    exact (((hasFDerivAt_gradient f hf x).norm_sq.const_add (1 : ℝ)).sqrt
+      (by positivity)).differentiableAt
+  have hinv : DifferentiableAt ℝ (fun y => (area y)⁻¹) x :=
+    harea.inv (graphAreaFactor_ne_zero f x)
+  have hquot : DifferentiableAt ℝ (fun y => numerator y / area y) x := by
+    change DifferentiableAt ℝ (numerator * fun y => (area y)⁻¹) x
+    exact hnum.differentiableAt.mul hinv
+  have hcoord := hquot.hasGradientAt.fderiv_apply (y := e)
+  rw [EuclideanSpace.inner_single_right] at hcoord
+  norm_num at hcoord
+  change fderiv ℝ (fun y => numerator y / area y) x e =
+    (∇ (fun y : GraphBase n => (∇ f y) i / graphAreaFactor f y) x) k at hcoord
+  rw [← hcoord]
+  change fderiv ℝ (fun y => numerator y * (area y)⁻¹) x e = _
+  rw [fderiv_fun_mul hnum.differentiableAt hinv]
+  simp only [add_apply, smul_apply, smul_eq_mul]
+  rw [hnum.fderiv]
+  have hareaNe : area x ≠ 0 := graphAreaFactor_ne_zero f x
+  have hinvDeriv : fderiv ℝ (fun y => (area y)⁻¹) x =
+      ContinuousLinearMap.toSpanSingleton ℝ (-(area x ^ 2)⁻¹) ∘L
+        fderiv ℝ area x := by
+    change fderiv ℝ ((fun z : ℝ => z⁻¹) ∘ area) x = _
+    exact ((hasFDerivAt_inv (𝕜 := ℝ) hareaNe).comp x harea.hasFDerivAt).fderiv
+  rw [hinvDeriv]
+  simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.toSpanSingleton_apply]
+  rw [fderiv_graphAreaFactor_apply f hf]
+  rw [real_inner_comm, inner_fderiv_gradient f hf]
+  have hnumApply : numDeriv e = secondDerivative f x e (EuclideanSpace.single i 1) := by
+    dsimp [numDeriv]
+    rw [← hgrad.fderiv]
+    change (fderiv ℝ (∇ f) x e) i = _
+    have h := inner_fderiv_gradient f hf x e (EuclideanSpace.single i 1)
+    rw [EuclideanSpace.inner_single_right] at h
+    norm_num at h
+    exact h
+  rw [hnumApply]
+  dsimp [numerator, area, e]
+  field_simp [graphAreaFactor_ne_zero f x]
+  ring
 
 lemma graphNormalVector_ne_zero {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
     graphNormalVector f x ≠ 0 := by
@@ -262,6 +503,100 @@ lemma norm_graphNormalVector {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase 
 noncomputable def graphUnitNormal {n : ℕ}
     (f : GraphBase n → ℝ) (x : GraphBase n) : GraphAmbient n :=
   (graphAreaFactor f x)⁻¹ • graphNormalVector f x
+
+/-- For the downward unit normal, the graph second fundamental form is the scalar Hessian divided
+by the graph area factor. -/
+theorem secondFundamentalForm_graphPosition {n : ℕ} (f : GraphBase n → ℝ)
+    (hf : ContDiff ℝ 2 f) (x v w : GraphBase n) :
+    secondFundamentalForm (graphPosition f) (graphUnitNormal f) x v w =
+      secondDerivative f x v w / graphAreaFactor f x := by
+  unfold secondFundamentalForm
+  rw [secondDerivative_graphPosition f hf]
+  rw [graphUnitNormal, real_inner_smul_right]
+  rw [graphNormalVector, inner_graphVector_graphVector]
+  simp
+  field_simp [graphAreaFactor_ne_zero f x]
+
+/-- In standard coordinates, `h_ij = (partial_i partial_j f) / sqrt(1 + ‖∇f‖²)`. -/
+theorem secondFundamentalFormMatrix_graphPosition {n : ℕ} (f : GraphBase n → ℝ)
+    (hf : ContDiff ℝ 2 f) (x : GraphBase n) (i j : Fin n) :
+    secondFundamentalFormMatrix (graphPosition f) (graphUnitNormal f) x i j =
+      secondDerivative f x (EuclideanSpace.single i 1) (EuclideanSpace.single j 1) /
+        graphAreaFactor f x :=
+  secondFundamentalForm_graphPosition f hf x
+    (EuclideanSpace.single i 1) (EuclideanSpace.single j 1)
+
+/-- For a graph with the downward normal, the divergence definition of scalar mean curvature is
+the trace of the second fundamental form with respect to the inverse induced metric. -/
+theorem meanCurvatureGraph_eq_metricTrace {n : ℕ} (f : GraphBase n → ℝ)
+    (hf : ContDiff ℝ 2 f) (x : GraphBase n) :
+    meanCurvatureGraph f x =
+      ∑ i : Fin n, ∑ j : Fin n,
+        graphInverseMetricMatrix f x i j *
+          secondFundamentalFormMatrix (graphPosition f) (graphUnitNormal f) x i j := by
+  have hinner (i : Fin n) :
+      @inner ℝ (GraphBase n) _ (∇ f x)
+          (fderiv ℝ (∇ f) x (EuclideanSpace.single i 1)) =
+        ∑ j : Fin n, (∇ f x) j *
+          secondDerivative f x (EuclideanSpace.single i 1) (EuclideanSpace.single j 1) := by
+    rw [PiLp.inner_apply]
+    apply Finset.sum_congr rfl
+    intro j _
+    rw [Real.inner_apply]
+    have h := inner_fderiv_gradient f hf x
+      (EuclideanSpace.single i 1) (EuclideanSpace.single j 1)
+    rw [EuclideanSpace.inner_single_right] at h
+    norm_num at h
+    rw [h]
+  have hareaSq : 1 + ‖∇ f x‖ ^ 2 = graphAreaFactor f x ^ 2 := by
+    unfold graphAreaFactor
+    rw [Real.sq_sqrt]
+    positivity
+  unfold meanCurvatureGraph
+  simp_rw [gradient_gradient_div_graphAreaFactor_apply f hf x]
+  simp_rw [hinner]
+  simp_rw [graphInverseMetricMatrix, secondFundamentalFormMatrix_graphPosition f hf x]
+  rw [hareaSq]
+  simp only [sub_mul, Finset.sum_sub_distrib, ite_mul, one_mul, zero_mul,
+    Fintype.sum_ite_eq]
+  simp_rw [Finset.mul_sum]
+  apply congrArg₂ (fun a b : ℝ => a - b)
+  · apply Finset.sum_congr rfl
+    intro i _
+    ring
+  · apply Finset.sum_congr rfl
+    intro i _
+    rw [div_eq_mul_inv, Finset.sum_mul]
+    apply Finset.sum_congr rfl
+    intro j _
+    field_simp [graphAreaFactor_ne_zero f x]
+
+/-- The graph mean curvature is the metric trace formed directly from the generic induced Gram
+matrix and generic second fundamental form matrix. -/
+theorem meanCurvatureGraph_eq_inducedMetricTrace {n : ℕ} (f : GraphBase n → ℝ)
+    (hf : ContDiff ℝ 2 f) (x : GraphBase n) :
+    meanCurvatureGraph f x =
+      ∑ i : Fin n, ∑ j : Fin n,
+        (inducedGramMatrix (graphPosition f) x)⁻¹ i j *
+          secondFundamentalFormMatrix (graphPosition f) (graphUnitNormal f) x i j := by
+  rw [inducedGramMatrix_graphPosition f x (hf.differentiable (by norm_num) x),
+    graphMetricMatrix_inv]
+  exact meanCurvatureGraph_eq_metricTrace f hf x
+
+/-- The normal-valued second fundamental form matrix of a graph. With our convention
+`h_ij = -⟨D²F(e_i,e_j), ν⟩`, its normal component is `-h_ij • ν`. -/
+noncomputable def graphSecondFundamentalFormVectorMatrix {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) :
+    Matrix (Fin n) (Fin n) (GraphAmbient n) :=
+  fun i j =>
+    -(secondFundamentalFormMatrix (graphPosition f) (graphUnitNormal f) x i j) •
+      graphUnitNormal f x
+
+/-- The inverse-metric trace of the graph's normal-valued second fundamental form. -/
+noncomputable def graphSecondFundamentalFormVectorTrace {n : ℕ}
+    (f : GraphBase n → ℝ) (x : GraphBase n) : GraphAmbient n :=
+  ∑ i : Fin n, ∑ j : Fin n,
+    graphInverseMetricMatrix f x i j • graphSecondFundamentalFormVectorMatrix f x i j
 
 lemma norm_graphUnitNormal {n : ℕ} (f : GraphBase n → ℝ) (x : GraphBase n) :
     ‖graphUnitNormal f x‖ = 1 := by
@@ -353,6 +688,44 @@ lemma graphNormalProjection_posDecomp {n : ℕ}
 noncomputable def graphMeanCurvatureVector {n : ℕ}
     (f : GraphBase n → ℝ) (x : GraphBase n) : GraphAmbient n :=
   -(meanCurvatureGraph f x) • graphUnitNormal f x
+
+/-- The inverse-metric trace of the normal-valued second fundamental form is the graph
+mean-curvature vector. -/
+theorem graphSecondFundamentalFormVectorTrace_eq_meanCurvatureVector {n : ℕ}
+    (f : GraphBase n → ℝ) (hf : ContDiff ℝ 2 f) (x : GraphBase n) :
+    graphSecondFundamentalFormVectorTrace f x = graphMeanCurvatureVector f x := by
+  unfold graphSecondFundamentalFormVectorTrace graphSecondFundamentalFormVectorMatrix
+    graphMeanCurvatureVector
+  rw [meanCurvatureGraph_eq_metricTrace f hf x]
+  calc
+    _ = ∑ i : Fin n, ∑ j : Fin n,
+        -(graphInverseMetricMatrix f x i j *
+          secondFundamentalFormMatrix (graphPosition f) (graphUnitNormal f) x i j) •
+            graphUnitNormal f x := by
+      apply Finset.sum_congr rfl
+      intro i _
+      apply Finset.sum_congr rfl
+      intro j _
+      rw [smul_smul]
+      congr 1
+      ring
+    _ = -(∑ i : Fin n, ∑ j : Fin n,
+        graphInverseMetricMatrix f x i j *
+          secondFundamentalFormMatrix (graphPosition f) (graphUnitNormal f) x i j) •
+            graphUnitNormal f x := by
+      simp only [Finset.sum_neg_distrib, Finset.sum_smul, neg_smul]
+
+/-- The vector trace formed with the inverse generic induced Gram matrix is the graph
+mean-curvature vector. -/
+theorem inducedMetricTrace_graphSecondFundamentalFormVector_eq_meanCurvatureVector
+    {n : ℕ} (f : GraphBase n → ℝ) (hf : ContDiff ℝ 2 f) (x : GraphBase n) :
+    (∑ i : Fin n, ∑ j : Fin n,
+      (inducedGramMatrix (graphPosition f) x)⁻¹ i j •
+        graphSecondFundamentalFormVectorMatrix f x i j) =
+      graphMeanCurvatureVector f x := by
+  rw [inducedGramMatrix_graphPosition f x (hf.differentiable (by norm_num) x),
+    graphMetricMatrix_inv]
+  exact graphSecondFundamentalFormVectorTrace_eq_meanCurvatureVector f hf x
 
 lemma graphMeanCurvatureVector_normal {n : ℕ}
     (f : GraphBase n → ℝ) (x : GraphBase n) (Y : GraphAmbient n) :

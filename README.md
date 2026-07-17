@@ -63,6 +63,14 @@ concrete graph calculations for `X_f(x) = (x, f x)`.
 - `graphTangentVector`, `graphNormalVector_orthogonal_tangent`,
   `graphUnitNormal_orthogonal_tangent` prove the coordinate tangent vectors are
   orthogonal to the normal.
+- `secondFundamentalFormMatrix_graphPosition` proves
+  `h_ij = partial_i partial_j f / sqrt(1 + ||grad f||^2)` for the lower normal.
+- `meanCurvatureGraph_eq_metricTrace` proves that the divergence definition is
+  `sum_i,j g^ij h_ij`; `meanCurvatureGraph_eq_inducedMetricTrace` states the
+  same identity using the generic induced Gram and second fundamental form matrices.
+- `graphSecondFundamentalFormVectorTrace_eq_meanCurvatureVector` and its
+  induced-Gram-matrix variant prove that tracing the normal-valued form gives
+  the orientation-independent vector `-H * nu`.
 - `graphNormalProjection`, `graphMeanCurvatureVector`,
   `graphNormalProjection_posDecomp`, and `graphMeanCurvatureVector_normal`
   discharge the two geometric coherence axioms required by `MonotonicityData`.
@@ -75,7 +83,7 @@ concrete graph calculations for `X_f(x) = (x, f x)`.
 
 ### Flow — abstract scaffolding
 
-mathlib (v4.30.0-rc2) does *not* yet contain the second fundamental form, the mean
+The pinned mathlib snapshot does *not* yet contain an integrated second fundamental form, the mean
 curvature vector, the induced volume measure on an immersion, or the first variation
 of area. `Flow.lean` therefore defines `ImmersionFamily` and a placeholder
 `SurfaceMeasure`, so that the statement of Huisken's theorem can be written; these are
