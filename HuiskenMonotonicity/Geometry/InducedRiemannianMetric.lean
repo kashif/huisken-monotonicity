@@ -128,6 +128,40 @@ theorem inducedMetricFamily_apply (F : SmoothImmersionFamily I M E)
     F.inducedMetricFamily himm t = F.inducedMetric t (himm t) :=
   rfl
 
+/-! ### The chart Gram matrix of the induced metric
+
+`DifferentialGeometry.Integral.Measure.traceTimeDerivMetric`, the weight consumed by
+`volume_variation_formula`, is the trace of `G⁻¹ ∂ₜG` where `G` is
+`Tensor.Coordinates.chartGramMatrix` of the metric family at `x₀ = x`. The identification
+below is the first step in evaluating that weight for the induced metric: the chart Gram
+matrix is the matrix of inner products of the pushed-forward chart frame vectors. -/
+
+/-- The chart Gram matrix of the induced metric is the Gram matrix of the chart frame pushed
+forward by `dF_t`. -/
+theorem chartGramMatrix_inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ)
+    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x₀ x i j =
+      @inner ℝ E _
+        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
+          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x))
+        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
+          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) := by
+  rw [Tensor.Coordinates.chartGramMatrix_apply, inducedMetric_inner]
+
+/-- The same, for the time-indexed family: the entries whose time derivative
+`traceTimeDerivMetric` differentiates. -/
+theorem chartGramMatrix_inducedMetricFamily (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (t : ℝ) (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetricFamily himm t) x₀ x i j =
+      @inner ℝ E _
+        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
+          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x))
+        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
+          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) :=
+  chartGramMatrix_inducedMetric F t (himm t) x₀ x i j
+
 end Metric
 
 section SurfaceMeasure
