@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kashif Rasul
 -/
 
-import HuiskenMonotonicity.Geometry.InducedMetric
+import HuiskenMonotonicity.SmoothImmersionFamily
 import HuiskenMonotonicity.MetricEvolution
 import DifferentialGeometry.Topology.Manifold.MFDeriv.Interior
 import DifferentialGeometry.Topology.Manifold.ChartDifferential
@@ -16,14 +16,13 @@ import HuiskenMonotonicity.Upstream.DifferentialGeometry.Analysis.Integration.Me
 /-!
 # The induced Riemannian metric and surface measure of an immersion family
 
-`HuiskenMonotonicity.Geometry.InducedMetric` builds the pullback inner product
+The metric induced on `M` by a time slice `F_t` is the pullback of the ambient Euclidean
+metric,
 
-`g_t(v, w) = ⟪dF_t v, dF_t w⟫`
+`g_t(v, w) = ⟪dF_t v, dF_t w⟫`.
 
-pointwise, but stops short of bundling it as a Riemannian metric: that additionally needs
-smooth dependence of the form on the base point in manifold charts.
-
-`DifferentialGeometry` supplies precisely that missing step. Its
+Bundling it as a Riemannian metric needs smooth dependence of the form on the base point in
+manifold charts. `DifferentialGeometry` supplies that. Its
 `SmoothRiemannianMetric.pullback` bundles the pullback of a metric along an immersion, with
 the chart-smoothness discharged by `SmoothRiemannianMetric.pullbackInner_contMDiff`. This
 file applies it to the Euclidean metric on the ambient space to obtain
@@ -87,8 +86,7 @@ variable [T2Space M]
 `SmoothRiemannianMetric`.
 
 This is the pullback of the ambient Euclidean metric along `F_t`. The smooth dependence on
-the base point — the step left open in `HuiskenMonotonicity.Geometry.InducedMetric` — comes
-from `DifferentialGeometry.SmoothRiemannianMetric.pullbackInner_contMDiff`. -/
+the base point comes from `DifferentialGeometry.SmoothRiemannianMetric.pullbackInner_contMDiff`. -/
 def inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ)
     (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p)) :
     SmoothRiemannianMetric I M :=
@@ -102,14 +100,6 @@ theorem inducedMetric_inner (F : SmoothImmersionFamily I M E) (t : ℝ)
     (F.inducedMetric t himm).inner p v w =
       @inner ℝ E _ (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p v)
         (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p w) :=
-  rfl
-
-/-- The bundled induced metric agrees with the pointwise pullback form of
-`HuiskenMonotonicity.Geometry.InducedMetric`. -/
-theorem inducedMetric_inner_eq_inducedInner (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
-    (p : M) (v w : TangentSpace I p) :
-    (F.inducedMetric t himm).inner p v w = F.inducedInner p t v w :=
   rfl
 
 /-- At a valid time the immersion hypothesis of `inducedMetric` is automatic. -/

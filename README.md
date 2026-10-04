@@ -20,7 +20,6 @@ The repository is organised around these modules:
 | [`HuiskenMonotonicity.HeatKernel`](HuiskenMonotonicity/HeatKernel.lean) | proved |
 | [`HuiskenMonotonicity.Flow`](HuiskenMonotonicity/Flow.lean) | scaffolding |
 | [`HuiskenMonotonicity.SmoothImmersionFamily`](HuiskenMonotonicity/SmoothImmersionFamily.lean) | proved |
-| [`HuiskenMonotonicity.Geometry.InducedMetric`](HuiskenMonotonicity/Geometry/InducedMetric.lean) | proved pointwise |
 | [`HuiskenMonotonicity.Monotonicity`](HuiskenMonotonicity/Monotonicity.lean) | proved (axiom-conditional) |
 | [`HuiskenMonotonicity.GraphMeanCurvature`](HuiskenMonotonicity/GraphMeanCurvature.lean) | definition |
 | [`HuiskenMonotonicity.CoordinateHypersurface`](HuiskenMonotonicity/CoordinateHypersurface.lean) | proved (graph axioms discharged) |

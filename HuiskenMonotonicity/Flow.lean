@@ -66,21 +66,6 @@ def IsMeanCurvatureFlow
     (F : ImmersionFamily M E) (H : M → ℝ → E) : Prop :=
   ∀ p : M, ∀ t : ℝ, 0 ≤ t → t < F.T → HasDerivAt (fun s => F p s) (H p t) t
 
-/-- The **rescaled** mean curvature flow predicate. Under Huisken's parabolic rescaling
-`F̃(p, s) = (2(T - t))^(-1/2) F(p, t)`, `s = -½ log(T - t)`, the rescaled family
-satisfies the augmented evolution equation
-
-  `∂/∂s' F̃(p, s') ∣_{s' = s} = H̃(p, s) + F̃(p, s)`,
-
-where the extra `F̃` term arises from differentiating the time-dependent rescaling
-factor. Same caveats as `IsMeanCurvatureFlow`: the velocity-direction `H̃` is taken
-as explicit data until mathlib gains the second fundamental form. -/
-def IsRescaledMeanCurvatureFlow
-    {M E : Type*} [TopologicalSpace M] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-    (F : ImmersionFamily M E) (H : M → ℝ → E) : Prop :=
-  ∀ p : M, ∀ s : ℝ, 0 ≤ s → s < F.T →
-    HasDerivAt (fun s' => F p s') (H p s + F p s) s
-
 /-- Placeholder for the surface measure on `F(·, t)(M)`.
 
 In the formula `(d/dt) ∫_{M_t} ρ dμ_t = …`, `dμ_t` is the volume element induced by the
