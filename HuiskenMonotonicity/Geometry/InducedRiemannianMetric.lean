@@ -7,6 +7,7 @@ Authors: Kashif Rasul
 import HuiskenMonotonicity.Geometry.InducedMetric
 import HuiskenMonotonicity.MetricEvolution
 import DifferentialGeometry.Topology.Manifold.MFDeriv.Interior
+import DifferentialGeometry.Topology.Manifold.ChartDifferential
 import DifferentialGeometry.Geometry.Metric.Euclidean
 import DifferentialGeometry.Geometry.Metric.Pullback.Immersion
 import DifferentialGeometry.Analysis.Integration.Measure.Family.VolumeVariation
@@ -389,6 +390,60 @@ theorem contDiffOn_chartRep (F : SmoothImmersionFamily I M E) (t : ℝ) (x₀ : 
     fun _ hy => ⟨Set.mem_univ _, hy⟩
   exact (F.contDiffOn_spaceTimeChartRep x₀).comp
     (contDiff_const.prodMk contDiff_id).contDiffOn hmaps
+
+/-! ### The uniform identification
+
+The identification used for `traceTimeDerivMetric` reads the derivative in the chart at the
+point itself. The continuity fields of `MetricFamilyRegularAt` instead need the chart Gram
+entries in one *fixed* chart at `x₀`, uniformly in the point. The two differ by the tangent
+coordinate change, so the uniform version is a separate statement.
+
+The library already proves it, as
+`Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv`: the Fréchet
+derivative of a map written in fixed charts is the manifold derivative conjugated by the
+trivializations. With a vector-space target the outer chart and trivialization are trivial,
+and what remains is exactly the statement that the chart frame is carried to the model
+basis. -/
+
+/-- **The uniform identification.** In the chart fixed at `x₀`, the chart Gram entries are
+the `frameGram` of the chart representation against the *constant* model basis, evaluated at
+the chart coordinate of `x`.
+
+This is what the continuity fields of `MetricFamilyRegularAt` need: with the frame constant
+and the chart fixed, the entries are a function of `(t, y) ∈ ℝ × E₁` to which
+`contDiffOn_spaceTimeChartRep` applies. The earlier identification instead uses the chart at
+`x` itself, which suffices for `traceTimeDerivMetric` but is not uniform in the point.
+
+The work is done by the library's
+`Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv`, specialised to a
+vector-space target, where the outer chart and trivialization are trivial. -/
+theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E) (t : ℝ)
+    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (x₀ : M) {x : M} (hx : x ∈ (extChartAt I x₀).source)
+    (i j : Fin (Module.finrank ℝ E₁)) :
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x₀ x i j =
+      frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁)
+        (extChartAt I x₀ x) i j := by
+  have hcont : ContinuousAt (fun q => F q t) x :=
+    ((F.contMDiff_timeSlice t).continuous).continuousAt
+  have hfx : (fun q => F q t) x ∈ (extChartAt 𝓘(ℝ, E) (F x t)).source := by simp
+  have h := DifferentialGeometry.Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv
+    (I := I) (J := 𝓘(ℝ, E)) (fun q => F q t) x₀ (F x t) x hx hfx hcont
+  -- the outer chart and trivialization are trivial for a vector-space target
+  rw [extChartAt_model_space_eq_id, TangentBundle.continuousLinearMapAt_model_space] at h
+  have key : ∀ k : Fin (Module.finrank ℝ E₁),
+      fderiv ℝ (F.chartRep t x₀) (extChartAt I x₀ x)
+          (Tensor.Coordinates.chartModelBasis E₁ k) =
+        mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
+          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ k x) := by
+    intro k
+    have happ := DFunLike.congr_fun h (Tensor.Coordinates.chartModelBasis E₁ k)
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.one_apply,
+      PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
+    exact happ
+  rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply,
+    key i, key j]
 
 end Metric
 
