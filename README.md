@@ -30,6 +30,7 @@ The repository is organised around these modules:
 | [`HuiskenMonotonicity.TangentialCalculus`](HuiskenMonotonicity/TangentialCalculus.lean) | proved (normal divergence identity, `div_M F = n`) |
 | [`HuiskenMonotonicity.MetricEvolution`](HuiskenMonotonicity/MetricEvolution.lean) | proved (metric evolution, trace, derivative commutation) |
 | [`HuiskenMonotonicity.FirstVariation`](HuiskenMonotonicity/FirstVariation.lean) | proved (kernel gradient, test-field divergence) |
+| [`HuiskenMonotonicity.TransportFormula`](HuiskenMonotonicity/TransportFormula.lean) | proved (transport formula; `hChainRule` discharged) |
 | [`HuiskenMonotonicity.DGInterface`](HuiskenMonotonicity/DGInterface.lean) | interface check against DG chart conventions |
 | [`DifferentialGeometry.Integral.Measure.Regularity`](HuiskenMonotonicity/Upstream/DifferentialGeometry/Analysis/Integration/Measure/Family/Regularity.lean) | new API for upstreaming to `DifferentialGeometry` |
 | [`DifferentialGeometry.Geometry.MeanCurvature`](HuiskenMonotonicity/Upstream/DifferentialGeometry/Geometry/Submanifold/MeanCurvature.lean) | new API for upstreaming to `DifferentialGeometry` |
