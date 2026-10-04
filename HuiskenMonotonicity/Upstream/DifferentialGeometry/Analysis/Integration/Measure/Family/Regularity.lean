@@ -1,4 +1,5 @@
 import DifferentialGeometry.Analysis.Integration.Measure.Family.Defs
+import DifferentialGeometry.Analysis.Integration.Measure.Family.VolumeVariation
 
 /-!
 # A chart-local constructor for `MetricFamilyRegularAt`
@@ -21,6 +22,13 @@ by transporting along `extChartAt I x₀`:
 The transport is possible because `(trivializationAt E (TangentSpace I) x₀).baseSet` is the
 chart source, on which `extChartAt I x₀` is continuous, maps into the chart target and is
 inverted by its symm.
+
+It also adds `volume_variation_formula_of_eventuallyEq`, which lets the transport formula be
+applied to an integrand that is regular only *near* the time in question. That is needed in
+practice: `FunctionRegularAt` asks for continuity on all of `ℝ × M`, which a backward heat
+kernel centred at `t₀` cannot satisfy, being singular there. Since the conclusion is a
+`HasDerivAt` at a point, and so local, the formula transfers along eventual equality of the
+integrand.
 
 Intended upstream location:
 `DifferentialGeometry/Analysis/Integration/Measure/Family/Regularity.lean`.
@@ -119,5 +127,48 @@ theorem MetricFamilyRegularAt.of_chartGramOnE
       exact ⟨mem_univ _,
         (extChartAt I x₀).map_source (baseSet_subset_extChartAt_source (I := I) x₀ hp.2)⟩
     exact (hcontD x₀ i j).comp hmap hmaps
+
+
+/-! ## Transferring the transport formula along eventual equality -/
+
+/-- **The transport formula for a locally regular integrand.**
+
+`FunctionRegularAt` is a global-in-time hypothesis, which rules out integrands that are
+singular at some time, such as a backward heat kernel centred at `t₀`. The conclusion of
+`volume_variation_formula` is a derivative at a point, hence local, so it is enough that the
+integrand agree near that time with one that *is* globally regular. -/
+theorem volume_variation_formula_of_eventuallyEq
+    [T2Space M] [SigmaCompactSpace M] [CompactSpace M]
+    {g_fam : ℝ → SmoothRiemannianMetric I M} {f f' : ℝ → M → ℝ} {t₀ : ℝ}
+    (hg : MetricFamilyRegularAt (I := I) g_fam t₀)
+    (hf' : FunctionRegularAt (M := M) f' t₀)
+    (hff : ∀ᶠ s in nhds t₀, f s = f' s) :
+    HasDerivAt
+      (fun s : ℝ => ∫ x, f s x ∂(riemannianMeasureFamily (I := I) (M := M) g_fam s))
+      (∫ x, (deriv (fun s : ℝ => f s x) t₀
+              + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) g_fam t₀ x * f t₀ x)
+          ∂(riemannianMeasureFamily (I := I) (M := M) g_fam t₀))
+      t₀ := by
+  have hbase := volume_variation_formula (I := I) (M := M) (g_fam := g_fam) (f := f')
+    (t₀ := t₀) hg hf'
+  -- at `t₀` the two integrands agree, and so do their time derivatives
+  have ht₀ : f t₀ = f' t₀ := hff.self_of_nhds
+  have hderiv : ∀ x : M,
+      deriv (fun s : ℝ => f s x) t₀ = deriv (fun s : ℝ => f' s x) t₀ := by
+    intro x
+    refine Filter.EventuallyEq.deriv_eq ?_
+    filter_upwards [hff] with s hs
+    exact congrFun hs x
+  have hintegrand : (fun x : M => deriv (fun s : ℝ => f s x) t₀
+        + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) g_fam t₀ x * f t₀ x)
+      = fun x : M => deriv (fun s : ℝ => f' s x) t₀
+        + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) g_fam t₀ x * f' t₀ x := by
+    funext x
+    rw [hderiv x, ht₀]
+  rw [hintegrand]
+  -- the integrals as functions of `s` agree near `t₀`
+  refine hbase.congr_of_eventuallyEq ?_
+  filter_upwards [hff] with s hs
+  rw [hs]
 
 end DifferentialGeometry.Integral.Measure
