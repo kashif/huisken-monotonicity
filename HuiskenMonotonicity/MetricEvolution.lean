@@ -196,6 +196,69 @@ theorem hasDerivAt_fderiv_spatialSlice
   convert hLd using 1
   rfl
 
+/-- **Commutation of the spatial and time derivatives, local form.**
+
+Only `ContDiffAt` at the point is required. This matters for manifold data: a chart
+representation `fun y => f ((extChartAt I x).symm y)` is smooth on the chart target and
+nowhere else, so a global hypothesis would be unusable.
+
+Both sides are the mixed second derivative of `Φ` in the two orders, so the proof is
+`second_derivative_symmetric_of_eventually`. -/
+theorem hasDerivAt_fderiv_spatialSlice_of_contDiffAt
+    {Φ : ℝ × E₁ → E} {t : ℝ} {x : E₁} (hΦ : ContDiffAt ℝ 2 Φ (t, x)) (v : E₁) :
+    HasDerivAt (fun s => fderiv ℝ (spatialSlice Φ s) x v)
+      (fderiv ℝ (timeVelocity Φ t) x v) t := by
+  -- `Φ` is differentiable on a neighbourhood of `(t, x)`.
+  have hev : ∀ᶠ q in nhds ((t, x) : ℝ × E₁), HasFDerivAt Φ (fderiv ℝ Φ q) q := by
+    filter_upwards [hΦ.eventually (by norm_num)] with q hq
+    exact (hq.differentiableAt (by norm_num)).hasFDerivAt
+  have hΦ2 : ContDiffAt ℝ 1 (fderiv ℝ Φ) (t, x) := hΦ.fderiv_right (by norm_num)
+  have hd2 : HasFDerivAt (fderiv ℝ Φ) (fderiv ℝ (fderiv ℝ Φ) (t, x)) (t, x) :=
+    (hΦ2.differentiableAt (by norm_num)).hasFDerivAt
+  set D := fderiv ℝ (fderiv ℝ Φ) (t, x) with hD
+  -- Left side: differentiate `s ↦ dΦ_{(s,x)}(0, v)` in `s`.
+  have hLinner : HasFDerivAt (fun p : ℝ × E₁ => fderiv ℝ Φ p (0, v))
+      (D.flip (0, v)) (t, x) := by
+    simpa using hd2.clm_apply (hasFDerivAt_const ((0 : ℝ), v) (t, x))
+  have hLcomp : HasFDerivAt
+      ((fun p : ℝ × E₁ => fderiv ℝ Φ p (0, v)) ∘ fun s : ℝ => (s, x))
+      ((D.flip (0, v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t :=
+    hLinner.comp t (hasFDerivAt_prodMk_left (𝕜 := ℝ) t x)
+  have hL : HasFDerivAt (fun s : ℝ => fderiv ℝ Φ (s, x) (0, v))
+      ((D.flip (0, v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t := hLcomp
+  have hLd := hL.hasDerivAt
+  -- Near `t` the slice derivative agrees with that partial derivative.
+  have hmap : Filter.Tendsto (fun s : ℝ => ((s, x) : ℝ × E₁)) (nhds t)
+      (nhds ((t, x) : ℝ × E₁)) :=
+    (continuous_id.prodMk continuous_const).continuousAt
+  have hfun : ∀ᶠ s in nhds t,
+      fderiv ℝ (spatialSlice Φ s) x v = fderiv ℝ Φ (s, x) (0, v) := by
+    filter_upwards [hmap.eventually hev] with s hs
+    have h : HasFDerivAt (spatialSlice Φ s)
+        ((fderiv ℝ Φ (s, x)).comp (ContinuousLinearMap.inr ℝ ℝ E₁)) x :=
+      hs.comp x (hasFDerivAt_prodMk_right (𝕜 := ℝ) s x)
+    rw [h.fderiv]
+    rfl
+  -- Right side: differentiate `y ↦ dΦ_{(t,y)}(1, 0)` in `y`.
+  have hRinner : HasFDerivAt (fun p : ℝ × E₁ => fderiv ℝ Φ p (1, 0))
+      (D.flip ((1 : ℝ), (0 : E₁))) (t, x) := by
+    simpa using hd2.clm_apply (hasFDerivAt_const ((1 : ℝ), (0 : E₁)) (t, x))
+  have hRcomp : HasFDerivAt
+      ((fun p : ℝ × E₁ => fderiv ℝ Φ p (1, 0)) ∘ fun y : E₁ => (t, y))
+      ((D.flip ((1 : ℝ), (0 : E₁))).comp (ContinuousLinearMap.inr ℝ ℝ E₁)) x :=
+    hRinner.comp x (hasFDerivAt_prodMk_right (𝕜 := ℝ) t x)
+  have hR : HasFDerivAt (timeVelocity Φ t)
+      ((D.flip ((1 : ℝ), (0 : E₁))).comp (ContinuousLinearMap.inr ℝ ℝ E₁)) x := hRcomp
+  have hRv : fderiv ℝ (timeVelocity Φ t) x v = D ((0 : ℝ), v) ((1 : ℝ), (0 : E₁)) := by
+    rw [hR.fderiv]
+    rfl
+  have hsymm : D ((1 : ℝ), (0 : E₁)) ((0 : ℝ), v) = D ((0 : ℝ), v) ((1 : ℝ), (0 : E₁)) :=
+    second_derivative_symmetric_of_eventually hev hd2 _ _
+  rw [hRv, ← hsymm]
+  refine HasDerivAt.congr_of_eventuallyEq ?_ hfun
+  convert hLd using 1
+  rfl
+
 end Commutation
 
 end HuiskenMonotonicity

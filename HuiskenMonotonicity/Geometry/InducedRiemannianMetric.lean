@@ -5,7 +5,7 @@ Authors: Kashif Rasul
 -/
 
 import HuiskenMonotonicity.Geometry.InducedMetric
-import HuiskenMonotonicity.TangentialCalculus
+import HuiskenMonotonicity.MetricEvolution
 import DifferentialGeometry.Topology.Manifold.MFDeriv.Interior
 import DifferentialGeometry.Geometry.Metric.Euclidean
 import DifferentialGeometry.Geometry.Metric.Pullback.Immersion
@@ -208,6 +208,129 @@ theorem chartGramMatrix_inducedMetric_eq_frameGram [BoundarylessManifold I M]
       (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x i x)) h
   · exact congrArg
       (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x j x)) h
+
+/-! ### The time derivative of the chart Gram entries
+
+With the chart Gram matrix identified as a `frameGram`, the metric evolution equation
+applies to it directly. The velocity is supplied as a family `V` of fields on the model
+space, which is what the chart representation produces. -/
+
+/-- The chart Gram entries of the induced metric family evolve by `-2 ⟪V, D²F(b_i, b_j)⟫`,
+the entries whose trace `traceTimeDerivMetric` takes. -/
+theorem hasDerivAt_chartGramMatrix_inducedMetricFamily [BoundarylessManifold I M]
+    (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    {V : ℝ → E₁ → E} {t : ℝ} (x : M) (i j : Fin (Module.finrank ℝ E₁))
+    (hF2 : ContDiff ℝ 2 (F.chartRep t x))
+    (hV : Differentiable ℝ (V t))
+    (hnormal : IsNormalAlong (F.chartRep t x) (V t))
+    (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
+      HasDerivAt
+        (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
+          (extChartAt I x x) k)
+        (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t) :
+    HasDerivAt
+      (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
+        (F.inducedMetricFamily himm s) x x i j)
+      (-2 * @inner ℝ E _ (V t (extChartAt I x x))
+        (secondDerivative (F.chartRep t x) (extChartAt I x x)
+          (chartFrame (I := I) x i) (chartFrame (I := I) x j))) t := by
+  have hfun : (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
+        (F.inducedMetricFamily himm s) x x i j)
+      = fun s => frameGram (F.chartRep s x) (chartFrame (I := I) x)
+          (extChartAt I x x) i j := by
+    funext s
+    rw [inducedMetricFamily_apply]
+    exact chartGramMatrix_inducedMetric_eq_frameGram F s (himm s) x i j
+  rw [hfun]
+  exact hasDerivAt_frameGram_of_isNormalAlong
+    (F := fun s => F.chartRep s x) (V := V) (chartFrame (I := I) x) i j hF2 hV hnormal hcomm
+
+/-- The inverse chart Gram matrix of the induced metric family, as a `Matrix`.
+
+Naming it is not cosmetic: in a position expecting `Idx → Idx → ℝ` the notation `⁻¹` would
+elaborate as the pointwise `Pi.instInv` rather than `Matrix.inv`, which is not what
+`traceTimeDerivMetric` uses. -/
+noncomputable def chartGramInv (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (t : ℝ) (x : M) :
+    Matrix (Fin (Module.finrank ℝ E₁)) (Fin (Module.finrank ℝ E₁)) ℝ :=
+  (Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetricFamily himm t) x x)⁻¹
+
+/-- **The transport weight of the induced metric family.**
+
+`traceTimeDerivMetric`, the quantity `volume_variation_formula` halves to form its weight,
+evaluates to `-2 ⟪V, Hvec⟫` for a velocity normal along the immersion. Under mean curvature
+flow `V = Hvec`, so the weight becomes `-‖Hvec‖²`, the classical evolution of the volume
+element. -/
+theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
+    (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    {V : ℝ → E₁ → E} {t : ℝ} (x : M)
+    (hF2 : ContDiff ℝ 2 (F.chartRep t x))
+    (hV : Differentiable ℝ (V t))
+    (hnormal : IsNormalAlong (F.chartRep t x) (V t))
+    (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
+      HasDerivAt
+        (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
+          (extChartAt I x x) k)
+        (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t) :
+    traceTimeDerivMetric (I := I) (F.inducedMetricFamily himm) t x =
+      -2 * @inner ℝ E _ (V t (extChartAt I x x))
+        (meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
+          (F.chartGramInv himm t x) (extChartAt I x x)) := by
+  have hderiv : ∀ i j : Fin (Module.finrank ℝ E₁),
+      deriv (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
+        (F.inducedMetricFamily himm s) x x i j) t =
+        -2 * @inner ℝ E _ (V t (extChartAt I x x))
+          (secondDerivative (F.chartRep t x) (extChartAt I x x)
+            (chartFrame (I := I) x i) (chartFrame (I := I) x j)) :=
+    fun i j =>
+      (hasDerivAt_chartGramMatrix_inducedMetricFamily F himm x i j hF2 hV hnormal hcomm).deriv
+  rw [traceTimeDerivMetric_eq, Matrix.trace]
+  simp only [Matrix.diag_apply, Matrix.mul_apply, Matrix.of_apply, chartGramInv]
+  calc ∑ i, ∑ j,
+        F.chartGramInv himm t x i j *
+          deriv (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
+            (F.inducedMetricFamily himm s) x x j i) t
+      = ∑ i, ∑ j,
+          F.chartGramInv himm t x i j *
+            (-2 * @inner ℝ E _ (V t (extChartAt I x x))
+              (secondDerivative (F.chartRep t x) (extChartAt I x x)
+                (chartFrame (I := I) x i) (chartFrame (I := I) x j))) := by
+        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+        rw [hderiv j i, secondDerivative_symm hF2]
+    _ = -2 * @inner ℝ E _ (V t (extChartAt I x x))
+          (meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
+            (F.chartGramInv himm t x) (extChartAt I x x)) :=
+        trace_metricEvolution (F := F.chartRep t x) (V := V t)
+          (x := extChartAt I x x) (chartFrame (I := I) x) (F.chartGramInv himm t x)
+
+/-- **Mean curvature flow: the transport weight is `-‖Hvec‖²`.**
+
+`volume_variation_formula` halves this, so its weight is `-‖Hvec‖²`, which is the classical
+statement `∂_t dμ = -H² dμ` that Huisken's proof cites. -/
+theorem traceTimeDerivMetric_inducedMetricFamily_meanCurvatureFlow
+    [BoundarylessManifold I M]
+    (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    {V : ℝ → E₁ → E} {t : ℝ} (x : M)
+    (hF2 : ContDiff ℝ 2 (F.chartRep t x))
+    (hV : Differentiable ℝ (V t))
+    (hnormal : IsNormalAlong (F.chartRep t x) (V t))
+    (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
+      HasDerivAt
+        (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
+          (extChartAt I x x) k)
+        (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t)
+    (hmcf : V t (extChartAt I x x) =
+      meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
+        (F.chartGramInv himm t x) (extChartAt I x x)) :
+    traceTimeDerivMetric (I := I) (F.inducedMetricFamily himm) t x =
+      -2 * ‖meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
+        (F.chartGramInv himm t x) (extChartAt I x x)‖ ^ 2 := by
+  rw [traceTimeDerivMetric_inducedMetricFamily F himm x hF2 hV hnormal hcomm, hmcf,
+    real_inner_self_eq_norm_sq]
 
 end Metric
 
