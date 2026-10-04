@@ -578,4 +578,53 @@ theorem integral_backwardHeatKernel
 
 end Normalisation
 
+section JointSmoothness
+
+/-- **Joint smoothness of the kernel in time and space**, on `{t < t₀}`.
+
+`contDiff_backwardHeatKernel` gives smoothness in the spatial variable at a fixed time.
+This is the joint statement, which is what a transport formula needs: its regularity
+hypotheses are about the integrand as a function on `ℝ × M`.
+
+The restriction to `{t < t₀}` is essential rather than technical: at `t = t₀` the prefactor
+`(4π(t₀-t))^(-n/2)` is singular, so no joint statement holds on a neighbourhood of `t₀`. -/
+theorem contDiffOn_backwardHeatKernel_prod
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    (n : ℕ) (t₀ : ℝ) :
+    ContDiffOn ℝ ⊤ (fun p : ℝ × V => backwardHeatKernel n t₀ p.1 p.2)
+      {p : ℝ × V | p.1 < t₀} := by
+  intro p hp
+  have hτpos : (0 : ℝ) < t₀ - p.1 := sub_pos.mpr hp
+  -- the prefactor
+  have hbase : ContDiffAt ℝ ⊤ (fun q : ℝ × V => 4 * π * (t₀ - q.1)) p := by
+    exact contDiffAt_const.mul ((contDiffAt_const).sub (contDiff_fst.contDiffAt))
+  have hbase_ne : (fun q : ℝ × V => 4 * π * (t₀ - q.1)) p ≠ 0 := by
+    have : (0 : ℝ) < 4 * π * (t₀ - p.1) := by positivity
+    exact ne_of_gt this
+  have hpre : ContDiffAt ℝ ⊤
+      (fun q : ℝ × V => (4 * π * (t₀ - q.1)) ^ (-(n : ℝ) / 2)) p :=
+    hbase.rpow_const_of_ne hbase_ne
+  -- the exponent
+  have hden : ContDiffAt ℝ ⊤ (fun q : ℝ × V => 4 * (t₀ - q.1)) p :=
+    contDiffAt_const.mul ((contDiffAt_const).sub (contDiff_fst.contDiffAt))
+  have hden_ne : (fun q : ℝ × V => 4 * (t₀ - q.1)) p ≠ 0 := by
+    have : (0 : ℝ) < 4 * (t₀ - p.1) := by positivity
+    exact ne_of_gt this
+  have hnum : ContDiffAt ℝ ⊤ (fun q : ℝ × V => -‖q.2‖ ^ 2) p :=
+    (contDiff_norm_sq (𝕜 := ℝ)).contDiffAt.comp p contDiff_snd.contDiffAt |>.neg
+  have hexparg : ContDiffAt ℝ ⊤
+      (fun q : ℝ × V => -‖q.2‖ ^ 2 / (4 * (t₀ - q.1))) p := hnum.div hden hden_ne
+  have hexp : ContDiffAt ℝ ⊤
+      (fun q : ℝ × V => Real.exp (-‖q.2‖ ^ 2 / (4 * (t₀ - q.1)))) p :=
+    Real.contDiff_exp.contDiffAt.comp p hexparg
+  exact (hpre.mul hexp).contDiffWithinAt
+
+/-- The set on which the kernel is jointly smooth is open. -/
+theorem isOpen_lt_fst_backwardHeatKernel
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] (t₀ : ℝ) :
+    IsOpen {p : ℝ × V | p.1 < t₀} :=
+  isOpen_lt continuous_fst continuous_const
+
+end JointSmoothness
+
 end HuiskenMonotonicity
