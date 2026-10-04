@@ -181,9 +181,18 @@ spaces. -/
 def chartRep (F : SmoothImmersionFamily I M E) (t : ℝ) (x : M) : E₁ → E :=
   fun y => F ((extChartAt I x).symm y) t
 
+/-- The chart frame of the chart around `x₀`, evaluated at `x`, read in the model space.
+
+`MetricFamilyRegularAt` quantifies over `x₀` and over all `x` in the trivialization base
+set, so the frame has to be allowed off the diagonal even though `traceTimeDerivMetric`
+itself only uses `x₀ = x`. The chart in which the derivative is taken is always the one at
+`x`; only the frame comes from `x₀`. -/
+def chartFrameAt (x₀ x : M) (i : Fin (Module.finrank ℝ E₁)) : E₁ :=
+  Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x
+
 /-- The chart frame at its own base point, read in the model space. -/
 def chartFrame (x : M) (i : Fin (Module.finrank ℝ E₁)) : E₁ :=
-  Tensor.Coordinates.chartBasisVecFiber (I := I) x i x
+  chartFrameAt (I := I) x x i
 
 /-- The chart Gram matrix of the induced metric is `frameGram` of the chart representation.
 
@@ -193,21 +202,21 @@ This is the identification that lets `hasDerivAt_frameGram_of_isNormalAlong` and
 theorem chartGramMatrix_inducedMetric_eq_frameGram [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E) (t : ℝ)
     (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
-    (x : M) (i j : Fin (Module.finrank ℝ E₁)) :
-    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x x i j =
-      frameGram (F.chartRep t x) (chartFrame (I := I) x) (extChartAt I x x) i j := by
+    (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x₀ x i j =
+      frameGram (F.chartRep t x) (chartFrameAt (I := I) x₀ x) (extChartAt I x x) i j := by
   have hmd : MDifferentiableAt I 𝓘(ℝ, E) (fun q => F q t) x :=
     (F.contMDiff_timeSlice t).mdifferentiableAt (by simp)
   have hint : I.IsInteriorPoint x := BoundarylessManifold.isInteriorPoint
   have h := DifferentialGeometry.Manifold.mfderiv_eq_fderiv_extChartAt_of_isInteriorPoint
     I hmd hint
   rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply]
-  simp only [chartFrame]
+  simp only [chartFrameAt]
   congr 1
   · exact congrArg
-      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x i x)) h
+      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x)) h
   · exact congrArg
-      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x j x)) h
+      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) h
 
 /-! ### The time derivative of the chart Gram entries
 
@@ -220,31 +229,32 @@ the entries whose trace `traceTimeDerivMetric` takes. -/
 theorem hasDerivAt_chartGramMatrix_inducedMetricFamily [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E)
     (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
-    {V : ℝ → E₁ → E} {t : ℝ} (x : M) (i j : Fin (Module.finrank ℝ E₁))
+    {V : ℝ → E₁ → E} {t : ℝ} (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁))
     (hF2 : ContDiff ℝ 2 (F.chartRep t x))
     (hV : Differentiable ℝ (V t))
     (hnormal : IsNormalAlong (F.chartRep t x) (V t))
     (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
       HasDerivAt
-        (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
+        (fun s => frameTangent (F.chartRep s x) (chartFrameAt (I := I) x₀ x)
           (extChartAt I x x) k)
-        (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t) :
+        (frameTangent (V t) (chartFrameAt (I := I) x₀ x) (extChartAt I x x) k) t) :
     HasDerivAt
       (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily himm s) x x i j)
+        (F.inducedMetricFamily himm s) x₀ x i j)
       (-2 * @inner ℝ E _ (V t (extChartAt I x x))
         (secondDerivative (F.chartRep t x) (extChartAt I x x)
-          (chartFrame (I := I) x i) (chartFrame (I := I) x j))) t := by
+          (chartFrameAt (I := I) x₀ x i) (chartFrameAt (I := I) x₀ x j))) t := by
   have hfun : (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily himm s) x x i j)
-      = fun s => frameGram (F.chartRep s x) (chartFrame (I := I) x)
+        (F.inducedMetricFamily himm s) x₀ x i j)
+      = fun s => frameGram (F.chartRep s x) (chartFrameAt (I := I) x₀ x)
           (extChartAt I x x) i j := by
     funext s
     rw [inducedMetricFamily_apply]
-    exact chartGramMatrix_inducedMetric_eq_frameGram F s (himm s) x i j
+    exact chartGramMatrix_inducedMetric_eq_frameGram F s (himm s) x₀ x i j
   rw [hfun]
   exact hasDerivAt_frameGram_of_isNormalAlong
-    (F := fun s => F.chartRep s x) (V := V) (chartFrame (I := I) x) i j hF2 hV hnormal hcomm
+    (F := fun s => F.chartRep s x) (V := V) (chartFrameAt (I := I) x₀ x) i j
+    hF2 hV hnormal hcomm
 
 /-- The inverse chart Gram matrix of the induced metric family, as a `Matrix`.
 
@@ -286,7 +296,8 @@ theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
           (secondDerivative (F.chartRep t x) (extChartAt I x x)
             (chartFrame (I := I) x i) (chartFrame (I := I) x j)) :=
     fun i j =>
-      (hasDerivAt_chartGramMatrix_inducedMetricFamily F himm x i j hF2 hV hnormal hcomm).deriv
+      (hasDerivAt_chartGramMatrix_inducedMetricFamily F himm x x i j hF2 hV hnormal
+        hcomm).deriv
   rw [traceTimeDerivMetric_eq, Matrix.trace]
   simp only [Matrix.diag_apply, Matrix.mul_apply, Matrix.of_apply, chartGramInv]
   calc ∑ i, ∑ j,
