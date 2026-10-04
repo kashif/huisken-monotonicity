@@ -5,6 +5,8 @@ Authors: Kashif Rasul
 -/
 
 import HuiskenMonotonicity.Geometry.InducedMetric
+import HuiskenMonotonicity.TangentialCalculus
+import DifferentialGeometry.Topology.Manifold.MFDeriv.Interior
 import DifferentialGeometry.Geometry.Metric.Euclidean
 import DifferentialGeometry.Geometry.Metric.Pullback.Immersion
 import DifferentialGeometry.Analysis.Integration.Measure.Family.VolumeVariation
@@ -161,6 +163,51 @@ theorem chartGramMatrix_inducedMetricFamily (F : SmoothImmersionFamily I M E)
         (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
           (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) :=
   chartGramMatrix_inducedMetric F t (himm t) x₀ x i j
+
+/-! ### The chart representation
+
+The chart Gram matrix is a Gram matrix of Fréchet derivatives: `mfderiv` of a time slice,
+viewed on the model space, is the `fderiv` of the chart representation
+`F_t ∘ (extChartAt I x).symm`. That identification turns the entries of the chart Gram
+matrix into `frameGram` of the chart representation, which is the form the metric evolution
+results of `MetricEvolution.lean` consume.
+
+The frame used is `chartBasisVecFiber x · x`, the chart frame at its own base point. Its
+value is never needed: the tangential calculus is stated for an arbitrary frame, so the
+frame may be carried along opaquely. -/
+
+/-- The chart representation of the time slice `F_t` around `x`, as a map between model
+spaces. -/
+def chartRep (F : SmoothImmersionFamily I M E) (t : ℝ) (x : M) : E₁ → E :=
+  fun y => F ((extChartAt I x).symm y) t
+
+/-- The chart frame at its own base point, read in the model space. -/
+def chartFrame (x : M) (i : Fin (Module.finrank ℝ E₁)) : E₁ :=
+  Tensor.Coordinates.chartBasisVecFiber (I := I) x i x
+
+/-- The chart Gram matrix of the induced metric is `frameGram` of the chart representation.
+
+This is the identification that lets `hasDerivAt_frameGram_of_isNormalAlong` and
+`trace_metricEvolution` evaluate `traceTimeDerivMetric`, which is defined through
+`chartGramMatrix` at `x₀ = x`. -/
+theorem chartGramMatrix_inducedMetric_eq_frameGram [BoundarylessManifold I M]
+    (F : SmoothImmersionFamily I M E) (t : ℝ)
+    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (x : M) (i j : Fin (Module.finrank ℝ E₁)) :
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x x i j =
+      frameGram (F.chartRep t x) (chartFrame (I := I) x) (extChartAt I x x) i j := by
+  have hmd : MDifferentiableAt I 𝓘(ℝ, E) (fun q => F q t) x :=
+    (F.contMDiff_timeSlice t).mdifferentiableAt (by simp)
+  have hint : I.IsInteriorPoint x := BoundarylessManifold.isInteriorPoint
+  have h := DifferentialGeometry.Manifold.mfderiv_eq_fderiv_extChartAt_of_isInteriorPoint
+    I hmd hint
+  rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply]
+  simp only [chartFrame]
+  congr 1
+  · exact congrArg
+      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x i x)) h
+  · exact congrArg
+      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x j x)) h
 
 end Metric
 
