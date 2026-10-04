@@ -11,6 +11,7 @@ import DifferentialGeometry.Topology.Manifold.ChartDifferential
 import DifferentialGeometry.Geometry.Metric.Euclidean
 import DifferentialGeometry.Geometry.Metric.Pullback.Immersion
 import DifferentialGeometry.Analysis.Integration.Measure.Family.VolumeVariation
+import HuiskenMonotonicity.Upstream.DifferentialGeometry.Analysis.Integration.Measure.Family.Regularity
 
 /-!
 # The induced Riemannian metric and surface measure of an immersion family
@@ -444,6 +445,82 @@ theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
     exact happ
   rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply,
     key i, key j]
+
+/-! ### The regularity hypothesis, in chart-representation form
+
+`MetricFamilyRegularAt.of_chartGramOnE` consumes the chart Gram entries as a function on
+`ℝ × E₁`, namely `chartGramMatrixOnE`. For the induced metric family that function is a
+`frameGram` of the space-time chart representation against the constant model basis. -/
+
+/-- The chart-representation form of the chart Gram entries of the induced metric family. -/
+theorem chartGramMatrixOnE_inducedMetricFamily [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) (t : ℝ) {y : E₁}
+    (hy : y ∈ (extChartAt I x₀).target) :
+    chartGramMatrixOnE (I := I) (F.inducedMetricFamily himm) x₀ i j t y =
+      frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁) y i j := by
+  have hmem : (extChartAt I x₀).symm y ∈ (extChartAt I x₀).source :=
+    (extChartAt I x₀).map_target hy
+  have hyy : extChartAt I x₀ ((extChartAt I x₀).symm y) = y := (extChartAt I x₀).right_inv hy
+  rw [chartGramMatrixOnE, inducedMetricFamily_apply,
+    chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F t (himm t) x₀ hmem i j, hyy]
+
+/-- The chart target, crossed with all times, is open. -/
+lemma isOpen_univ_prod_extChartAt_target [I.Boundaryless] (x₀ : M) :
+    IsOpen ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) :=
+  isOpen_univ.prod (isOpen_extChartAt_target (I := I) x₀)
+
+/-- A spatial derivative of the chart representation is a partial derivative of the
+space-time chart representation, at points of the chart target. -/
+theorem fderiv_chartRep_eq_fderiv_spaceTimeChartRep [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E) (x₀ : M) {p : ℝ × E₁}
+    (hp : p ∈ Set.univ ×ˢ (extChartAt I x₀).target) (v : E₁) :
+    fderiv ℝ (F.chartRep p.1 x₀) p.2 v =
+      fderiv ℝ (F.spaceTimeChartRep x₀) p ((0 : ℝ), v) := by
+  have hs := isOpen_univ_prod_extChartAt_target (I := I) x₀
+  have hΦ : HasFDerivAt (F.spaceTimeChartRep x₀)
+      (fderiv ℝ (F.spaceTimeChartRep x₀) p) p :=
+    (((F.contDiffOn_spaceTimeChartRep x₀).differentiableOn (by norm_num)).differentiableAt
+      (hs.mem_nhds hp)).hasFDerivAt
+  have hcomp : HasFDerivAt ((F.spaceTimeChartRep x₀) ∘ fun z : E₁ => (p.1, z))
+      ((fderiv ℝ (F.spaceTimeChartRep x₀) p).comp
+        (ContinuousLinearMap.inr ℝ ℝ E₁)) p.2 :=
+    hΦ.comp p.2 (hasFDerivAt_prodMk_right (𝕜 := ℝ) p.1 p.2)
+  have hslice : HasFDerivAt (F.chartRep p.1 x₀)
+      ((fderiv ℝ (F.spaceTimeChartRep x₀) p).comp
+        (ContinuousLinearMap.inr ℝ ℝ E₁)) p.2 := hcomp
+  rw [hslice.fderiv]
+  rfl
+
+/-- **Joint continuity of the chart Gram entries.** The second field of
+`MetricFamilyRegularAt.of_chartGramOnE`. -/
+theorem continuousOn_chartGramMatrixOnE_inducedMetricFamily [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) :
+    ContinuousOn
+      (fun p : ℝ × E₁ =>
+        chartGramMatrixOnE (I := I) (F.inducedMetricFamily himm) x₀ i j p.1 p.2)
+      (Set.univ ×ˢ (extChartAt I x₀).target) := by
+  have hs := isOpen_univ_prod_extChartAt_target (I := I) x₀
+  have hfd : ContinuousOn (fderiv ℝ (F.spaceTimeChartRep x₀))
+      (Set.univ ×ˢ (extChartAt I x₀).target) :=
+    (F.contDiffOn_spaceTimeChartRep x₀).continuousOn_fderiv_of_isOpen hs (by norm_num)
+  have hev : ∀ v : E₁, ContinuousOn
+      (fun p : ℝ × E₁ => fderiv ℝ (F.spaceTimeChartRep x₀) p ((0 : ℝ), v))
+      (Set.univ ×ˢ (extChartAt I x₀).target) := fun v =>
+    ((ContinuousLinearMap.apply ℝ E ((0 : ℝ), v)).continuous).comp_continuousOn hfd
+  refine ((hev (Tensor.Coordinates.chartModelBasis E₁ i)).inner
+    (hev (Tensor.Coordinates.chartModelBasis E₁ j))).congr ?_
+  intro p hp
+  dsimp only
+  rw [chartGramMatrixOnE_inducedMetricFamily F himm x₀ i j p.1 hp.2, frameGram,
+    frameTangent_apply, frameTangent_apply,
+    fderiv_chartRep_eq_fderiv_spaceTimeChartRep F x₀ hp
+      (Tensor.Coordinates.chartModelBasis E₁ i),
+    fderiv_chartRep_eq_fderiv_spaceTimeChartRep F x₀ hp
+      (Tensor.Coordinates.chartModelBasis E₁ j)]
 
 end Metric
 
