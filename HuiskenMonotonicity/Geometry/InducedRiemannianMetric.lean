@@ -343,6 +343,53 @@ theorem traceTimeDerivMetric_inducedMetricFamily_meanCurvatureFlow
   rw [traceTimeDerivMetric_inducedMetricFamily F himm x hF2 hV hnormal hcomm, hmcf,
     real_inner_self_eq_norm_sq]
 
+/-! ### Smoothness of the space-time chart representation
+
+Everything the regularity hypothesis needs is a statement about the chart representation of
+the space-time map, as an honest map `ℝ × E₁ → E`. It is smooth on the chart target, and
+the proof is mathlib's chart API composed with `contMDiff_spaceTime`:
+`contMDiffOn_extChartAt_symm` for the inverse chart, `ContMDiff.comp_contMDiffOn` for the
+composite, and `contMDiffOn_iff_contDiffOn` to land back in Fréchet calculus. -/
+
+/-- The space-time chart representation around `x₀`, as a map `ℝ × E₁ → E`. -/
+def spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M) : ℝ × E₁ → E :=
+  fun p => F.chartRep p.1 x₀ p.2
+
+@[simp]
+theorem spaceTimeChartRep_apply (F : SmoothImmersionFamily I M E) (x₀ : M) (p : ℝ × E₁) :
+    F.spaceTimeChartRep x₀ p = F ((extChartAt I x₀).symm p.2) p.1 :=
+  rfl
+
+/-- The space-time chart representation is smooth on the chart target. -/
+theorem contDiffOn_spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M) :
+    ContDiffOn ℝ ⊤ (F.spaceTimeChartRep x₀)
+      (Set.univ ×ˢ (extChartAt I x₀).target) := by
+  have hsymm : ContMDiffOn 𝓘(ℝ, E₁) I ⊤ (extChartAt I x₀).symm (extChartAt I x₀).target :=
+    contMDiffOn_extChartAt_symm x₀
+  have hmaps : Set.MapsTo (fun p : ℝ × E₁ => p.2)
+      (Set.univ ×ˢ (extChartAt I x₀).target) (extChartAt I x₀).target :=
+    fun _ hp => hp.2
+  -- Build the inner map with the self-model on `ℝ × E₁`, avoiding the product
+  -- charted-space structure, whose instances do not match `chartedSpaceSelf`.
+  have hsnd : ContMDiff 𝓘(ℝ, ℝ × E₁) 𝓘(ℝ, E₁) ⊤ (fun p : ℝ × E₁ => p.2) :=
+    (contDiff_snd (𝕜 := ℝ)).contMDiff
+  have hfst : ContMDiff 𝓘(ℝ, ℝ × E₁) 𝓘(ℝ, ℝ) ⊤ (fun p : ℝ × E₁ => p.1) :=
+    (contDiff_fst (𝕜 := ℝ)).contMDiff
+  have hg : ContMDiffOn 𝓘(ℝ, ℝ × E₁) (I.prod 𝓘(ℝ, ℝ)) ⊤
+      (fun p : ℝ × E₁ => ((extChartAt I x₀).symm p.2, p.1))
+      (Set.univ ×ˢ (extChartAt I x₀).target) :=
+    (hsymm.comp hsnd.contMDiffOn hmaps).prodMk hfst.contMDiffOn
+  exact (F.contMDiff_spaceTime.comp_contMDiffOn hg).contDiffOn
+
+/-- The time slices of the chart representation are smooth on the chart target. -/
+theorem contDiffOn_chartRep (F : SmoothImmersionFamily I M E) (t : ℝ) (x₀ : M) :
+    ContDiffOn ℝ ⊤ (F.chartRep t x₀) (extChartAt I x₀).target := by
+  have hmaps : Set.MapsTo (fun y : E₁ => ((t, y) : ℝ × E₁))
+      (extChartAt I x₀).target (Set.univ ×ˢ (extChartAt I x₀).target) :=
+    fun _ hy => ⟨Set.mem_univ _, hy⟩
+  exact (F.contDiffOn_spaceTimeChartRep x₀).comp
+    (contDiff_const.prodMk contDiff_id).contDiffOn hmaps
+
 end Metric
 
 section SurfaceMeasure
