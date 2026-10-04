@@ -117,6 +117,53 @@ theorem trace_metricEvolution_meanCurvatureFlow
       -2 * ‖meanCurvatureVectorFrame F b gInv x‖ ^ 2 := by
   rw [trace_metricEvolution b gInv, hmcf, real_inner_self_eq_norm_sq]
 
+/-! ## The trace for a general velocity is the tangential divergence
+
+For a velocity that is *not* assumed normal, the trace of the metric evolution is twice the
+tangential divergence of the velocity. Combined with the transport formula applied to the
+constant integrand `1`, this says that the derivative of the total area along a variation is
+the integral of the divergence of its velocity, which is the first variation of area.
+
+It is also the route to the Stokes half of the divergence theorem that avoids the Gauss
+formula: for a *tangential* velocity the variation is a reparametrisation, and the library's
+`riemannianVolumeMeasure_pullback_cross` says the Riemannian volume of a pullback metric is
+the pushforward of the volume, so the total area does not move and the integral of the
+divergence vanishes. -/
+
+/-- The trace of the metric evolution, for an arbitrary velocity, is twice the tangential
+divergence of the velocity.
+
+Symmetry of `gInv` is needed and is available for any genuine inverse metric. -/
+theorem trace_frameGram_deriv_eq_two_mul_tangentialDivergence
+    {F V : E₁ → E} (b : Idx → E₁) (gInv : Idx → Idx → ℝ) {x : E₁}
+    (hsymm : ∀ i j : Idx, gInv i j = gInv j i) :
+    ∑ i, ∑ j, gInv i j *
+        (@inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) +
+          @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j))) =
+      2 * tangentialDivergence F V b gInv x := by
+  have hsplit : ∑ i, ∑ j, gInv i j *
+        (@inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) +
+          @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j)))
+      = (∑ i, ∑ j, gInv i j *
+            @inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j))
+        + ∑ i, ∑ j, gInv i j *
+            @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j)) := by
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    ring
+  -- the second sum is the first, after swapping the summation indices
+  have hswap : ∑ i, ∑ j, gInv i j *
+        @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j))
+      = ∑ i, ∑ j, gInv i j *
+            @inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    rw [hsymm j i, real_inner_comm (frameTangent F b x j) (fderiv ℝ V x (b i))]
+  rw [hsplit, hswap, tangentialDivergence]
+  ring
+
 /-! ## Discharging the commutation hypothesis
 
 For a jointly twice-differentiable space-time map, the time derivative of a spatial
