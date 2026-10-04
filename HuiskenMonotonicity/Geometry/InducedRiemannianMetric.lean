@@ -522,6 +522,120 @@ theorem continuousOn_chartGramMatrixOnE_inducedMetricFamily [I.Boundaryless]
     fderiv_chartRep_eq_fderiv_spaceTimeChartRep F x₀ hp
       (Tensor.Coordinates.chartModelBasis E₁ j)]
 
+/-! ### The derivative of the chart Gram entries, and its continuity
+
+The derivative needs neither the velocity nor any normality hypothesis: it is the plain
+product rule applied to `⟪∂_i Φ, ∂_j Φ⟫`, with the time derivative of a spatial partial
+derivative given by `hasDerivAt_fderiv_partial_time`. So all three fields of
+`of_chartGramOnE` follow from smoothness of the space-time chart representation alone. The
+velocity and the normality enter only later, when the *value* of the trace is evaluated. -/
+
+/-- The time derivative of the chart Gram entries, in chart-representation form. -/
+noncomputable def chartGramDeriv (F : SmoothImmersionFamily I M E) (x₀ : M)
+    (i j : Fin (Module.finrank ℝ E₁)) (t : ℝ) (y : E₁) : ℝ :=
+  @inner ℝ E _
+      (fderiv ℝ (F.spaceTimeChartRep x₀) (t, y)
+        ((0 : ℝ), Tensor.Coordinates.chartModelBasis E₁ i))
+      (fderiv ℝ (fderiv ℝ (F.spaceTimeChartRep x₀)) (t, y) ((1 : ℝ), (0 : E₁))
+        ((0 : ℝ), Tensor.Coordinates.chartModelBasis E₁ j)) +
+    @inner ℝ E _
+      (fderiv ℝ (fderiv ℝ (F.spaceTimeChartRep x₀)) (t, y) ((1 : ℝ), (0 : E₁))
+        ((0 : ℝ), Tensor.Coordinates.chartModelBasis E₁ i))
+      (fderiv ℝ (F.spaceTimeChartRep x₀) (t, y)
+        ((0 : ℝ), Tensor.Coordinates.chartModelBasis E₁ j))
+
+/-- **The derivative property.** The first field of
+`MetricFamilyRegularAt.of_chartGramOnE`. -/
+theorem hasDerivAt_chartGramMatrix_chartGramDeriv [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) (t : ℝ) {x : M}
+    (hx : x ∈ (trivializationAt E₁ (TangentSpace I) x₀).baseSet) :
+    HasDerivAt
+      (fun s : ℝ => Tensor.Coordinates.chartGramMatrix (I := I)
+        (F.inducedMetricFamily himm s) x₀ x i j)
+      (F.chartGramDeriv x₀ i j t (extChartAt I x₀ x)) t := by
+  have hxs : x ∈ (extChartAt I x₀).source :=
+    baseSet_subset_extChartAt_source (I := I) x₀ hx
+  have hy : extChartAt I x₀ x ∈ (extChartAt I x₀).target :=
+    (extChartAt I x₀).map_source hxs
+  have hmem : ((t, extChartAt I x₀ x) : ℝ × E₁) ∈
+      (Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target := ⟨Set.mem_univ _, hy⟩
+  have hs := isOpen_univ_prod_extChartAt_target (I := I) x₀
+  have hΦ : ContDiffAt ℝ 2 (F.spaceTimeChartRep x₀) (t, extChartAt I x₀ x) :=
+    ((F.contDiffOn_spaceTimeChartRep x₀).contDiffAt (hs.mem_nhds hmem)).of_le (by norm_num)
+  -- rewrite the function of `s` into chart-representation form
+  have hfun : (fun s : ℝ => Tensor.Coordinates.chartGramMatrix (I := I)
+        (F.inducedMetricFamily himm s) x₀ x i j)
+      = fun s : ℝ =>
+        @inner ℝ E _
+          (fderiv ℝ (F.spaceTimeChartRep x₀) (s, extChartAt I x₀ x)
+            ((0 : ℝ), Tensor.Coordinates.chartModelBasis E₁ i))
+          (fderiv ℝ (F.spaceTimeChartRep x₀) (s, extChartAt I x₀ x)
+            ((0 : ℝ), Tensor.Coordinates.chartModelBasis E₁ j)) := by
+    funext s
+    rw [inducedMetricFamily_apply,
+      chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F s (himm s) x₀ hxs i j,
+      frameGram, frameTangent_apply, frameTangent_apply,
+      fderiv_chartRep_eq_fderiv_spaceTimeChartRep F x₀
+        (p := (s, extChartAt I x₀ x)) ⟨Set.mem_univ _, hy⟩
+        (Tensor.Coordinates.chartModelBasis E₁ i),
+      fderiv_chartRep_eq_fderiv_spaceTimeChartRep F x₀
+        (p := (s, extChartAt I x₀ x)) ⟨Set.mem_univ _, hy⟩
+        (Tensor.Coordinates.chartModelBasis E₁ j)]
+  rw [hfun]
+  exact HasDerivAt.inner ℝ
+    (hasDerivAt_fderiv_partial_time hΦ (Tensor.Coordinates.chartModelBasis E₁ i))
+    (hasDerivAt_fderiv_partial_time hΦ (Tensor.Coordinates.chartModelBasis E₁ j))
+
+/-- **Joint continuity of the derivative.** The third field of
+`MetricFamilyRegularAt.of_chartGramOnE`. -/
+theorem continuousOn_chartGramDeriv [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E) (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) :
+    ContinuousOn (fun p : ℝ × E₁ => F.chartGramDeriv x₀ i j p.1 p.2)
+      ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) := by
+  have hs := isOpen_univ_prod_extChartAt_target (I := I) x₀
+  have hfd : ContinuousOn (fderiv ℝ (F.spaceTimeChartRep x₀))
+      ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) :=
+    (F.contDiffOn_spaceTimeChartRep x₀).continuousOn_fderiv_of_isOpen hs (by norm_num)
+  have hfd2 : ContinuousOn (fderiv ℝ (fderiv ℝ (F.spaceTimeChartRep x₀)))
+      ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) :=
+    ((F.contDiffOn_spaceTimeChartRep x₀).fderiv_of_isOpen hs
+      (m := 1) le_top).continuousOn_fderiv_of_isOpen hs (by norm_num)
+  have hev : ∀ v : E₁, ContinuousOn
+      (fun p : ℝ × E₁ => fderiv ℝ (F.spaceTimeChartRep x₀) p ((0 : ℝ), v))
+      ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) := fun v =>
+    ((ContinuousLinearMap.apply ℝ E ((0 : ℝ), v)).continuous).comp_continuousOn hfd
+  have hev2 : ∀ v : E₁, ContinuousOn
+      (fun p : ℝ × E₁ => fderiv ℝ (fderiv ℝ (F.spaceTimeChartRep x₀)) p
+        ((1 : ℝ), (0 : E₁)) ((0 : ℝ), v))
+      ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) := fun v =>
+    ((ContinuousLinearMap.apply ℝ E ((0 : ℝ), v)).continuous).comp_continuousOn
+      (((ContinuousLinearMap.apply ℝ ((ℝ × E₁) →L[ℝ] E) ((1 : ℝ), (0 : E₁))).continuous)
+        |>.comp_continuousOn hfd2)
+  exact ((hev (Tensor.Coordinates.chartModelBasis E₁ i)).inner
+      (hev2 (Tensor.Coordinates.chartModelBasis E₁ j))).add
+    ((hev2 (Tensor.Coordinates.chartModelBasis E₁ i)).inner
+      (hev (Tensor.Coordinates.chartModelBasis E₁ j)))
+
+/-- **The induced metric family is regular.**
+
+Discharges the regularity hypothesis of
+`DifferentialGeometry.Integral.Measure.volume_variation_formula` for the induced metric
+family of a smooth immersion family, from smoothness alone. The library assumes this
+hypothesis wherever it needs it and never constructs it. -/
+theorem metricFamilyRegularAt_inducedMetricFamily [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E)
+    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
+    (t₀ : ℝ) :
+    MetricFamilyRegularAt (I := I) (F.inducedMetricFamily himm) t₀ :=
+  MetricFamilyRegularAt.of_chartGramOnE (I := I)
+    (fun x₀ i j => F.chartGramDeriv x₀ i j)
+    (fun x₀ i j t _ hx =>
+      hasDerivAt_chartGramMatrix_chartGramDeriv F himm x₀ i j t hx)
+    (fun x₀ i j => continuousOn_chartGramMatrixOnE_inducedMetricFamily F himm x₀ i j)
+    (fun x₀ i j => continuousOn_chartGramDeriv F x₀ i j)
+
 end Metric
 
 section SurfaceMeasure

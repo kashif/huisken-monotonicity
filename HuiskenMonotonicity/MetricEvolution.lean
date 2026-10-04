@@ -259,6 +259,31 @@ theorem hasDerivAt_fderiv_spatialSlice_of_contDiffAt
   convert hLd using 1
   rfl
 
+/-- The time derivative of a spatial partial derivative is the mixed second derivative.
+
+Extracted from the proof of `hasDerivAt_fderiv_spatialSlice_of_contDiffAt`, where it is the
+left-hand computation. Stated separately because the regularity hypothesis of the transport
+formula needs it on its own, without the symmetry step. -/
+theorem hasDerivAt_fderiv_partial_time
+    {Φ : ℝ × E₁ → E} {t : ℝ} {x : E₁} (hΦ : ContDiffAt ℝ 2 Φ (t, x)) (v : E₁) :
+    HasDerivAt (fun s : ℝ => fderiv ℝ Φ (s, x) ((0 : ℝ), v))
+      (fderiv ℝ (fderiv ℝ Φ) (t, x) ((1 : ℝ), (0 : E₁)) ((0 : ℝ), v)) t := by
+  have hΦ2 : ContDiffAt ℝ 1 (fderiv ℝ Φ) (t, x) := hΦ.fderiv_right (by norm_num)
+  have hd2 : HasFDerivAt (fderiv ℝ Φ) (fderiv ℝ (fderiv ℝ Φ) (t, x)) (t, x) :=
+    (hΦ2.differentiableAt (by norm_num)).hasFDerivAt
+  set D := fderiv ℝ (fderiv ℝ Φ) (t, x) with hD
+  have hinner : HasFDerivAt (fun p : ℝ × E₁ => fderiv ℝ Φ p ((0 : ℝ), v))
+      (D.flip ((0 : ℝ), v)) (t, x) := by
+    simpa using hd2.clm_apply (hasFDerivAt_const ((0 : ℝ), v) (t, x))
+  have hcomp : HasFDerivAt
+      ((fun p : ℝ × E₁ => fderiv ℝ Φ p ((0 : ℝ), v)) ∘ fun s : ℝ => (s, x))
+      ((D.flip ((0 : ℝ), v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t :=
+    hinner.comp t (hasFDerivAt_prodMk_left (𝕜 := ℝ) t x)
+  have hL : HasFDerivAt (fun s : ℝ => fderiv ℝ Φ (s, x) ((0 : ℝ), v))
+      ((D.flip ((0 : ℝ), v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t := hcomp
+  convert hL.hasDerivAt using 1
+  rfl
+
 end Commutation
 
 end HuiskenMonotonicity
