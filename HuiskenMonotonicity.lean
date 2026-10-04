@@ -1,7 +1,14 @@
 import HuiskenMonotonicity.HeatKernel
 import HuiskenMonotonicity.Flow
+import HuiskenMonotonicity.SmoothImmersionFamily
+import HuiskenMonotonicity.Geometry.InducedMetric
 import HuiskenMonotonicity.InducedMetric
 import HuiskenMonotonicity.SecondFundamentalForm
+import HuiskenMonotonicity.Weingarten
+import HuiskenMonotonicity.TangentialCalculus
+import HuiskenMonotonicity.MetricEvolution
+import HuiskenMonotonicity.FirstVariation
+import HuiskenMonotonicity.DGInterface
 import HuiskenMonotonicity.GraphMeanCurvature
 import HuiskenMonotonicity.Monotonicity
 import HuiskenMonotonicity.CoordinateHypersurface

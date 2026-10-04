@@ -9,7 +9,8 @@ fundamental form* at `x ∈ E₁` is the bilinear form on `E₁` given by
 
 In coordinates `g_ij = ⟨∂F/∂x^i, ∂F/∂x^j⟩` (the induced metric), the matrix
 entries are `h_ij(x) = -⟨∂²F/∂x^i∂x^j(x),\, ν(x)⟩` (Schnürer Lemma 2.1, the
-"lower-normal" sign convention; cf. Huisken §1, background.latex eq. 1.13).
+"lower-normal" sign convention; cf. Huisken, *Asymptotic behavior for singularities
+of the mean curvature flow*, §1).
 
 Symmetry (`h_ij = h_ji`) follows from Schwarz's theorem applied to `D²F`.
 
@@ -57,7 +58,7 @@ normal `ν : E₁ → E`, evaluated at `x` on tangent vectors `v, w`:
   `h_x(v, w) = -⟨D²F_x(v, w),\, ν(x)⟩`.
 
 The minus sign matches the "lower-normal" convention of Schnürer §2 / Huisken §1
-(background.latex eq. 1.13). For codimension-1 immersions there is a global
+(Schnürer, Lemma 2.1). For codimension-1 immersions there is a global
 choice of `ν` up to sign (orientation); the choice is supplied externally. -/
 noncomputable def secondFundamentalForm
     (F : E₁ → E) (ν : E₁ → E) (x : E₁) (v w : E₁) : ℝ :=

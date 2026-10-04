@@ -135,7 +135,7 @@ end inducedMetricMatrix
 
 /-! ## Induced Gram matrix in the standard basis
 
-The classical formula `g_ij(x) = ⟨∂F/∂x^i(x), ∂F/∂x^j(x)⟩` of background.latex
+The classical formula `g_ij(x) = ⟨∂F/∂x^i(x), ∂F/∂x^j(x)⟩`
 (eq. 1.12 for graphs) packaged as a mathlib `Matrix (Fin n) (Fin n) ℝ`. This
 specialisation of `inducedMetricMatrix` to the standard basis of
 `EuclideanSpace ℝ (Fin n)` lets us hook into the mathlib matrix API
