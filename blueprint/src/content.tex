@@ -20,19 +20,22 @@ explicit rate given by the squared-norm formula
 
 \section*{Formalization status}
 
-Mathlib v4.30.0-rc2 does not yet contain the second fundamental form, the surface
-measure of an immersion, the moving-measure chain rule, or the first variation
-formula. Rather than build all four, the formalization \emph{axiomatises} them at
-the level needed for this single application: two purely geometric coherence axioms
-on the data structure (orthogonality of $F^T$ and $F^\perp$; $H \perp F^T$), and
-two analytic hypotheses on the theorem itself (the chain-rule expansion of
-$(d/dt) \int \rho\,d\mu_s$, and the integrated first-variation identity for the
-test field $Y = \rho F / \tau$).
+The pinned Mathlib snapshot does not yet contain an integrated second
+fundamental form, the surface measure of an immersion, the moving-measure chain
+rule, or the first variation formula. This project now constructs the induced
+metric and second fundamental form for coordinate immersions and verifies them
+explicitly for graphs. The current global theorem still \emph{axiomatises} the
+missing manifold-level inputs: two purely geometric coherence axioms on the
+data structure (orthogonality of $F^T$ and $F^\perp$; $H \perp F^T$), and two
+analytic hypotheses on the theorem itself (the chain-rule expansion of
+$(d/dt) \int \rho\,d\mu_s$, and the integrated first-variation identity for
+the test field $Y = \rho F / \tau$).
 
 Given those axioms, Theorem~\ref{thm:huisken-monotonicity} is fully proved
 (\texttt{lake build} reports zero \texttt{sorry}). When mathlib gains the missing
-geometric primitives, the analytic hypotheses can be discharged for any genuine
-mean curvature flow, recovering Huisken's theorem unconditionally.
+generic geometric and integration layers are available, the hypotheses can be
+discharged for any genuine mean curvature flow, recovering Huisken's theorem
+unconditionally.
 
 \chapter{The backward heat kernel}
 
@@ -433,6 +436,19 @@ hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
 \end{lemma}
 \begin{proof}\leanok Verified in Lean. \end{proof}
 
+\begin{definition}[second fundamental form matrix]
+  \label{def:second-fundamental-form-matrix}
+  \lean{HuiskenMonotonicity.secondFundamentalFormMatrix}
+  \leanok
+  For a coordinate immersion $F : \mathbb{R}^n \to E$ and a chosen normal
+  field $\nu$, the scalar second fundamental form has entries
+  \[
+    h_{ij}(x)=-\left\langle D^2F_x(e_i,e_j),\,\nu(x)\right\rangle .
+  \]
+  The minus sign is the lower-normal convention used throughout the
+  formalization.
+\end{definition}
+
 \begin{definition}[graph position]
   \label{def:graph-position}
   \lean{HuiskenMonotonicity.graphPosition}
@@ -458,6 +474,67 @@ hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
   Norm verified to equal $1$.
 \end{definition}
 
+\begin{lemma}[second fundamental form of a graph]
+  \label{lem:graph-second-fundamental-form}
+  \lean{HuiskenMonotonicity.secondFundamentalFormMatrix_graphPosition}
+  \leanok
+  \uses{def:second-fundamental-form-matrix, def:graph-position,
+        def:graph-unit-normal}
+  If $f$ is $C^2$ and
+  $v=\sqrt{1+\|\nabla f\|^2}$, then the downward-oriented graph satisfies
+  \[
+    h_{ij}=\frac{\partial_i\partial_j f}{v}.
+  \]
+\end{lemma}
+\begin{proof}\leanok
+  The second derivative of the graph position has only a height component.
+  Pairing it with $(\nabla f,-1)/v$ and applying the sign in the definition
+  gives the result.
+\end{proof}
+
+\begin{theorem}[graph scalar mean curvature is the metric trace]
+  \label{thm:graph-scalar-metric-trace}
+  \lean{HuiskenMonotonicity.meanCurvatureGraph_eq_inducedMetricTrace}
+  \leanok
+  \uses{def:induced-gram-matrix, def:graph-mc-scalar,
+        lem:graph-second-fundamental-form}
+  For a $C^2$ graph, the divergence definition of scalar mean curvature agrees
+  with the geometric contraction
+  \[
+    H=\sum_{i,j}g^{ij}h_{ij},
+  \]
+  where $g^{ij}$ is the inverse of the generic induced Gram matrix of the
+  graph position.
+\end{theorem}
+\begin{proof}\leanok
+  Differentiate $\partial_i f/v$, expand the derivative of $v$, and use
+  $g^{ij}=\delta_{ij}-(\partial_i f)(\partial_j f)/v^2$. The resulting
+  Hessian trace and rank-one correction agree term by term.
+\end{proof}
+
+\begin{definition}[normal-valued second fundamental form of a graph]
+  \label{def:graph-second-fundamental-form-vector}
+  \lean{HuiskenMonotonicity.graphSecondFundamentalFormVectorMatrix}
+  \leanok
+  \uses{lem:graph-second-fundamental-form, def:graph-unit-normal}
+  With the scalar convention above, the ambient normal-valued entries are
+  \[
+    \vec h_{ij}=-h_{ij}\nu.
+  \]
+  This sign makes their metric trace equal to the mean curvature vector.
+\end{definition}
+
+\begin{definition}[vector trace of the graph second fundamental form]
+  \label{def:graph-second-fundamental-form-vector-trace}
+  \lean{HuiskenMonotonicity.graphSecondFundamentalFormVectorTrace}
+  \leanok
+  \uses{def:graph-second-fundamental-form-vector}
+  The explicit inverse graph metric contracts the normal-valued matrix:
+  \[
+    \operatorname{tr}_g\vec h=\sum_{i,j}g^{ij}\vec h_{ij}.
+  \]
+\end{definition}
+
 \begin{definition}[graph mean curvature vector]
   \label{def:graph-mc-vector}
   \lean{HuiskenMonotonicity.graphMeanCurvatureVector}
@@ -465,6 +542,39 @@ hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
   \uses{def:graph-mc-scalar, def:graph-unit-normal}
   Mean curvature vector $\vec{H} = -H \cdot \nu$ along the unit normal.
 \end{definition}
+
+\begin{theorem}[vector trace equals graph mean curvature]
+  \label{thm:graph-vector-metric-trace}
+  \lean{HuiskenMonotonicity.graphSecondFundamentalFormVectorTrace_eq_meanCurvatureVector}
+  \leanok
+  \uses{thm:graph-scalar-metric-trace,
+        def:graph-second-fundamental-form-vector-trace,
+        def:graph-mc-vector}
+  For a $C^2$ graph,
+  \[
+    \operatorname{tr}_g\vec h
+      =-\left(\sum_{i,j}g^{ij}h_{ij}\right)\nu
+      =-H\nu
+      =\vec H.
+  \]
+\end{theorem}
+\begin{proof}\leanok
+  Factor the common normal through the two finite sums and apply the scalar
+  trace theorem.
+\end{proof}
+
+\begin{theorem}[induced-metric vector trace equals graph mean curvature]
+  \label{thm:graph-induced-vector-metric-trace}
+  \lean{HuiskenMonotonicity.inducedMetricTrace_graphSecondFundamentalFormVector_eq_meanCurvatureVector}
+  \leanok
+  \uses{def:induced-gram-matrix, thm:graph-vector-metric-trace}
+  Replacing the explicit inverse graph metric by the inverse of the generic
+  induced Gram matrix gives the same normal-valued trace $\vec H$.
+\end{theorem}
+\begin{proof}\leanok
+  The generic induced Gram matrix of the graph position equals the explicit
+  graph metric, whose matrix inverse is the explicit $g^{ij}$.
+\end{proof}
 
 \begin{lemma}[graph mean curvature is normal]
   \label{lem:graph-mc-normal}

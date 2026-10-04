@@ -1,5 +1,15 @@
+.claude/
+.cursor/
 /.lake
 /blueprint/print/
 /blueprint/web/
 **/.DS_Store
 *.paux
+
+# Reference texts and local tooling state (kept untracked deliberately)
+/paper.md
+/mcf.md
+/background.latex
+/.codegraph/
+/mise.toml
+/slides_*.pdf
