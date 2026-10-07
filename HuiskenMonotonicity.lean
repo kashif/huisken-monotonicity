@@ -15,3 +15,4 @@ import HuiskenMonotonicity.GraphMeanCurvature
 import HuiskenMonotonicity.Monotonicity
 import HuiskenMonotonicity.CoordinateHypersurface
 import HuiskenMonotonicity.Examples.Hyperplane
+import HuiskenMonotonicity.Upstream.DifferentialGeometry.Geometry.Submanifold.MeanCurvature
