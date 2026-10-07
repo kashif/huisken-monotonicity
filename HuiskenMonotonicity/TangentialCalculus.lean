@@ -199,4 +199,98 @@ theorem tangentialDivergence_self
     _ = ∑ _i : Idx, (1 : ℝ) := Finset.sum_congr rfl fun i _ => by simpa using hinv i i
     _ = (Fintype.card Idx : ℝ) := by simp
 
+/-! ## Tangential and normal parts
+
+The tangential part of an ambient vector is its projection onto the tangent space,
+written through the inverse metric so that no projection operator is constructed:
+
+  `vᵀ = ∑ k, ∑ l, g^{kl} ⟪v, ∂_l F⟫ ∂_k F`,   `v^⊥ = v - vᵀ`.
+
+`meanCurvatureVectorFrame` is the plain trace `g^{ij} D²F(∂_i, ∂_j)`, which has a tangential
+Christoffel component; its normal part is the mean curvature vector proper. The difference is
+invisible against a normal field, but not against the position vector, which is what
+Huisken's first-variation identity pairs it with. -/
+
+/-- The **tangential part** of an ambient vector. -/
+noncomputable def tangentialPart
+    (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) : E :=
+  ∑ k, ∑ l, (gInv k l * @inner ℝ E _ v (frameTangent F b x l)) • frameTangent F b x k
+
+/-- The **normal part** of an ambient vector. -/
+noncomputable def normalPart
+    (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) : E :=
+  v - tangentialPart F b gInv x v
+
+/-- The **mean curvature vector**: the normal part of the inverse-metric trace of the second
+derivative. -/
+noncomputable def meanCurvatureNormal
+    (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) : E :=
+  normalPart F b gInv x (meanCurvatureVectorFrame F b gInv x)
+
+/-- The tangential part pairs with each frame vector as the vector itself does. -/
+theorem inner_tangentialPart_frameTangent
+    {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
+    (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
+    (v : E) (j : Idx) :
+    @inner ℝ E _ (tangentialPart F b gInv x v) (frameTangent F b x j) =
+      @inner ℝ E _ v (frameTangent F b x j) := by
+  have hstep : @inner ℝ E _ (tangentialPart F b gInv x v) (frameTangent F b x j) =
+      ∑ l, @inner ℝ E _ v (frameTangent F b x l) *
+        ∑ k, gInv l k * frameGram F b x k j := by
+    simp only [tangentialPart, sum_inner, real_inner_smul_left, Finset.mul_sum]
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun l _ => Finset.sum_congr rfl fun k _ => ?_
+    rw [hsymm k l, frameGram]
+    ring
+  rw [hstep]
+  simp only [hinv _ j, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+
+/-- The normal part is orthogonal to every frame vector. -/
+theorem inner_normalPart_frameTangent
+    {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
+    (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
+    (v : E) (j : Idx) :
+    @inner ℝ E _ (normalPart F b gInv x v) (frameTangent F b x j) = 0 := by
+  rw [normalPart, inner_sub_left, inner_tangentialPart_frameTangent hinv hsymm, sub_self]
+
+/-- The normal part is orthogonal to the tangential part of any vector. -/
+theorem inner_normalPart_tangentialPart
+    {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
+    (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
+    (v w : E) :
+    @inner ℝ E _ (normalPart F b gInv x v) (tangentialPart F b gInv x w) = 0 := by
+  simp only [tangentialPart, inner_sum, real_inner_smul_right,
+    inner_normalPart_frameTangent hinv hsymm, mul_zero, Finset.sum_const_zero]
+
+/-- The squared tangential norm is the squared length of the tangential part. -/
+theorem inner_tangentialPart_self
+    {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
+    (hsymm : ∀ i j, gInv i j = gInv j i) (v : E) :
+    @inner ℝ E _ (tangentialPart F b gInv x v) v = tangentialNormSq F b gInv x v := by
+  simp only [tangentialPart, tangentialNormSq, sum_inner, real_inner_smul_left]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  rw [hsymm j i, real_inner_comm (frameTangent F b x j) v]
+  ring
+
+/-- Pairing with the mean curvature vector sees only the normal part of the other vector, and
+on a normal vector it agrees with pairing against the plain trace. -/
+theorem inner_meanCurvatureNormal_eq
+    {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
+    (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i) (v : E) :
+    @inner ℝ E _ v (meanCurvatureNormal F b gInv x) =
+      @inner ℝ E _ (normalPart F b gInv x v) (meanCurvatureVectorFrame F b gInv x) := by
+  have hv : v = normalPart F b gInv x v + tangentialPart F b gInv x v := by
+    simp [normalPart]
+  have hH : meanCurvatureVectorFrame F b gInv x =
+      meanCurvatureNormal F b gInv x +
+        tangentialPart F b gInv x (meanCurvatureVectorFrame F b gInv x) := by
+    simp [meanCurvatureNormal, normalPart]
+  have h0 : @inner ℝ E _ (tangentialPart F b gInv x v) (meanCurvatureNormal F b gInv x) = 0 := by
+    rw [real_inner_comm, meanCurvatureNormal, inner_normalPart_tangentialPart hinv hsymm]
+  conv_lhs => rw [hv]
+  conv_rhs => rw [hH]
+  rw [inner_add_left, inner_add_right, inner_normalPart_tangentialPart hinv hsymm, add_zero, h0,
+    add_zero]
+
 end HuiskenMonotonicity
