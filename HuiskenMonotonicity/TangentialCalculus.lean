@@ -293,4 +293,59 @@ theorem inner_meanCurvatureNormal_eq
   rw [inner_add_left, inner_add_right, inner_normalPart_tangentialPart hinv hsymm, add_zero, h0,
     add_zero]
 
+/-! ## Beltrami's formula for the squared distance
+
+`Δ_M (|F|²/2) = n + ⟪F, Hvec⟫`, the form of Beltrami's formula `Δ_M F = Hvec` that Huisken's
+first-variation step uses. The gradient of `|F|²/2` is the tangential part of the position
+vector, so the statement is about the divergence of that field. It follows the split of the
+divergence theorem for a submanifold: `F = Fᵀ + F^⊥`, with `div F = n` and, `F^⊥` being normal,
+`div F^⊥ = -⟪F^⊥, Hvec⟫`.
+
+The inverse metric is allowed to vary with the point, as it does in a chart; it must be an
+inverse metric near the point and differentiable there. -/
+
+/-- The tangential divergence is additive in the field. -/
+theorem tangentialDivergence_sub (F : E₁ → E) {ξ₁ ξ₂ : E₁ → E} (b : Idx → E₁)
+    (gInv : Idx → Idx → ℝ) {x : E₁} (h₁ : DifferentiableAt ℝ ξ₁ x)
+    (h₂ : DifferentiableAt ℝ ξ₂ x) :
+    tangentialDivergence F (fun y => ξ₁ y - ξ₂ y) b gInv x =
+      tangentialDivergence F ξ₁ b gInv x - tangentialDivergence F ξ₂ b gInv x := by
+  simp only [tangentialDivergence, fderiv_fun_sub h₁ h₂, ContinuousLinearMap.sub_apply,
+    inner_sub_left, mul_sub, Finset.sum_sub_distrib]
+
+/-- **Beltrami's formula for `|F|²/2`.** The tangential divergence of the tangential part of
+the position vector is `n + ⟪F, Hvec⟫`. -/
+theorem tangentialDivergence_tangentialPart_position {F : E₁ → E} {x : E₁}
+    (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁) (hb : Submodule.span ℝ (Set.range b) = ⊤)
+    (gInv : E₁ → Idx → Idx → ℝ)
+    (hinv : ∀ᶠ y in nhds x, IsFrameInverse F b y (gInv y))
+    (hsymm : ∀ y i j, gInv y i j = gInv y j i)
+    (hN : DifferentiableAt ℝ (fun y => normalPart F b (gInv y) y (F y)) x) :
+    tangentialDivergence F (fun y => tangentialPart F b (gInv y) y (F y)) b (gInv x) x =
+      (Fintype.card Idx : ℝ) +
+        @inner ℝ E _ (F x) (meanCurvatureNormal F b (gInv x) x) := by
+  have hFd : DifferentiableAt ℝ F x := hF.differentiableAt (by norm_num)
+  -- the tangential part is the position vector minus its normal part
+  have hT : (fun y => tangentialPart F b (gInv y) y (F y)) =
+      fun y => F y - normalPart F b (gInv y) y (F y) := by
+    funext y
+    simp [normalPart]
+  -- the normal part is normal along F near x: `v ↦ ⟪N, dF v⟫` is linear and vanishes on the
+  -- spanning frame
+  have hnormal : IsNormalAlongNear F (fun y => normalPart F b (gInv y) y (F y)) x := by
+    filter_upwards [hinv] with y hy v
+    set L : E₁ →L[ℝ] ℝ :=
+      (innerSL ℝ (normalPart F b (gInv y) y (F y))).comp (fderiv ℝ F y) with hL
+    have hker : Submodule.span ℝ (Set.range b) ≤ LinearMap.ker (L : E₁ →ₗ[ℝ] ℝ) := by
+      rw [Submodule.span_le]
+      rintro _ ⟨j, rfl⟩
+      simpa [hL, frameTangent] using inner_normalPart_frameTangent hy (hsymm y) (F y) j
+    have hv : v ∈ LinearMap.ker (L : E₁ →ₗ[ℝ] ℝ) := hker (hb ▸ Submodule.mem_top)
+    simpa [hL] using hv
+  rw [hT, tangentialDivergence_sub F b (gInv x) hFd hN,
+    tangentialDivergence_self F b hinv.self_of_nhds,
+    tangentialDivergence_of_isNormalAlong hF hN hnormal b (gInv x),
+    inner_meanCurvatureNormal_eq hinv.self_of_nhds (hsymm x)]
+  ring
+
 end HuiskenMonotonicity
