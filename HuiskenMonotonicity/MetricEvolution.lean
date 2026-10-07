@@ -63,8 +63,8 @@ theorem hasDerivAt_frameGram
 Orientation-free form of `∂_t g_ij = -2 F h_ij`. -/
 theorem hasDerivAt_frameGram_of_isNormalAlong
     {F V : ℝ → E₁ → E} (b : Idx → E₁) {t : ℝ} {x : E₁} (i j : Idx)
-    (hF : ContDiff ℝ 2 (F t)) (hV : Differentiable ℝ (V t))
-    (hnormal : IsNormalAlong (F t) (V t))
+    (hF : ContDiffAt ℝ 2 (F t) x) (hV : DifferentiableAt ℝ (V t) x)
+    (hnormal : IsNormalAlongNear (F t) (V t) x)
     (hcomm : ∀ k : Idx,
       HasDerivAt (fun s => frameTangent (F s) b x k) (frameTangent (V t) b x k) t) :
     HasDerivAt (fun s => frameGram (F s) b x i j)
@@ -73,12 +73,12 @@ theorem hasDerivAt_frameGram_of_isNormalAlong
   have hji : @inner ℝ E _ (frameTangent (F t) b x i) (frameTangent (V t) b x j) =
       -@inner ℝ E _ (V t x) (secondDerivative (F t) x (b i) (b j)) := by
     rw [real_inner_comm, frameTangent_apply, frameTangent_apply,
-      inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal x (b j) (b i),
-      secondDerivative_symm hF x (b j) (b i)]
+      inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal (b j) (b i),
+      secondDerivative_symm_of_contDiffAt hF (b j) (b i)]
   have hij : @inner ℝ E _ (frameTangent (V t) b x i) (frameTangent (F t) b x j) =
       -@inner ℝ E _ (V t x) (secondDerivative (F t) x (b i) (b j)) := by
     rw [frameTangent_apply, frameTangent_apply,
-      inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal x (b i) (b j)]
+      inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal (b i) (b j)]
   rw [hji, hij] at hbase
   convert hbase using 1
   ring

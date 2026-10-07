@@ -31,14 +31,14 @@ variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁] [Finite
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- The normal divergence identity, stated at DG's chart index type and model basis. -/
-example {F ξ : E₁ → E} (hF : ContDiff ℝ 2 F) (hξ : Differentiable ℝ ξ)
-    (hnormal : IsNormalAlong F ξ)
+example {F ξ : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (hξ : DifferentiableAt ℝ ξ x)
+    (hnormal : IsNormalAlongNear F ξ x)
     (gInv : DifferentialGeometry.Tensor.Coordinates.CoordinateIdx (𝕜 := ℝ) E₁ →
-      DifferentialGeometry.Tensor.Coordinates.CoordinateIdx (𝕜 := ℝ) E₁ → ℝ) (x : E₁) :
+      DifferentialGeometry.Tensor.Coordinates.CoordinateIdx (𝕜 := ℝ) E₁ → ℝ) :
     tangentialDivergence F ξ (DifferentialGeometry.Tensor.Coordinates.chartModelBasis E₁) gInv x =
       -@inner ℝ E _ (ξ x)
         (meanCurvatureVectorFrame F (DifferentialGeometry.Tensor.Coordinates.chartModelBasis E₁) gInv x) :=
-  tangentialDivergence_of_isNormalAlong hF hξ hnormal _ gInv x
+  tangentialDivergence_of_isNormalAlong hF hξ hnormal _ gInv
 
 /-- `div_M F` at DG's chart frame is the model-space dimension, on the nose. -/
 example {F : E₁ → E}

@@ -123,8 +123,8 @@ For a field `ξ` normal along `F`,
 The inverse-metric contraction of `inner_fderiv_eq_neg_inner_secondDerivative`; needs no
 unit normal, and holds for an arbitrary `gInv`. -/
 theorem tangentialDivergence_of_isNormalAlong
-    {F ξ : E₁ → E} (hF : ContDiff ℝ 2 F) (hξ : Differentiable ℝ ξ)
-    (hnormal : IsNormalAlong F ξ) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) :
+    {F ξ : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (hξ : DifferentiableAt ℝ ξ x)
+    (hnormal : IsNormalAlongNear F ξ x) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) :
     tangentialDivergence F ξ b gInv x =
       -@inner ℝ E _ (ξ x) (meanCurvatureVectorFrame F b gInv x) := by
   have hR : -@inner ℝ E _ (ξ x) (meanCurvatureVectorFrame F b gInv x) =
@@ -134,7 +134,7 @@ theorem tangentialDivergence_of_isNormalAlong
   rw [tangentialDivergence, hR]
   refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
   rw [frameTangent_apply,
-    inner_fderiv_eq_neg_inner_secondDerivative hF hξ hnormal x (b i) (b j),
+    inner_fderiv_eq_neg_inner_secondDerivative hF hξ hnormal (b i) (b j),
     real_inner_smul_right]
   ring
 

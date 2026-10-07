@@ -197,9 +197,9 @@ the entries whose trace `traceTimeDerivMetric` takes. -/
 theorem hasDerivAt_chartGramMatrix_inducedMetricFamily [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E)
     {V : ℝ → E₁ → E} {t : ℝ} (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁))
-    (hF2 : ContDiff ℝ 2 (F.chartRep t x))
-    (hV : Differentiable ℝ (V t))
-    (hnormal : IsNormalAlong (F.chartRep t x) (V t))
+    (hF2 : ContDiffAt ℝ 2 (F.chartRep t x) (extChartAt I x x))
+    (hV : DifferentiableAt ℝ (V t) (extChartAt I x x))
+    (hnormal : IsNormalAlongNear (F.chartRep t x) (V t) (extChartAt I x x))
     (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
       HasDerivAt
         (fun s => frameTangent (F.chartRep s x) (chartFrameAt (I := I) x₀ x)
@@ -242,9 +242,9 @@ element. -/
 theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E)
     {V : ℝ → E₁ → E} {t : ℝ} (x : M)
-    (hF2 : ContDiff ℝ 2 (F.chartRep t x))
-    (hV : Differentiable ℝ (V t))
-    (hnormal : IsNormalAlong (F.chartRep t x) (V t))
+    (hF2 : ContDiffAt ℝ 2 (F.chartRep t x) (extChartAt I x x))
+    (hV : DifferentiableAt ℝ (V t) (extChartAt I x x))
+    (hnormal : IsNormalAlongNear (F.chartRep t x) (V t) (extChartAt I x x))
     (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
       HasDerivAt
         (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
@@ -275,7 +275,7 @@ theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
               (secondDerivative (F.chartRep t x) (extChartAt I x x)
                 (chartFrame (I := I) x i) (chartFrame (I := I) x j))) := by
         refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-        rw [hderiv j i, secondDerivative_symm hF2]
+        rw [hderiv j i, secondDerivative_symm_of_contDiffAt hF2]
     _ = -2 * @inner ℝ E _ (V t (extChartAt I x x))
           (meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
             (F.chartGramInv t x) (extChartAt I x x)) :=
@@ -290,9 +290,9 @@ theorem traceTimeDerivMetric_inducedMetricFamily_meanCurvatureFlow
     [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E)
     {V : ℝ → E₁ → E} {t : ℝ} (x : M)
-    (hF2 : ContDiff ℝ 2 (F.chartRep t x))
-    (hV : Differentiable ℝ (V t))
-    (hnormal : IsNormalAlong (F.chartRep t x) (V t))
+    (hF2 : ContDiffAt ℝ 2 (F.chartRep t x) (extChartAt I x x))
+    (hV : DifferentiableAt ℝ (V t) (extChartAt I x x))
+    (hnormal : IsNormalAlongNear (F.chartRep t x) (V t) (extChartAt I x x))
     (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
       HasDerivAt
         (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)

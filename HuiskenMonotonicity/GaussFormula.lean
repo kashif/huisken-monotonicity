@@ -33,29 +33,6 @@ variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable {Idx : Type*} [Fintype Idx] [DecidableEq Idx]
 
-/-- The second derivative as an iterated Fréchet derivative. -/
-lemma secondDerivative_eq_fderiv_fderiv (F : E₁ → E) (x v w : E₁) :
-    secondDerivative F x v w = fderiv ℝ (fderiv ℝ F) x v w := by
-  unfold secondDerivative
-  rw [iteratedFDeriv_two_apply]
-  rfl
-
-/-- Symmetry of the second derivative at a point where the map is `C²`. Only local
-smoothness is needed, which matters because a chart representation is smooth on the chart
-target and nowhere else. -/
-lemma secondDerivative_symm_of_contDiffAt {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x)
-    (v w : E₁) : secondDerivative F x v w = secondDerivative F x w v := by
-  rw [secondDerivative_eq_fderiv_fderiv, secondDerivative_eq_fderiv_fderiv]
-  exact hF.isSymmSndFDerivAt (by simp) v w
-
-/-- A tangent vector `y ↦ dF_y(w)` has derivative `v ↦ D²F(v, w)`. -/
-theorem hasFDerivAt_fderiv_apply {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (w : E₁) :
-    HasFDerivAt (fun y => fderiv ℝ F y w) ((fderiv ℝ (fderiv ℝ F) x).flip w) x := by
-  have hFd : ContDiffAt ℝ 1 (fderiv ℝ F) x := hF.fderiv_right (by norm_num)
-  have hFd' : HasFDerivAt (fderiv ℝ F) (fderiv ℝ (fderiv ℝ F) x) x :=
-    (hFd.differentiableAt (by norm_num)).hasFDerivAt
-  simpa using hFd'.clm_apply (hasFDerivAt_const w x)
-
 /-- **The derivative of a Gram entry**, by the product rule:
 
   `∂_v g_{jk} = ⟪D²F(v, ∂_j), ∂_k F⟫ + ⟪∂_j F, D²F(v, ∂_k)⟫`. -/
