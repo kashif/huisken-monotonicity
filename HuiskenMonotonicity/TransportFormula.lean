@@ -173,19 +173,18 @@ mean curvature flow. -/
 theorem hasDerivAt_integral_backwardHeatKernel
     [I.Boundaryless] [T2Space M] [SigmaCompactSpace M] [CompactSpace M]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (n : ℕ) {t₀ t : ℝ} (h : t < t₀) :
     HasDerivAt
-      (fun s : ℝ => ∫ x, backwardHeatKernel n t₀ s (F x s) ∂(F.surfaceMeasure himm s))
+      (fun s : ℝ => ∫ x, backwardHeatKernel n t₀ s (F x s) ∂(F.surfaceMeasure s))
       (∫ x, (deriv (fun s : ℝ => backwardHeatKernel n t₀ s (F x s)) t
               + (1 / 2 : ℝ) *
-                traceTimeDerivMetric (I := I) (F.inducedMetricFamily himm) t x *
+                traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x *
                 backwardHeatKernel n t₀ t (F x t))
-          ∂(F.surfaceMeasure himm t)) t := by
-  have hmeas := F.surfaceMeasure_eq_riemannianMeasureFamily himm
+          ∂(F.surfaceMeasure t)) t := by
+  have hmeas := F.surfaceMeasure_eq_riemannianMeasureFamily
   rw [hmeas]
   exact volume_variation_formula_of_eventuallyEq (I := I)
-    (F.metricFamilyRegularAt_inducedMetricFamily himm t)
+    (F.metricFamilyRegularAt_inducedMetricFamily t)
     (functionRegularAt_cutoffIntegrand F n h t)
     (cutoffIntegrand_eventuallyEq F n h)
 

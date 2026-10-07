@@ -6,6 +6,7 @@ import HuiskenMonotonicity.SecondFundamentalForm
 import HuiskenMonotonicity.Weingarten
 import HuiskenMonotonicity.TangentialCalculus
 import HuiskenMonotonicity.GaussFormula
+import HuiskenMonotonicity.VossWeyl
 import HuiskenMonotonicity.MetricEvolution
 import HuiskenMonotonicity.FirstVariation
 import HuiskenMonotonicity.TransportFormula

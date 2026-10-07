@@ -1,4 +1,5 @@
 import DifferentialGeometry.Analysis.Integration.Measure.Family.Defs
+import DifferentialGeometry.Geometry.Metric.Coordinates.ChartGram
 import DifferentialGeometry.Analysis.Integration.Measure.Family.VolumeVariation
 
 /-!
@@ -14,7 +15,8 @@ That shape is awkward to verify, because the data one actually has is usually a 
 `(t, y) ∈ ℝ × E`: a chart representation. This file reduces the hypothesis to exactly that,
 by transporting along `extChartAt I x₀`:
 
-* `chartGramMatrixOnE` reads the chart Gram entries as a function on `ℝ × E`;
+* the chart Gram entries are read on `ℝ × E` through the library's own
+  `Geometry.Operator.chartGramOnE`, at the metric of each time;
 * `MetricFamilyRegularAt.of_chartGramOnE` builds `MetricFamilyRegularAt` from the
   derivative property together with continuity *on the chart target*, where ordinary
   Fréchet calculus applies.
@@ -47,21 +49,14 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [Module.Finite �
 variable {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
 variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I ∞ M]
 
-/-- The chart Gram entries of a metric family, read as a function of a time and a point of
-the model space. -/
-def chartGramMatrixOnE (g_fam : ℝ → SmoothRiemannianMetric I M) (x₀ : M)
-    (i j : Fin (Module.finrank ℝ E)) (t : ℝ) (y : E) : ℝ :=
-  DifferentialGeometry.Tensor.Coordinates.chartGramMatrix (I := I) (g_fam t) x₀
-    ((extChartAt I x₀).symm y) i j
-
 /-- On the chart source, the chart-representation form agrees with the chart Gram entry. -/
-lemma chartGramMatrixOnE_extChartAt
+lemma chartGramOnE_extChartAt
     (g_fam : ℝ → SmoothRiemannianMetric I M) (x₀ : M)
     (i j : Fin (Module.finrank ℝ E)) (t : ℝ) {x : M}
     (hx : x ∈ (extChartAt I x₀).source) :
-    chartGramMatrixOnE (I := I) g_fam x₀ i j t (extChartAt I x₀ x) =
+    DifferentialGeometry.Geometry.Operator.chartGramOnE (I := I) (g_fam t) x₀ i j (extChartAt I x₀ x) =
       DifferentialGeometry.Tensor.Coordinates.chartGramMatrix (I := I) (g_fam t) x₀ x i j := by
-  rw [chartGramMatrixOnE, (extChartAt I x₀).left_inv hx]
+  rw [DifferentialGeometry.Geometry.Operator.chartGramOnE, (extChartAt I x₀).left_inv hx]
 
 /-- The trivialization base set is contained in the source of the extended chart. -/
 lemma baseSet_subset_extChartAt_source (x₀ : M) :
@@ -86,7 +81,7 @@ theorem MetricFamilyRegularAt.of_chartGramOnE
           DifferentialGeometry.Tensor.Coordinates.chartGramMatrix (I := I) (g_fam s) x₀ x i j)
         (D x₀ i j t (extChartAt I x₀ x)) t)
     (hcontG : ∀ (x₀ : M) (i j : Fin (Module.finrank ℝ E)),
-      ContinuousOn (fun p : ℝ × E => chartGramMatrixOnE (I := I) g_fam x₀ i j p.1 p.2)
+      ContinuousOn (fun p : ℝ × E => DifferentialGeometry.Geometry.Operator.chartGramOnE (I := I) (g_fam p.1) x₀ i j p.2)
         (univ ×ˢ (extChartAt I x₀).target))
     (hcontD : ∀ (x₀ : M) (i j : Fin (Module.finrank ℝ E)),
       ContinuousOn (fun p : ℝ × E => D x₀ i j p.1 p.2)
@@ -112,7 +107,7 @@ theorem MetricFamilyRegularAt.of_chartGramOnE
     have hcomp := (hcontG x₀ i j).comp hmap hmaps
     refine hcomp.congr ?_
     intro p hp
-    exact (chartGramMatrixOnE_extChartAt (I := I) g_fam x₀ i j p.1
+    exact (chartGramOnE_extChartAt (I := I) g_fam x₀ i j p.1
       (baseSet_subset_extChartAt_source (I := I) x₀ hp.2)).symm
   · -- continuity of the derivative, transported the same way
     have hmap : ContinuousOn (fun p : ℝ × M => (p.1, extChartAt I x₀ p.2))

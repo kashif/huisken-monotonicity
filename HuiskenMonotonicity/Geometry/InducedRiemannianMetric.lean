@@ -60,6 +60,7 @@ noncomputable section
 namespace HuiskenMonotonicity
 
 open Manifold DifferentialGeometry DifferentialGeometry.Integral.Measure
+open DifferentialGeometry.Geometry.Operator (chartGramOnE)
 
 universe u v w
 
@@ -87,33 +88,29 @@ variable [T2Space M]
 
 This is the pullback of the ambient Euclidean metric along `F_t`. The smooth dependence on
 the base point comes from `DifferentialGeometry.SmoothRiemannianMetric.pullbackInner_contMDiff`. -/
-def inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p)) :
+def inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ) :
     SmoothRiemannianMetric I M :=
   (euclideanMetric (E := E)).pullback (I := I) (fun p => F p t)
-    ((F.contMDiff_timeSlice t).of_le le_top) himm
+    ((F.contMDiff_timeSlice t).of_le le_top) (F.mfderiv_injective t)
 
 @[simp]
 theorem inducedMetric_inner (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (p : M) (v w : TangentSpace I p) :
-    (F.inducedMetric t himm).inner p v w =
+    (F.inducedMetric t).inner p v w =
       @inner ℝ E _ (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p v)
         (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p w) :=
   rfl
 
 /-- The time-indexed family of induced metrics, in the shape consumed by
 `DifferentialGeometry.Integral.Measure.volume_variation_formula`. -/
-def inducedMetricFamily (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p)) :
+def inducedMetricFamily (F : SmoothImmersionFamily I M E) :
     ℝ → SmoothRiemannianMetric I M :=
-  fun t => F.inducedMetric t (himm t)
+  fun t => F.inducedMetric t
 
 @[simp]
 theorem inducedMetricFamily_apply (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (t : ℝ) :
-    F.inducedMetricFamily himm t = F.inducedMetric t (himm t) :=
+    F.inducedMetricFamily t = F.inducedMetric t :=
   rfl
 
 /-! ### The chart Gram matrix of the induced metric
@@ -127,9 +124,8 @@ matrix is the matrix of inner products of the pushed-forward chart frame vectors
 /-- The chart Gram matrix of the induced metric is the Gram matrix of the chart frame pushed
 forward by `dF_t`. -/
 theorem chartGramMatrix_inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
-    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x₀ x i j =
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t) x₀ x i j =
       @inner ℝ E _
         (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
           (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x))
@@ -174,9 +170,8 @@ This is the identification that lets `hasDerivAt_frameGram_of_isNormalAlong` and
 `chartGramMatrix` at `x₀ = x`. -/
 theorem chartGramMatrix_inducedMetric_eq_frameGram [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
-    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x₀ x i j =
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t) x₀ x i j =
       frameGram (F.chartRep t x) (chartFrameAt (I := I) x₀ x) (extChartAt I x x) i j := by
   have hmd : MDifferentiableAt I 𝓘(ℝ, E) (fun q => F q t) x :=
     (F.contMDiff_timeSlice t).mdifferentiableAt (by simp)
@@ -201,7 +196,6 @@ space, which is what the chart representation produces. -/
 the entries whose trace `traceTimeDerivMetric` takes. -/
 theorem hasDerivAt_chartGramMatrix_inducedMetricFamily [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     {V : ℝ → E₁ → E} {t : ℝ} (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁))
     (hF2 : ContDiff ℝ 2 (F.chartRep t x))
     (hV : Differentiable ℝ (V t))
@@ -213,17 +207,17 @@ theorem hasDerivAt_chartGramMatrix_inducedMetricFamily [BoundarylessManifold I M
         (frameTangent (V t) (chartFrameAt (I := I) x₀ x) (extChartAt I x x) k) t) :
     HasDerivAt
       (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily himm s) x₀ x i j)
+        (F.inducedMetricFamily s) x₀ x i j)
       (-2 * @inner ℝ E _ (V t (extChartAt I x x))
         (secondDerivative (F.chartRep t x) (extChartAt I x x)
           (chartFrameAt (I := I) x₀ x i) (chartFrameAt (I := I) x₀ x j))) t := by
   have hfun : (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily himm s) x₀ x i j)
+        (F.inducedMetricFamily s) x₀ x i j)
       = fun s => frameGram (F.chartRep s x) (chartFrameAt (I := I) x₀ x)
           (extChartAt I x x) i j := by
     funext s
     rw [inducedMetricFamily_apply]
-    exact chartGramMatrix_inducedMetric_eq_frameGram F s (himm s) x₀ x i j
+    exact chartGramMatrix_inducedMetric_eq_frameGram F s x₀ x i j
   rw [hfun]
   exact hasDerivAt_frameGram_of_isNormalAlong
     (F := fun s => F.chartRep s x) (V := V) (chartFrameAt (I := I) x₀ x) i j
@@ -235,10 +229,9 @@ Naming it is not cosmetic: in a position expecting `Idx → Idx → ℝ` the not
 elaborate as the pointwise `Pi.instInv` rather than `Matrix.inv`, which is not what
 `traceTimeDerivMetric` uses. -/
 noncomputable def chartGramInv (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (t : ℝ) (x : M) :
     Matrix (Fin (Module.finrank ℝ E₁)) (Fin (Module.finrank ℝ E₁)) ℝ :=
-  (Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetricFamily himm t) x x)⁻¹
+  (Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetricFamily t) x x)⁻¹
 
 /-- **The transport weight of the induced metric family.**
 
@@ -248,7 +241,6 @@ flow `V = Hvec`, so the weight becomes `-‖Hvec‖²`, the classical evolution 
 element. -/
 theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     {V : ℝ → E₁ → E} {t : ℝ} (x : M)
     (hF2 : ContDiff ℝ 2 (F.chartRep t x))
     (hV : Differentiable ℝ (V t))
@@ -258,27 +250,27 @@ theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
         (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
           (extChartAt I x x) k)
         (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t) :
-    traceTimeDerivMetric (I := I) (F.inducedMetricFamily himm) t x =
+    traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x =
       -2 * @inner ℝ E _ (V t (extChartAt I x x))
         (meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-          (F.chartGramInv himm t x) (extChartAt I x x)) := by
+          (F.chartGramInv t x) (extChartAt I x x)) := by
   have hderiv : ∀ i j : Fin (Module.finrank ℝ E₁),
       deriv (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily himm s) x x i j) t =
+        (F.inducedMetricFamily s) x x i j) t =
         -2 * @inner ℝ E _ (V t (extChartAt I x x))
           (secondDerivative (F.chartRep t x) (extChartAt I x x)
             (chartFrame (I := I) x i) (chartFrame (I := I) x j)) :=
     fun i j =>
-      (hasDerivAt_chartGramMatrix_inducedMetricFamily F himm x x i j hF2 hV hnormal
+      (hasDerivAt_chartGramMatrix_inducedMetricFamily F x x i j hF2 hV hnormal
         hcomm).deriv
   rw [traceTimeDerivMetric_eq, Matrix.trace]
   simp only [Matrix.diag_apply, Matrix.mul_apply, Matrix.of_apply, chartGramInv]
   calc ∑ i, ∑ j,
-        F.chartGramInv himm t x i j *
+        F.chartGramInv t x i j *
           deriv (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-            (F.inducedMetricFamily himm s) x x j i) t
+            (F.inducedMetricFamily s) x x j i) t
       = ∑ i, ∑ j,
-          F.chartGramInv himm t x i j *
+          F.chartGramInv t x i j *
             (-2 * @inner ℝ E _ (V t (extChartAt I x x))
               (secondDerivative (F.chartRep t x) (extChartAt I x x)
                 (chartFrame (I := I) x i) (chartFrame (I := I) x j))) := by
@@ -286,9 +278,9 @@ theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
         rw [hderiv j i, secondDerivative_symm hF2]
     _ = -2 * @inner ℝ E _ (V t (extChartAt I x x))
           (meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-            (F.chartGramInv himm t x) (extChartAt I x x)) :=
+            (F.chartGramInv t x) (extChartAt I x x)) :=
         trace_metricEvolution (F := F.chartRep t x) (V := V t)
-          (x := extChartAt I x x) (chartFrame (I := I) x) (F.chartGramInv himm t x)
+          (x := extChartAt I x x) (chartFrame (I := I) x) (F.chartGramInv t x)
 
 /-- **Mean curvature flow: the transport weight is `-‖Hvec‖²`.**
 
@@ -297,7 +289,6 @@ statement `∂_t dμ = -H² dμ` that Huisken's proof cites. -/
 theorem traceTimeDerivMetric_inducedMetricFamily_meanCurvatureFlow
     [BoundarylessManifold I M]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     {V : ℝ → E₁ → E} {t : ℝ} (x : M)
     (hF2 : ContDiff ℝ 2 (F.chartRep t x))
     (hV : Differentiable ℝ (V t))
@@ -309,11 +300,11 @@ theorem traceTimeDerivMetric_inducedMetricFamily_meanCurvatureFlow
         (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t)
     (hmcf : V t (extChartAt I x x) =
       meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-        (F.chartGramInv himm t x) (extChartAt I x x)) :
-    traceTimeDerivMetric (I := I) (F.inducedMetricFamily himm) t x =
+        (F.chartGramInv t x) (extChartAt I x x)) :
+    traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x =
       -2 * ‖meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-        (F.chartGramInv himm t x) (extChartAt I x x)‖ ^ 2 := by
-  rw [traceTimeDerivMetric_inducedMetricFamily F himm x hF2 hV hnormal hcomm, hmcf,
+        (F.chartGramInv t x) (extChartAt I x x)‖ ^ 2 := by
+  rw [traceTimeDerivMetric_inducedMetricFamily F x hF2 hV hnormal hcomm, hmcf,
     real_inner_self_eq_norm_sq]
 
 /-! ### Smoothness of the space-time chart representation
@@ -382,10 +373,9 @@ The work is done by the library's
 vector-space target, where the outer chart and trivialization are trivial. -/
 theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
     (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (himm : ∀ p : M, Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (x₀ : M) {x : M} (hx : x ∈ (extChartAt I x₀).source)
     (i j : Fin (Module.finrank ℝ E₁)) :
-    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t himm) x₀ x i j =
+    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t) x₀ x i j =
       frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁)
         (extChartAt I x₀ x) i j := by
   have hcont : ContinuousAt (fun q => F q t) x :=
@@ -411,22 +401,21 @@ theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
 /-! ### The regularity hypothesis, in chart-representation form
 
 `MetricFamilyRegularAt.of_chartGramOnE` consumes the chart Gram entries as a function on
-`ℝ × E₁`, namely `chartGramMatrixOnE`. For the induced metric family that function is a
+`ℝ × E₁`, namely `chartGramOnE`. For the induced metric family that function is a
 `frameGram` of the space-time chart representation against the constant model basis. -/
 
 /-- The chart-representation form of the chart Gram entries of the induced metric family. -/
-theorem chartGramMatrixOnE_inducedMetricFamily [I.Boundaryless]
+theorem chartGramOnE_inducedMetricFamily [I.Boundaryless]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) (t : ℝ) {y : E₁}
     (hy : y ∈ (extChartAt I x₀).target) :
-    chartGramMatrixOnE (I := I) (F.inducedMetricFamily himm) x₀ i j t y =
+    chartGramOnE (I := I) (F.inducedMetricFamily t) x₀ i j y =
       frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁) y i j := by
   have hmem : (extChartAt I x₀).symm y ∈ (extChartAt I x₀).source :=
     (extChartAt I x₀).map_target hy
   have hyy : extChartAt I x₀ ((extChartAt I x₀).symm y) = y := (extChartAt I x₀).right_inv hy
-  rw [chartGramMatrixOnE, inducedMetricFamily_apply,
-    chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F t (himm t) x₀ hmem i j, hyy]
+  rw [chartGramOnE, inducedMetricFamily_apply,
+    chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F t x₀ hmem i j, hyy]
 
 /-- The chart target, crossed with all times, is open. -/
 lemma isOpen_univ_prod_extChartAt_target [I.Boundaryless] (x₀ : M) :
@@ -457,13 +446,12 @@ theorem fderiv_chartRep_eq_fderiv_spaceTimeChartRep [I.Boundaryless]
 
 /-- **Joint continuity of the chart Gram entries.** The second field of
 `MetricFamilyRegularAt.of_chartGramOnE`. -/
-theorem continuousOn_chartGramMatrixOnE_inducedMetricFamily [I.Boundaryless]
+theorem continuousOn_chartGramOnE_inducedMetricFamily [I.Boundaryless]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) :
     ContinuousOn
       (fun p : ℝ × E₁ =>
-        chartGramMatrixOnE (I := I) (F.inducedMetricFamily himm) x₀ i j p.1 p.2)
+        chartGramOnE (I := I) (F.inducedMetricFamily p.1) x₀ i j p.2)
       (Set.univ ×ˢ (extChartAt I x₀).target) := by
   have hs := isOpen_univ_prod_extChartAt_target (I := I) x₀
   have hfd : ContinuousOn (fderiv ℝ (F.spaceTimeChartRep x₀))
@@ -477,7 +465,7 @@ theorem continuousOn_chartGramMatrixOnE_inducedMetricFamily [I.Boundaryless]
     (hev (Tensor.Coordinates.chartModelBasis E₁ j))).congr ?_
   intro p hp
   dsimp only
-  rw [chartGramMatrixOnE_inducedMetricFamily F himm x₀ i j p.1 hp.2, frameGram,
+  rw [chartGramOnE_inducedMetricFamily F x₀ i j p.1 hp.2, frameGram,
     frameTangent_apply, frameTangent_apply,
     fderiv_chartRep_eq_fderiv_spaceTimeChartRep F x₀ hp
       (Tensor.Coordinates.chartModelBasis E₁ i),
@@ -510,12 +498,11 @@ noncomputable def chartGramDeriv (F : SmoothImmersionFamily I M E) (x₀ : M)
 `MetricFamilyRegularAt.of_chartGramOnE`. -/
 theorem hasDerivAt_chartGramMatrix_chartGramDeriv [I.Boundaryless]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) (t : ℝ) {x : M}
     (hx : x ∈ (trivializationAt E₁ (TangentSpace I) x₀).baseSet) :
     HasDerivAt
       (fun s : ℝ => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily himm s) x₀ x i j)
+        (F.inducedMetricFamily s) x₀ x i j)
       (F.chartGramDeriv x₀ i j t (extChartAt I x₀ x)) t := by
   have hxs : x ∈ (extChartAt I x₀).source :=
     baseSet_subset_extChartAt_source (I := I) x₀ hx
@@ -528,7 +515,7 @@ theorem hasDerivAt_chartGramMatrix_chartGramDeriv [I.Boundaryless]
     ((F.contDiffOn_spaceTimeChartRep x₀).contDiffAt (hs.mem_nhds hmem)).of_le (by norm_num)
   -- rewrite the function of `s` into chart-representation form
   have hfun : (fun s : ℝ => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily himm s) x₀ x i j)
+        (F.inducedMetricFamily s) x₀ x i j)
       = fun s : ℝ =>
         @inner ℝ E _
           (fderiv ℝ (F.spaceTimeChartRep x₀) (s, extChartAt I x₀ x)
@@ -537,7 +524,7 @@ theorem hasDerivAt_chartGramMatrix_chartGramDeriv [I.Boundaryless]
             ((0 : ℝ), Tensor.Coordinates.chartModelBasis E₁ j)) := by
     funext s
     rw [inducedMetricFamily_apply,
-      chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F s (himm s) x₀ hxs i j,
+      chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F s x₀ hxs i j,
       frameGram, frameTangent_apply, frameTangent_apply,
       fderiv_chartRep_eq_fderiv_spaceTimeChartRep F x₀
         (p := (s, extChartAt I x₀ x)) ⟨Set.mem_univ _, hy⟩
@@ -588,14 +575,13 @@ family of a smooth immersion family, from smoothness alone. The library assumes 
 hypothesis wherever it needs it and never constructs it. -/
 theorem metricFamilyRegularAt_inducedMetricFamily [I.Boundaryless]
     (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (t₀ : ℝ) :
-    MetricFamilyRegularAt (I := I) (F.inducedMetricFamily himm) t₀ :=
+    MetricFamilyRegularAt (I := I) (F.inducedMetricFamily) t₀ :=
   MetricFamilyRegularAt.of_chartGramOnE (I := I)
     (fun x₀ i j => F.chartGramDeriv x₀ i j)
     (fun x₀ i j t _ hx =>
-      hasDerivAt_chartGramMatrix_chartGramDeriv F himm x₀ i j t hx)
-    (fun x₀ i j => continuousOn_chartGramMatrixOnE_inducedMetricFamily F himm x₀ i j)
+      hasDerivAt_chartGramMatrix_chartGramDeriv F x₀ i j t hx)
+    (fun x₀ i j => continuousOn_chartGramOnE_inducedMetricFamily F x₀ i j)
     (fun x₀ i j => continuousOn_chartGramDeriv F x₀ i j)
 
 end Metric
@@ -610,23 +596,20 @@ induced metric.
 This replaces the placeholder `HuiskenMonotonicity.SurfaceMeasure`, whose `μ` field was
 unconstrained data. -/
 def surfaceMeasure (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (t : ℝ) : Measure M :=
-  riemannianVolumeMeasure I M (F.inducedMetricFamily himm t)
+  riemannianVolumeMeasure I M (F.inducedMetricFamily t)
 
 @[simp]
 theorem surfaceMeasure_apply (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
     (t : ℝ) :
-    F.surfaceMeasure himm t = riemannianVolumeMeasure I M (F.inducedMetric t (himm t)) :=
+    F.surfaceMeasure t = riemannianVolumeMeasure I M (F.inducedMetric t) :=
   rfl
 
 /-- The surface measure is the Riemannian measure family of the induced metric family. This
 is the form in which `volume_variation_formula` expects the measure. -/
-theorem surfaceMeasure_eq_riemannianMeasureFamily (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p)) :
-    F.surfaceMeasure himm =
-      riemannianMeasureFamily (I := I) (M := M) (F.inducedMetricFamily himm) :=
+theorem surfaceMeasure_eq_riemannianMeasureFamily (F : SmoothImmersionFamily I M E) :
+    F.surfaceMeasure =
+      riemannianMeasureFamily (I := I) (M := M) (F.inducedMetricFamily) :=
   rfl
 
 end SurfaceMeasure
