@@ -40,24 +40,32 @@ lemma secondDerivative_eq_fderiv_fderiv (F : E₁ → E) (x v w : E₁) :
   rw [iteratedFDeriv_two_apply]
   rfl
 
+/-- Symmetry of the second derivative at a point where the map is `C²`. Only local
+smoothness is needed, which matters because a chart representation is smooth on the chart
+target and nowhere else. -/
+lemma secondDerivative_symm_of_contDiffAt {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x)
+    (v w : E₁) : secondDerivative F x v w = secondDerivative F x w v := by
+  rw [secondDerivative_eq_fderiv_fderiv, secondDerivative_eq_fderiv_fderiv]
+  exact hF.isSymmSndFDerivAt (by simp) v w
+
 /-- A tangent vector `y ↦ dF_y(w)` has derivative `v ↦ D²F(v, w)`. -/
-theorem hasFDerivAt_fderiv_apply {F : E₁ → E} (hF : ContDiff ℝ 2 F) (x w : E₁) :
+theorem hasFDerivAt_fderiv_apply {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (w : E₁) :
     HasFDerivAt (fun y => fderiv ℝ F y w) ((fderiv ℝ (fderiv ℝ F) x).flip w) x := by
-  have hFd : ContDiff ℝ 1 (fderiv ℝ F) := (contDiff_succ_iff_fderiv.mp hF).2.2
+  have hFd : ContDiffAt ℝ 1 (fderiv ℝ F) x := hF.fderiv_right (by norm_num)
   have hFd' : HasFDerivAt (fderiv ℝ F) (fderiv ℝ (fderiv ℝ F) x) x :=
-    (hFd.differentiable (by norm_num) x).hasFDerivAt
+    (hFd.differentiableAt (by norm_num)).hasFDerivAt
   simpa using hFd'.clm_apply (hasFDerivAt_const w x)
 
 /-- **The derivative of a Gram entry**, by the product rule:
 
   `∂_v g_{jk} = ⟪D²F(v, ∂_j), ∂_k F⟫ + ⟪∂_j F, D²F(v, ∂_k)⟫`. -/
-theorem fderiv_frameGram {F : E₁ → E} (hF : ContDiff ℝ 2 F) (b : Idx → E₁)
-    (x v : E₁) (j k : Idx) :
+theorem fderiv_frameGram {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁)
+    (v : E₁) (j k : Idx) :
     fderiv ℝ (fun y => frameGram F b y j k) x v =
       @inner ℝ E _ (secondDerivative F x v (b j)) (frameTangent F b x k) +
         @inner ℝ E _ (frameTangent F b x j) (secondDerivative F x v (b k)) := by
-  have hprod := (hasFDerivAt_fderiv_apply hF x (b j)).inner (𝕜 := ℝ)
-    (hasFDerivAt_fderiv_apply hF x (b k))
+  have hprod := (hasFDerivAt_fderiv_apply hF (b j)).inner (𝕜 := ℝ)
+    (hasFDerivAt_fderiv_apply hF (b k))
   have hfun : (fun y => frameGram F b y j k) =
       fun y => @inner ℝ E _ (fderiv ℝ F y (b j)) (fderiv ℝ F y (b k)) := rfl
   rw [hfun, hprod.fderiv]
@@ -72,17 +80,17 @@ theorem fderiv_frameGram {F : E₁ → E} (hF : ContDiff ℝ 2 F) (b : Idx → E
 
 The right-hand side is the Christoffel symbol of the first kind of the induced metric, so
 this is the Gauss formula in coordinates. -/
-theorem inner_secondDerivative_frameTangent_eq_koszul {F : E₁ → E} (hF : ContDiff ℝ 2 F)
-    (b : Idx → E₁) (x : E₁) (i j k : Idx) :
+theorem inner_secondDerivative_frameTangent_eq_koszul {F : E₁ → E} {x : E₁}
+    (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁) (i j k : Idx) :
     @inner ℝ E _ (secondDerivative F x (b i) (b j)) (frameTangent F b x k) =
       (fderiv ℝ (fun y => frameGram F b y j k) x (b i) +
         fderiv ℝ (fun y => frameGram F b y i k) x (b j) -
         fderiv ℝ (fun y => frameGram F b y i j) x (b k)) / 2 := by
   rw [fderiv_frameGram hF, fderiv_frameGram hF, fderiv_frameGram hF]
   -- name the three distinct second-derivative pairings
-  have s1 := secondDerivative_symm hF x (b j) (b i)
-  have s2 := secondDerivative_symm hF x (b k) (b i)
-  have s3 := secondDerivative_symm hF x (b k) (b j)
+  have s1 := secondDerivative_symm_of_contDiffAt hF (b j) (b i)
+  have s2 := secondDerivative_symm_of_contDiffAt hF (b k) (b i)
+  have s3 := secondDerivative_symm_of_contDiffAt hF (b k) (b j)
   rw [s1, s2, s3, real_inner_comm (frameTangent F b x j) (secondDerivative F x (b i) (b k))]
   ring
 
@@ -103,8 +111,8 @@ a tangential field into the Voss-Weyl divergence `(1/√g) ∂_i(√g Z^i)`, onc
 identifies it with `∂_k log √det g`. Of the three Koszul terms, the two that differentiate in
 the summed directions cancel against each other under the symmetric inverse metric. -/
 theorem sum_inner_secondDerivative_frameTangent_eq_half_trace {F : E₁ → E}
-    (hF : ContDiff ℝ 2 F) (b : Idx → E₁) (gInv : Idx → Idx → ℝ)
-    (hsymm : ∀ i j, gInv i j = gInv j i) (x : E₁) (k : Idx) :
+    {x : E₁} (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁) (gInv : Idx → Idx → ℝ)
+    (hsymm : ∀ i j, gInv i j = gInv j i) (k : Idx) :
     ∑ i, ∑ j, gInv i j *
         @inner ℝ E _ (secondDerivative F x (b i) (b k)) (frameTangent F b x j) =
       (∑ i, ∑ j, gInv i j * fderiv ℝ (fun y => frameGram F b y i j) x (b k)) / 2 := by
@@ -121,7 +129,7 @@ theorem sum_inner_secondDerivative_frameTangent_eq_half_trace {F : E₁ → E}
         gInv i j * fderiv ℝ (fun y => frameGram F b y i j) x (b k) -
         gInv i j * fderiv ℝ (fun y => frameGram F b y i k) x (b j)) / 2 := by
     intro i j
-    rw [inner_secondDerivative_frameTangent_eq_koszul hF b x i k j]
+    rw [inner_secondDerivative_frameTangent_eq_koszul hF b i k j]
     ring
   simp only [hterm, ← Finset.sum_div, Finset.sum_sub_distrib, Finset.sum_add_distrib]
   rw [hcancel]
@@ -136,8 +144,8 @@ noncomputable def tangentField (F : E₁ → E) (b : Idx → E₁) (Z : Idx → 
 /-- The derivative of a tangential field, by the product rule:
 
   `∂_v ξ = ∑ k, (∂_v Z^k) ∂_k F + Z^k D²F(v, ∂_k)`. -/
-theorem fderiv_tangentField {F : E₁ → E} (hF : ContDiff ℝ 2 F) (b : Idx → E₁)
-    {Z : Idx → E₁ → ℝ} {x : E₁} (hZ : ∀ k, DifferentiableAt ℝ (Z k) x) (v : E₁) :
+theorem fderiv_tangentField {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁)
+    {Z : Idx → E₁ → ℝ} (hZ : ∀ k, DifferentiableAt ℝ (Z k) x) (v : E₁) :
     fderiv ℝ (tangentField F b Z) x v =
       ∑ k, (fderiv ℝ (Z k) x v • frameTangent F b x k +
         Z k x • secondDerivative F x v (b k)) := by
@@ -145,7 +153,7 @@ theorem fderiv_tangentField {F : E₁ → E} (hF : ContDiff ℝ 2 F) (b : Idx �
       HasFDerivAt (fun y => Z k y • fderiv ℝ F y (b k))
         (Z k x • (fderiv ℝ (fderiv ℝ F) x).flip (b k) +
           (fderiv ℝ (Z k) x).smulRight (fderiv ℝ F x (b k))) x :=
-    fun k _ => (hZ k).hasFDerivAt.smul (hasFDerivAt_fderiv_apply hF x (b k))
+    fun k _ => (hZ k).hasFDerivAt.smul (hasFDerivAt_fderiv_apply hF (b k))
   have hsum := HasFDerivAt.fun_sum hk
   have hfun : tangentField F b Z = fun y => ∑ k, Z k y • fderiv ℝ F y (b k) := rfl
   rw [hfun, hsum.fderiv]
@@ -163,8 +171,8 @@ With Jacobi's formula `½ g^{ij} ∂_k g_{ij} = ∂_k log √det g` the right-ha
 Voss-Weyl divergence `(1/√g) ∂_i(√g Z^i)`, which is the intrinsic divergence of the vector
 field `Z`. So this is the statement that the extrinsic divergence of a tangential field equals
 the intrinsic divergence of the field it pushes forward. -/
-theorem tangentialDivergence_tangentField {F : E₁ → E} (hF : ContDiff ℝ 2 F)
-    (b : Idx → E₁) {gInv : Idx → Idx → ℝ} {x : E₁}
+theorem tangentialDivergence_tangentField {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x)
+    (b : Idx → E₁) {gInv : Idx → Idx → ℝ}
     (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
     {Z : Idx → E₁ → ℝ} (hZ : ∀ k, DifferentiableAt ℝ (Z k) x) :
     tangentialDivergence F (tangentField F b Z) b gInv x =
@@ -212,6 +220,6 @@ theorem tangentialDivergence_tangentField {F : E₁ → E} (hF : ContDiff ℝ 2 
           rw [Finset.sum_comm]
       _ = _ := by
           refine Finset.sum_congr rfl fun k _ => ?_
-          rw [sum_inner_secondDerivative_frameTangent_eq_half_trace hF b gInv hsymm x k]
+          rw [sum_inner_secondDerivative_frameTangent_eq_half_trace hF b gInv hsymm k]
 
 end HuiskenMonotonicity
