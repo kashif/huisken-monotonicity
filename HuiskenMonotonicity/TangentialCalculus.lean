@@ -302,7 +302,7 @@ divergence theorem for a submanifold: `F = Fᵀ + F^⊥`, with `div F = n` and, 
 `div F^⊥ = -⟪F^⊥, Hvec⟫`.
 
 The inverse metric is allowed to vary with the point, as it does in a chart; it must be an
-inverse metric near the point and differentiable there. -/
+inverse metric near the point and have differentiable entries there. -/
 
 /-- The tangential divergence is additive in the field. -/
 theorem tangentialDivergence_sub (F : E₁ → E) {ξ₁ ξ₂ : E₁ → E} (b : Idx → E₁)
@@ -313,6 +313,19 @@ theorem tangentialDivergence_sub (F : E₁ → E) {ξ₁ ξ₂ : E₁ → E} (b 
   simp only [tangentialDivergence, fderiv_fun_sub h₁ h₂, ContinuousLinearMap.sub_apply,
     inner_sub_left, mul_sub, Finset.sum_sub_distrib]
 
+/-- The tangential part of a differentiable field is differentiable, when the inverse metric
+is. -/
+theorem differentiableAt_tangentialPart {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x)
+    (b : Idx → E₁) {gInv : E₁ → Idx → Idx → ℝ}
+    (hg : ∀ k l, DifferentiableAt ℝ (fun y => gInv y k l) x) {v : E₁ → E}
+    (hv : DifferentiableAt ℝ v x) :
+    DifferentiableAt ℝ (fun y => tangentialPart F b (gInv y) y (v y)) x := by
+  have hT : ∀ k, DifferentiableAt ℝ (fun y => frameTangent F b y k) x := fun k =>
+    (hasFDerivAt_fderiv_apply hF (b k)).differentiableAt
+  unfold tangentialPart
+  refine DifferentiableAt.fun_sum fun k _ => DifferentiableAt.fun_sum fun l _ => ?_
+  exact ((hg k l).mul (hv.inner ℝ (hT l))).smul (hT k)
+
 /-- **Beltrami's formula for `|F|²/2`.** The tangential divergence of the tangential part of
 the position vector is `n + ⟪F, Hvec⟫`. -/
 theorem tangentialDivergence_tangentialPart_position {F : E₁ → E} {x : E₁}
@@ -320,11 +333,13 @@ theorem tangentialDivergence_tangentialPart_position {F : E₁ → E} {x : E₁}
     (gInv : E₁ → Idx → Idx → ℝ)
     (hinv : ∀ᶠ y in nhds x, IsFrameInverse F b y (gInv y))
     (hsymm : ∀ y i j, gInv y i j = gInv y j i)
-    (hN : DifferentiableAt ℝ (fun y => normalPart F b (gInv y) y (F y)) x) :
+    (hg : ∀ k l, DifferentiableAt ℝ (fun y => gInv y k l) x) :
     tangentialDivergence F (fun y => tangentialPart F b (gInv y) y (F y)) b (gInv x) x =
       (Fintype.card Idx : ℝ) +
         @inner ℝ E _ (F x) (meanCurvatureNormal F b (gInv x) x) := by
   have hFd : DifferentiableAt ℝ F x := hF.differentiableAt (by norm_num)
+  have hN : DifferentiableAt ℝ (fun y => normalPart F b (gInv y) y (F y)) x :=
+    hFd.sub (differentiableAt_tangentialPart hF b hg hFd)
   -- the tangential part is the position vector minus its normal part
   have hT : (fun y => tangentialPart F b (gInv y) y (F y)) =
       fun y => F y - normalPart F b (gInv y) y (F y) := by

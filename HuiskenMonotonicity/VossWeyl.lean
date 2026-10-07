@@ -169,6 +169,30 @@ theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (F : SmoothImmersionFa
   rw [hS]
   ring
 
+/-- **Beltrami's formula for `|F|²/2` in a chart.** With the library's inverse chart Gram
+matrix as the inverse metric, the tangential divergence of the tangential part of the
+position vector is `n + ⟪F, Hvec⟫`. -/
+theorem tangentialDivergence_tangentialPart_chartRep [I.Boundaryless]
+    (F : SmoothImmersionFamily I M E) (t : ℝ) (α : M) {y : E₁}
+    (hy : y ∈ (extChartAt I α).target) :
+    tangentialDivergence (F.chartRep t α)
+        (fun z => tangentialPart (F.chartRep t α) (chartModelBasis E₁)
+          (fun k l => chartInvGramOnE (F.inducedMetric t) α k l z) z (F.chartRep t α z))
+        (chartModelBasis E₁) (fun k l => chartInvGramOnE (F.inducedMetric t) α k l y) y =
+      (Module.finrank ℝ E₁ : ℝ) + @inner ℝ E _ (F.chartRep t α y)
+        (meanCurvatureNormal (F.chartRep t α) (chartModelBasis E₁)
+          (fun k l => chartInvGramOnE (F.inducedMetric t) α k l y) y) := by
+  have hopen := isOpen_extChartAt_target (I := I) α
+  have h := tangentialDivergence_tangentialPart_position (contDiffAt_chartRep F t α hy)
+    (chartModelBasis E₁) (chartModelBasis E₁).span_eq
+    (fun z k l => chartInvGramOnE (F.inducedMetric t) α k l z)
+    (by filter_upwards [hopen.mem_nhds hy] with z hz
+        exact isFrameInverse_chartInvGramOnE F t α hz)
+    (fun z i j => chartInvGramOnE_symm (I := I) (F.inducedMetric t) α i j z)
+    (fun k l => ((chartInvGramOnE_contDiffOn (I := I) (F.inducedMetric t) α k l).contDiffAt
+      (hopen.mem_nhds hy)).differentiableAt (by simp))
+  simpa using h
+
 end SmoothImmersionFamily
 
 end HuiskenMonotonicity
