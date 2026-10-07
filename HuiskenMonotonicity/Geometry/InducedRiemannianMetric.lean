@@ -102,12 +102,6 @@ theorem inducedMetric_inner (F : SmoothImmersionFamily I M E) (t : ℝ)
         (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p w) :=
   rfl
 
-/-- At a valid time the immersion hypothesis of `inducedMetric` is automatic. -/
-theorem mfderiv_injective_of_isValidTime (F : SmoothImmersionFamily I M E) {t : ℝ}
-    (ht : F.IsValidTime t) (p : M) :
-    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p) :=
-  Upstream.isImmersion_mfderiv_injective (F.isImmersion_time' ht) p
-
 /-- The time-indexed family of induced metrics, in the shape consumed by
 `DifferentialGeometry.Integral.Measure.volume_variation_formula`. -/
 def inducedMetricFamily (F : SmoothImmersionFamily I M E)
@@ -142,19 +136,6 @@ theorem chartGramMatrix_inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ
         (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
           (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) := by
   rw [Tensor.Coordinates.chartGramMatrix_apply, inducedMetric_inner]
-
-/-- The same, for the time-indexed family: the entries whose time derivative
-`traceTimeDerivMetric` differentiates. -/
-theorem chartGramMatrix_inducedMetricFamily (F : SmoothImmersionFamily I M E)
-    (himm : ∀ (t : ℝ) (p : M), Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p))
-    (t : ℝ) (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
-    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetricFamily himm t) x₀ x i j =
-      @inner ℝ E _
-        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
-          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x))
-        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
-          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) :=
-  chartGramMatrix_inducedMetric F t (himm t) x₀ x i j
 
 /-! ### The chart representation
 
@@ -372,15 +353,6 @@ theorem contDiffOn_spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M
       (Set.univ ×ˢ (extChartAt I x₀).target) :=
     (hsymm.comp hsnd.contMDiffOn hmaps).prodMk hfst.contMDiffOn
   exact (F.contMDiff_spaceTime.comp_contMDiffOn hg).contDiffOn
-
-/-- The time slices of the chart representation are smooth on the chart target. -/
-theorem contDiffOn_chartRep (F : SmoothImmersionFamily I M E) (t : ℝ) (x₀ : M) :
-    ContDiffOn ℝ ⊤ (F.chartRep t x₀) (extChartAt I x₀).target := by
-  have hmaps : Set.MapsTo (fun y : E₁ => ((t, y) : ℝ × E₁))
-      (extChartAt I x₀).target (Set.univ ×ˢ (extChartAt I x₀).target) :=
-    fun _ hy => ⟨Set.mem_univ _, hy⟩
-  exact (F.contDiffOn_spaceTimeChartRep x₀).comp
-    (contDiff_const.prodMk contDiff_id).contDiffOn hmaps
 
 /-! ### The uniform identification
 

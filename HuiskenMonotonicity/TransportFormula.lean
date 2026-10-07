@@ -70,23 +70,10 @@ def timeCutoff {t₀ t : ℝ} (h : t < t₀) : ContDiffBump t where
 lemma timeCutoff_rOut {t₀ t : ℝ} (h : t < t₀) :
     (timeCutoff h).rOut = (t₀ - t) / 2 := rfl
 
-@[simp]
-lemma timeCutoff_rIn {t₀ t : ℝ} (h : t < t₀) :
-    (timeCutoff h).rIn = (t₀ - t) / 4 := rfl
-
 /-- The cutoff is one on a neighbourhood of `t`. -/
 lemma timeCutoff_eventuallyEq_one {t₀ t : ℝ} (h : t < t₀) :
     ∀ᶠ s in nhds t, (timeCutoff h) s = 1 :=
   (timeCutoff h).eventuallyEq_one
-
-/-- Where the cutoff is nonzero, the time is strictly before `t₀`. -/
-lemma lt_of_timeCutoff_ne_zero {t₀ t : ℝ} (h : t < t₀) {s : ℝ}
-    (hs : (timeCutoff h) s ≠ 0) : s < t₀ := by
-  by_contra hcon
-  have hge : (timeCutoff h).rOut ≤ dist s t := by
-    rw [timeCutoff_rOut h, Real.dist_eq, abs_of_nonneg (by linarith [not_lt.mp hcon])]
-    linarith [not_lt.mp hcon]
-  exact hs ((timeCutoff h).zero_of_le_dist hge)
 
 /-- Beyond the support of the cutoff the time is past `t + (t₀-t)/2`, hence the cutoff
 vanishes there. -/

@@ -87,18 +87,6 @@ theorem inner_fderiv_eq_neg_inner_secondDerivative
   rw [hsd]
   linarith [happ]
 
-/-- The same identity with the roles of the two arguments displayed symmetrically: for `ξ`
-normal along `F`, the bilinear form `(v, w) ↦ ⟪dξ_x(v), dF_x(w)⟫` is symmetric, because the
-second derivative of `F` is. -/
-theorem inner_fderiv_symm
-    {F ξ : E₁ → E} (hF : ContDiff ℝ 2 F) (hξ : Differentiable ℝ ξ)
-    (hnormal : IsNormalAlong F ξ) (x : E₁) (v w : E₁) :
-    @inner ℝ E _ (fderiv ℝ ξ x v) (fderiv ℝ F x w) =
-      @inner ℝ E _ (fderiv ℝ ξ x w) (fderiv ℝ F x v) := by
-  rw [inner_fderiv_eq_neg_inner_secondDerivative hF hξ hnormal x v w,
-    inner_fderiv_eq_neg_inner_secondDerivative hF hξ hnormal x w v,
-    secondDerivative_symm hF x v w]
-
 /-- Specialisation to a chosen unit normal: this is the coordinate Weingarten equation
 paired against a tangent vector, and exhibits `secondFundamentalForm` as the object the
 Weingarten equation produces. -/

@@ -138,14 +138,6 @@ theorem tangentialDivergence_of_isNormalAlong
     real_inner_smul_right]
   ring
 
-/-- The identity read the other way round. -/
-theorem inner_meanCurvatureVectorFrame_eq_neg_tangentialDivergence
-    {F ξ : E₁ → E} (hF : ContDiff ℝ 2 F) (hξ : Differentiable ℝ ξ)
-    (hnormal : IsNormalAlong F ξ) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) :
-    @inner ℝ E _ (ξ x) (meanCurvatureVectorFrame F b gInv x) =
-      -tangentialDivergence F ξ b gInv x := by
-  rw [tangentialDivergence_of_isNormalAlong hF hξ hnormal b gInv x, neg_neg]
-
 /-! ## Gradient, product rule, and the position field -/
 
 /-- Pairing the tangential gradient against a vector contracts to the same inverse-metric
