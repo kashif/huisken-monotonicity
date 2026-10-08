@@ -25,7 +25,7 @@ so its derivative in the direction `v` vanishes, and the product rule for the in
 splits that derivative into the two terms of the claim.
 -/
 
-import HuiskenMonotonicity.SecondFundamentalForm
+import Mathlib.Analysis.Calculus.FDeriv.Symmetric
 import Mathlib.Analysis.InnerProductSpace.Calculus
 
 namespace HuiskenMonotonicity
@@ -33,11 +33,12 @@ namespace HuiskenMonotonicity
 variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
-/-- The second derivative as an iterated Fréchet derivative. -/
+/-- The vector-valued second derivative `D²F_x(v, w)`. -/
+noncomputable def secondDerivative (F : E₁ → E) (x v w : E₁) : E :=
+  fderiv ℝ (fderiv ℝ F) x v w
+
 lemma secondDerivative_eq_fderiv_fderiv (F : E₁ → E) (x v w : E₁) :
-    secondDerivative F x v w = fderiv ℝ (fderiv ℝ F) x v w := by
-  unfold secondDerivative
-  rw [iteratedFDeriv_two_apply]
+    secondDerivative F x v w = fderiv ℝ (fderiv ℝ F) x v w :=
   rfl
 
 /-- Symmetry of the second derivative at a point where the map is `C²`. Only local
@@ -97,16 +98,5 @@ theorem inner_fderiv_eq_neg_inner_secondDerivative
     ContinuousLinearMap.zero_apply, ContinuousLinearMap.flip_apply] at happ
   rw [secondDerivative_eq_fderiv_fderiv]
   linarith [happ]
-
-/-- Specialisation to a chosen unit normal: this is the coordinate Weingarten equation
-paired against a tangent vector, and exhibits `secondFundamentalForm` as the object the
-Weingarten equation produces. -/
-theorem inner_fderiv_eq_secondFundamentalForm
-    {F ν : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (hν : DifferentiableAt ℝ ν x)
-    (hnormal : IsNormalAlongNear F ν x) (v w : E₁) :
-    @inner ℝ E _ (fderiv ℝ ν x v) (fderiv ℝ F x w) =
-      secondFundamentalForm F ν x v w := by
-  rw [inner_fderiv_eq_neg_inner_secondDerivative hF hν hnormal v w,
-    secondFundamentalForm, real_inner_comm]
 
 end HuiskenMonotonicity

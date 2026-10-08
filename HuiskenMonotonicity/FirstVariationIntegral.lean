@@ -5,7 +5,7 @@ Authors: Kashif Rasul
 -/
 
 import HuiskenMonotonicity.VossWeyl
-import HuiskenMonotonicity.FirstVariation
+import HuiskenMonotonicity.HeatKernel
 import DifferentialGeometry.Geometry.Operator.Laplacian.VossWeylFormula
 import DifferentialGeometry.Geometry.Operator.Gradient.Coordinates
 
@@ -50,6 +50,28 @@ variable {H : Type v} [TopologicalSpace H] {I : ModelWithCorners ℝ E₁ H}
 variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
+
+section Kernel
+
+variable {Idx : Type*} [Fintype Idx]
+
+/-- The kernel pulled back along `F`, differentiated in a coordinate direction. -/
+theorem fderiv_backwardHeatKernel_comp
+    (m : ℕ) (t₀ : ℝ) {t : ℝ} (hτ : t < t₀)
+    {F : E₁ → E} (b : Idx → E₁) (x : E₁)
+    (hF : DifferentiableAt ℝ F x) (i : Idx) :
+    fderiv ℝ (fun y => backwardHeatKernel m t₀ t (F y)) x (b i) =
+      -(backwardHeatKernel m t₀ t (F x) / (2 * (t₀ - t))) *
+        @inner ℝ E _ (F x) (frameTangent F b x i) := by
+  have hρ : DifferentiableAt ℝ (fun y : E => backwardHeatKernel m t₀ t y) (F x) :=
+    (contDiff_backwardHeatKernel m t₀ hτ).differentiable (by norm_num) (F x)
+  have h : HasFDerivAt (fun y => backwardHeatKernel m t₀ t (F y))
+      ((fderiv ℝ (fun y : E => backwardHeatKernel m t₀ t y) (F x)).comp (fderiv ℝ F x)) x :=
+    hρ.hasFDerivAt.comp x hF.hasFDerivAt
+  rw [h.fderiv]
+  simpa using fderiv_backwardHeatKernel m t₀ hτ (F x) (frameTangent F b x i)
+
+end Kernel
 
 /-- The Borel σ-algebra, matching the one under which the library's Riemannian volume measure,
 and hence `surfaceMeasure`, is stated. -/
@@ -287,7 +309,7 @@ omit [I.Boundaryless] in
 /-- On a closed manifold, every continuous function is integrable for the surface measure. -/
 theorem integrable_of_continuous {f : M → ℝ} (hf : Continuous f) :
     Integrable f (F.surfaceMeasure t) := by
-  haveI : IsFiniteMeasureOnCompacts (F.surfaceMeasure t) :=
+  have : IsFiniteMeasureOnCompacts (F.surfaceMeasure t) :=
     riemannianVolumeMeasure_isFiniteMeasureOnCompacts (I := I) (M := M) (F.inducedMetricFamily t)
   exact hf.integrable_of_hasCompactSupport
     (isCompact_univ.of_isClosed_subset (isClosed_tsupport _) (Set.subset_univ _))

@@ -1,41 +1,27 @@
 \chapter{Introduction}
 
-This blueprint documents a Lean 4 / mathlib formalization of Huisken's monotonicity
-formula for mean curvature flow~\cite{huisken1990}, together with the analytical
-infrastructure (the backward heat kernel and its derivative identities) underpinning
-its proof.
+This blueprint documents a Lean 4 formalization of Huisken's monotonicity formula for
+mean curvature flow~\cite{huisken1990}, built on mathlib and on the
+\texttt{DifferentialGeometry} library.
 
-The target is Theorem~\ref{thm:huisken-monotonicity}: for a hypersurface family
-$M_t \subset \mathbb{R}^{n+1}$ evolving by mean curvature, and the backward heat
-kernel
+Let $F \colon M \times \mathbb{R} \to E$ be a smooth family of immersions of a closed
+manifold $M$ of dimension $n$ into a finite-dimensional inner product space $E$, moving
+by mean curvature, $\partial_t F = \vec H$. For the backward heat kernel
 \[
-  \rho(x, t) = (4\pi(t_0 - t))^{-n/2}\,\exp\!\left(-\frac{\|x\|^2}{4(t_0 - t)}\right),
+  \rho(x, t) = (4\pi(t_0 - t))^{-n/2}\,\exp\!\left(-\frac{\|x\|^2}{4(t_0 - t)}\right)
 \]
-the integral $\int_{M_t} \rho\,d\mu_t$ is monotonically decreasing in $t$, with
-explicit rate given by the squared-norm formula
+and every $t < t_0$,
 \[
-  \frac{d}{dt}\int_{M_t} \rho\,d\mu_t = -\int_{M_t} \rho\,
-    \left\| H + \frac{F^\perp}{2(t_0 - t)} \right\|^2 d\mu_t.
+  \frac{d}{dt}\int_M \rho(F, t)\,d\mu_t = -\int_M \rho(F, t)\,
+    \left\| \vec H + \frac{F^\perp}{2(t_0 - t)} \right\|^2 d\mu_t
 \]
+(Theorem~\ref{thm:huisken-monotonicity}).
 
 \section*{Formalization status}
 
-The pinned Mathlib snapshot does not yet contain an integrated second
-fundamental form, the surface measure of an immersion, the moving-measure chain
-rule, or the first variation formula. This project now constructs the induced
-metric and second fundamental form for coordinate immersions and verifies them
-explicitly for graphs. The current global theorem still \emph{axiomatises} the
-missing manifold-level inputs: two purely geometric coherence axioms on the
-data structure (orthogonality of $F^T$ and $F^\perp$; $H \perp F^T$), and two
-analytic hypotheses on the theorem itself (the chain-rule expansion of
-$(d/dt) \int \rho\,d\mu_s$, and the integrated first-variation identity for
-the test field $Y = \rho F / \tau$).
-
-Given those axioms, Theorem~\ref{thm:huisken-monotonicity} is fully proved
-(\texttt{lake build} reports zero \texttt{sorry}). When mathlib gains the missing
-generic geometric and integration layers are available, the hypotheses can be
-discharged for any genuine mean curvature flow, recovering Huisken's theorem
-unconditionally.
+The theorem is proved with no hypotheses beyond the flow itself, in any codimension and
+without choosing a unit normal. \texttt{lake build} reports no \texttt{sorry}, and the
+theorem depends only on Lean's standard axioms.
 
 \chapter{The backward heat kernel}
 
@@ -142,523 +128,191 @@ unconditionally.
 \end{theorem}
 \begin{proof}\leanok Verified in Lean. \end{proof}
 
-\chapter{Mean curvature flow}
+\chapter{Immersions and the induced metric}
 
-\begin{definition}[immersion family]
-  \label{def:immersion-family}
-  \lean{HuiskenMonotonicity.ImmersionFamily}
+\begin{definition}[smooth immersion family]
+  \label{def:smooth-immersion-family}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily}
   \leanok
-  An \emph{immersion family} of a fixed parameter space $M$ into a real inner
-  product space $E$ is a triple $(T, F, \mathrm{cont})$ consisting of a positive
-  maximal time $T \in \mathbb{R}_{>0}$, a map $F : M \times \mathbb{R} \to E$,
-  and a proof that $F$ is jointly continuous in $(p, t)$.
+  A map $F \colon M \times \mathbb{R} \to E$, smooth on the product manifold, every time
+  slice of which is an immersion.
 \end{definition}
+
+\begin{definition}[induced metric and surface measure]
+  \label{def:induced-metric}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.inducedMetric, HuiskenMonotonicity.SmoothImmersionFamily.surfaceMeasure}
+  \leanok
+  \uses{def:smooth-immersion-family}
+  The pullback $g_t(v, w) = \langle dF_t\,v, dF_t\,w\rangle$ of the ambient inner
+  product, as a smooth Riemannian metric on $M$, and its Riemannian volume measure
+  $\mu_t$.
+\end{definition}
+
+\chapter{Extrinsic calculus}
+
+Everything in this chapter is stated for a map $F \colon E_1 \to E$ between model spaces,
+a frame $b$ of $E_1$ and a matrix $g^{ij}$ of inverse-metric components. On a manifold it
+is applied to the chart representation of a time slice.
+
+\begin{theorem}[Weingarten equation, orientation-free]
+  \label{thm:weingarten}
+  \lean{HuiskenMonotonicity.inner_fderiv_eq_neg_inner_secondDerivative}
+  \leanok
+  If $\xi$ is normal along $F$ near $x$, then
+  $\langle d\xi_x(v), dF_x(w)\rangle = -\langle \xi(x), D^2F_x(v, w)\rangle$.
+\end{theorem}
+
+\begin{definition}[tangential divergence, normal part, mean curvature vector]
+  \label{def:tangential-divergence}
+  \lean{HuiskenMonotonicity.tangentialDivergence, HuiskenMonotonicity.tangentialPart, HuiskenMonotonicity.normalPart, HuiskenMonotonicity.meanCurvatureNormal}
+  \leanok
+  $\operatorname{div}_M \xi = g^{ij}\langle d\xi(b_i), \partial_j F\rangle$;
+  $v^\top = g^{kl}\langle v, \partial_l F\rangle\,\partial_k F$ and $v^\perp = v - v^\top$;
+  $\vec H = (g^{ij} D^2F(b_i, b_j))^\perp$.
+\end{definition}
+
+\begin{theorem}[normal divergence identity]
+  \label{thm:normal-divergence}
+  \lean{HuiskenMonotonicity.tangentialDivergence_of_isNormalAlong}
+  \leanok
+  \uses{thm:weingarten, def:tangential-divergence}
+  For $\xi$ normal along $F$, $\operatorname{div}_M \xi = -\langle \xi, \vec H\rangle$.
+\end{theorem}
+
+\begin{theorem}[$\operatorname{div}_M F = n$]
+  \label{thm:div-position}
+  \lean{HuiskenMonotonicity.tangentialDivergence_self}
+  \leanok
+  \uses{def:tangential-divergence}
+  The tangential divergence of the position vector is the dimension.
+\end{theorem}
+
+\begin{theorem}[Beltrami's formula for $|F|^2/2$]
+  \label{thm:beltrami-frame}
+  \lean{HuiskenMonotonicity.tangentialDivergence_tangentialPart_position}
+  \leanok
+  \uses{thm:normal-divergence, thm:div-position}
+  $\operatorname{div}_M F^\top = n + \langle F, \vec H\rangle$, by the split
+  $F = F^\top + F^\perp$.
+\end{theorem}
+
+\begin{theorem}[Voss--Weyl]
+  \label{thm:voss-weyl}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.vossWeyl_eq_tangentialDivergence}
+  \leanok
+  \uses{def:tangential-divergence, def:induced-metric}
+  In a chart, the library's Voss--Weyl divergence
+  $\frac{1}{\sqrt g}\partial_i(\sqrt g\,Z^i)$ equals the tangential divergence of the
+  tangential field $Z^k \partial_k F$.
+\end{theorem}
+
+\chapter{The first variation}
+
+\begin{definition}[mean curvature and normal position on $M$]
+  \label{def:mean-curvature-M}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.meanCurvature, HuiskenMonotonicity.SmoothImmersionFamily.normalPosition, HuiskenMonotonicity.SmoothImmersionFamily.tangentialSqNorm}
+  \leanok
+  \uses{def:tangential-divergence, def:induced-metric}
+  $\vec H$, $F^\perp$ and $\|F^\top\|^2$ at $p \in M$, read in the chart at $p$.
+\end{definition}
+
+\begin{theorem}[Beltrami's formula on $M$]
+  \label{thm:laplacian-half-sq-norm}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.laplacian_halfSqNorm}
+  \leanok
+  \uses{thm:beltrami-frame, thm:voss-weyl, def:mean-curvature-M}
+  The library's Laplacian of $u = |F|^2/2$ is $\Delta u = n + \langle F, \vec H\rangle$.
+\end{theorem}
+
+\begin{lemma}[derivative of the kernel along $\nabla u$]
+  \label{lem:X-rho}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel}
+  \leanok
+  \uses{def:mean-curvature-M, def:backward-heat-kernel}
+  $\langle \nabla u, \nabla \rho\rangle = -\frac{\rho}{2\tau}\|F^\top\|^2$.
+\end{lemma}
+
+\begin{theorem}[first variation identity]
+  \label{thm:first-variation}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.integral_firstVariation}
+  \leanok
+  \uses{thm:laplacian-half-sq-norm, lem:X-rho}
+  On a closed manifold,
+  $\int_M \rho\left(n - \frac{\|F^\top\|^2}{2\tau} + \langle F, \vec H\rangle\right)d\mu_t = 0$,
+  by the library's integration by parts $\int X(\rho) = -\int \rho \operatorname{div} X$
+  with $X = \nabla u$.
+\end{theorem}
+
+\chapter{Mean curvature flow}
 
 \begin{definition}[mean curvature flow]
   \label{def:mcf}
-  \lean{HuiskenMonotonicity.IsMeanCurvatureFlow}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.IsMeanCurvatureFlow}
   \leanok
-  \uses{def:immersion-family}
-  An immersion family $F$ \emph{solves the mean curvature flow with prescribed
-  velocity field $H : M \to \mathbb{R} \to E$} if, for every $p \in M$ and every
-  $t \in [0, T)$,
-  \[
-    \left.\frac{\partial}{\partial s}\right|_{s = t} F(p, s) = H(p, t).
-  \]
-  Geometrically $H(p, t)$ is the mean curvature vector of the hypersurface
-  $F(\cdot, t)(M)$ at $F(p, t)$. Because the second fundamental form is missing
-  from mathlib, $H$ is taken as explicit data rather than derived from $F$.
+  \uses{def:mean-curvature-M}
+  $\partial_t F(p, t) = \vec H(p, t)$ for all $p$ and $t$.
 \end{definition}
 
-\begin{definition}[rescaled mean curvature flow]
-  \label{def:rescaled-mcf}
-  \lean{HuiskenMonotonicity.IsRescaledMeanCurvatureFlow}
+\begin{lemma}[normality in every chart]
+  \label{lem:normal-every-chart}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.inner_meanCurvature_fderiv_chartRep}
   \leanok
-  \uses{def:immersion-family}
-  Under the parabolic rescaling
-  $\widetilde{F}(p, s) = (2(T - t))^{-1/2} F(p, t)$, $s = -\tfrac{1}{2}\log(T - t)$,
-  the rescaled family satisfies
-  \[
-    \left.\frac{\partial}{\partial s'}\right|_{s' = s}
-      \widetilde{F}(p, s') = \widetilde{H}(p, s) + \widetilde{F}(p, s),
-  \]
-  with the extra $\widetilde{F}$ term arising from the time-dependent rescaling
-  factor.
-\end{definition}
+  \uses{def:mean-curvature-M}
+  $\vec H(p)$ is orthogonal to the tangent vectors of the chart representation of $F_t$ in
+  any chart containing $p$.
+\end{lemma}
 
-\begin{definition}[monotonicity data]
-  \label{def:monotonicity-data}
-  \lean{HuiskenMonotonicity.MonotonicityData}
+\begin{theorem}[evolution of the volume element]
+  \label{thm:volume-evolution}
+  \lean{HuiskenMonotonicity.hasDerivAt_frameGram_of_isNormalAlong, HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_of_isMeanCurvatureFlow}
   \leanok
-  \uses{def:immersion-family}
-  A \emph{monotonicity data structure} for an immersion family $F$ bundles a
-  surface measure $\mu_t$ on the parameter space $M$, a mean curvature vector
-  field $H$, a normal-position projection $F^\perp$, and the two coherence
-  axioms
-  \[
-    \langle F(p, t) - F^\perp(p, t),\, F^\perp(p, t)\rangle = 0,
-    \qquad
-    \langle H(p, t),\, F(p, t) - F^\perp(p, t)\rangle = 0.
-  \]
-  These say that $F = F^T + F^\perp$ is an orthogonal decomposition and that
-  $H$ is normal to the tangential component.
-\end{definition}
+  \uses{def:mcf, lem:normal-every-chart, thm:weingarten}
+  Under the flow $\partial_t g_{ij} = -2\langle \vec H, \partial_i\partial_j F\rangle$, so
+  $\operatorname{tr}(g^{-1}\partial_t g) = -2\|\vec H\|^2$.
+\end{theorem}
+
+\begin{theorem}[transport formula]
+  \label{thm:transport}
+  \lean{HuiskenMonotonicity.hasDerivAt_integral_backwardHeatKernel}
+  \leanok
+  \uses{def:induced-metric, def:backward-heat-kernel}
+  $\frac{d}{dt}\int \rho\,d\mu_t = \int \left(\partial_t[\rho(F)] +
+  \tfrac12 \operatorname{tr}(g^{-1}\partial_t g)\,\rho\right)d\mu_t$, through the
+  library's volume variation formula.
+\end{theorem}
+
+\begin{lemma}[the kernel along the flow]
+  \label{lem:kernel-curve}
+  \lean{HuiskenMonotonicity.hasDerivAt_backwardHeatKernel_curve}
+  \leanok
+  \uses{lem:rho-dt, lem:rho-dx}
+  $\frac{d}{ds}\rho(\gamma(s), s) = \rho\left(\frac{n}{2\tau} - \frac{\|\gamma\|^2}{4\tau^2}
+  - \frac{\langle \gamma, \gamma'\rangle}{2\tau}\right)$.
+\end{lemma}
 
 \chapter{Huisken's monotonicity formula}
 
-\begin{lemma}[pointwise algebraic identity]
-  \label{lem:huisken-pointwise}
+\begin{lemma}[pointwise identity]
+  \label{lem:pointwise-identity}
   \lean{HuiskenMonotonicity.huisken_pointwise_identity}
   \leanok
-  Pure algebra in a real inner product space. Let $\tau \neq 0$, and suppose
-  $\langle F - F^\perp,\, F^\perp\rangle = 0$ and
-  $\langle H,\, F - F^\perp\rangle = 0$. Then for any scalar $\rho$,
-  \begin{align*}
-    \rho \cdot \Big(\tfrac{n}{2\tau} &- \tfrac{\|F\|^2}{4\tau^2}
-        - \tfrac{\langle F, H\rangle}{2\tau} - \|H\|^2\Big) \\
-    &= -\rho\,\Big\|H + \tfrac{F^\perp}{2\tau}\Big\|^2
-       + \tfrac{1}{2\tau} \cdot \rho \cdot
-         \Big(n - \tfrac{\|F - F^\perp\|^2}{2\tau} + \langle H, F\rangle\Big).
-  \end{align*}
+  If $F^\top \perp F^\perp$ and $\vec H \perp F^\top$, then
+  \[
+    \rho\left(\frac{n}{2\tau} - \frac{\|F\|^2}{4\tau^2} - \frac{\langle F, \vec H\rangle}{2\tau}
+      - \|\vec H\|^2\right)
+    = -\rho\left\|\vec H + \frac{F^\perp}{2\tau}\right\|^2
+      + \frac{1}{2\tau}\,\rho\left(n - \frac{\|F^\top\|^2}{2\tau} + \langle \vec H, F\rangle\right).
+  \]
 \end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
 
 \begin{theorem}[Huisken's monotonicity formula]
   \label{thm:huisken-monotonicity}
-  \lean{HuiskenMonotonicity.huisken_monotonicity}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.huisken_monotonicity}
   \leanok
-  \uses{def:backward-heat-kernel, def:mcf, def:monotonicity-data,
-        lem:rho-dt, lem:rho-dx, lem:huisken-pointwise}
-  Let $F$ be an immersion family with monotonicity data $(\mu_t, H, F^\perp)$
-  satisfying $\partial_t F = H$ (Definition~\ref{def:mcf}). Suppose moreover the
-  two analytic hypotheses
-
-  \begin{enumerate}
-    \item (\emph{moving-measure chain rule}) the time derivative of
-      $\int_M \rho(F(p, s), s)\,d\mu_s(p)$ at $s = t$ equals
-      \[
-        \int_M \rho \cdot
-          \left(\tfrac{n}{2\tau} - \tfrac{\|F\|^2}{4\tau^2}
-            - \tfrac{\langle F, H\rangle}{2\tau} - \|H\|^2\right) d\mu_t,
-      \]
-    \item (\emph{first variation identity}) for the test field
-      $Y = \rho F / \tau$,
-      \[
-        \int_M \rho \cdot
-          \left(n - \tfrac{\|F^T\|^2}{2\tau} + \langle H, F\rangle\right)
-          d\mu_t = 0,
-      \]
-  \end{enumerate}
-  hold (with $\tau = t_0 - t$). Then for every $t < t_0$,
+  \uses{thm:transport, thm:volume-evolution, lem:kernel-curve, lem:pointwise-identity, thm:first-variation}
+  For a mean curvature flow of a closed manifold and $t < t_0$,
   \[
-    \frac{d}{dt}\int_M \rho(F(p, t), t)\,d\mu_t(p)
-      = - \int_M \rho \cdot \Big\|H + \tfrac{F^\perp}{2\tau}\Big\|^2 d\mu_t.
+    \frac{d}{dt}\int_M \rho(F, t)\,d\mu_t = -\int_M \rho(F, t)\,
+      \left\| \vec H + \frac{F^\perp}{2(t_0 - t)} \right\|^2 d\mu_t.
   \]
 \end{theorem}
-
-\begin{proof}\leanok
-  \uses{lem:huisken-pointwise}
-  By Lemma~\ref{lem:huisken-pointwise}, the chain-rule integrand from~(1)
-  equals the negated squared-norm integrand plus $\frac{1}{2\tau}$ times the
-  first-variation integrand from~(2). Integrating both sides and applying
-  hypothesis~(2) zeros out the first-variation contribution, leaving
-  exactly $-\int \rho\,\|H + F^\perp/(2\tau)\|^2 d\mu_t$.
-\end{proof}
-
-\begin{theorem}[rescaled monotonicity formula]
-  \label{thm:huisken-monotonicity-rescaled}
-  \lean{HuiskenMonotonicity.huisken_monotonicity_rescaled}
-  \leanok
-  \uses{def:rescaled-mcf, def:monotonicity-data, lem:huisken-pointwise}
-  In the rescaled setup of Definition~\ref{def:rescaled-mcf}, with rescaled
-  kernel $\widetilde{\rho}(x) = \exp(-\|x\|^2/2)$ (no time-dependent prefactor)
-  and the analogous chain-rule and first-variation hypotheses,
-  \[
-    \frac{d}{ds}\int_M \widetilde{\rho}(\widetilde{F}(p, s))\,d\widetilde{\mu}_s(p)
-      = - \int_M \widetilde{\rho} \cdot
-        \Big\|\widetilde{H} + \widetilde{F}^\perp\Big\|^2 d\widetilde{\mu}_s.
-  \]
-  The proof reuses Lemma~\ref{lem:huisken-pointwise} specialised at
-  $\tau = 1/2$: the factors $1/(2\tau)$ and $4\tau^2$ collapse to $1$.
-\end{theorem}
-\begin{proof}\leanok
-  \uses{lem:huisken-pointwise}
-  Same skeleton as Theorem~\ref{thm:huisken-monotonicity}: apply the
-  pointwise identity at $\tau = 1/2$, integrate, and use the rescaled
-  first-variation hypothesis to zero out the residue.
-\end{proof}
-
-\chapter{Sanity-check examples}
-
-\begin{example}[stationary hyperplane]
-  \label{ex:hyperplane}
-  \lean{HuiskenMonotonicity.Hyperplane.data}
-  \leanok
-  \uses{def:monotonicity-data, def:mcf}
-  The stationary $n$-dimensional hyperplane through the origin in
-  $\mathbb{R}^{n+1}$, embedded as $(p_1, \ldots, p_n) \mapsto
-  (p_1, \ldots, p_n, 0)$, has $H \equiv 0$ and $F^\perp \equiv 0$.
-  Both coherence axioms hold trivially, and the surface satisfies
-  $\partial_t F = 0 = H$.
-\end{example}
-
-\chapter{Coordinate hypersurfaces}
-
-The abstract \texttt{MonotonicityData} structure axiomatises the orthogonal
-decomposition $F = F^T + F^\perp$ and the normality $H \perp F^T$. For a
-hypersurface given as a graph $X_f(x) = (x, f(x))$, both axioms are
-\emph{constructively} satisfied via explicit coordinate calculations.
-
-\begin{definition}[induced (pullback) metric]
-  \label{def:induced-metric}
-  \lean{HuiskenMonotonicity.inducedMetric}
-  \leanok
-  For $F : E_1 \to E_2$ between inner product spaces, the induced bilinear
-  form on $E_1$ at $x$ is $g_x(v, w) := \langle dF_x v,\, dF_x w\rangle_{E_2}$.
-  At immersion points this is positive definite, the metric pulled back from
-  the ambient inner product. The classical Gram matrix
-  $g_{ij}(x) = \langle \partial F/\partial x^i,\, \partial F/\partial x^j\rangle$
-  is `inducedMetricMatrix` evaluated against a chosen basis.
-\end{definition}
-
-\begin{lemma}[induced metric self-eq-norm-sq]
-  \label{lem:induced-metric-self}
-  \lean{HuiskenMonotonicity.inducedMetric.self_eq_norm_sq}
-  \leanok
-  \uses{def:induced-metric}
-  $g_x(v, v) = \|dF_x v\|^2$. In particular $g_x(v, v) \geq 0$ always, and
-  positive when $dF_x$ is injective and $v \neq 0$ (the immersion case).
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{definition}[induced Gram matrix]
-  \label{def:induced-gram-matrix}
-  \lean{HuiskenMonotonicity.inducedGramMatrix}
-  \leanok
-  \uses{def:induced-metric}
-  Specialising to the standard basis of $\mathrm{EuclideanSpace}\,\mathbb{R}\,(\mathrm{Fin}\,n)$,
-  the induced metric is packaged as a mathlib
-  $\mathrm{Matrix}\,(\mathrm{Fin}\,n)\,(\mathrm{Fin}\,n)\,\mathbb{R}$ with
-  entries $g_{ij}(x) = \langle \partial F/\partial x^i(x),\,
-  \partial F/\partial x^j(x)\rangle$. The matrix layout will be reused for
-  the second fundamental form, which has the same shape and symmetry.
-\end{definition}
-
-\begin{lemma}[Gram matrix is symmetric]
-  \label{lem:induced-gram-matrix-isSymm}
-  \lean{HuiskenMonotonicity.inducedGramMatrix_isSymm}
-  \leanok
-  \uses{def:induced-gram-matrix}
-  $g_{ij} = g_{ji}$, packaged as `Matrix.IsSymm`.
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{lemma}[Gram matrix is positive semidefinite]
-  \label{lem:induced-gram-matrix-posSemidef}
-  \lean{HuiskenMonotonicity.inducedGramMatrix_posSemidef}
-  \leanok
-  \uses{def:induced-gram-matrix}
-  The induced Gram matrix is positive semidefinite, via mathlib's
-  \texttt{Matrix.posSemidef\_gram} applied to the partial-derivative vectors.
-  Consequently $\det(g_{ij}) \geq 0$.
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{definition}[induced volume element]
-  \label{def:induced-volume-element}
-  \lean{HuiskenMonotonicity.inducedVolumeElement}
-  \leanok
-  \uses{def:induced-gram-matrix}
-  The classical volume element of an immersion $F : \mathbb{R}^n \to E$ at $x$:
-  \[
-    d\mu_F(x) := \sqrt{\det(g_{ij}(x))} \, dx.
-  \]
-  In the graph case $F(x) = (x, f(x))$ this reduces to
-  $\sqrt{1 + \|\nabla f\|^2} \, dx$ (background.latex eq.~1.13). Always
-  non-negative (lemma~\ref{lem:induced-volume-element-nonneg}); positivity at
-  immersion points (where $dF_x$ is injective, hence the Gram matrix is
-  positive definite) is a follow-up.
-\end{definition}
-
-\begin{lemma}[volume element is non-negative]
-  \label{lem:induced-volume-element-nonneg}
-  \lean{HuiskenMonotonicity.inducedVolumeElement_nonneg}
-  \leanok
-  \uses{def:induced-volume-element}
-  $d\mu_F(x) \geq 0$ for every $x$, by \texttt{Real.sqrt\_nonneg}.
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{lemma}[Gram matrix is positive definite at immersion points]
-  \label{lem:induced-gram-matrix-posDef}
-  \lean{HuiskenMonotonicity.inducedGramMatrix_posDef_of_injective}
-  \leanok
-  \uses{def:induced-gram-matrix}
-  When $dF_x$ is injective (the immersion condition at $x$), the partial
-  derivatives $(\partial F/\partial x^i)_i$ are linearly independent, so the
-  Gram matrix is positive definite. Consequently $\det g_{ij}(x) > 0$ and
-  $d\mu_F(x) > 0$.
-\end{lemma}
-\begin{proof}\leanok
-  Standard basis $(e_i)$ is linearly independent; injectivity of $dF_x$ pushes
-  this through to the images $(dF_x e_i) = (\partial F/\partial x^i)$;
-  positive-definiteness then follows from
-  \texttt{Matrix.posDef\_gram\_of\_linearIndependent}. Verified in Lean.
-\end{proof}
-
-\begin{definition}[inverse metric $g^{ij}$]
-  \label{def:induced-inverse-metric}
-  \lean{HuiskenMonotonicity.inducedInverseMetricMatrix}
-  \leanok
-  \uses{def:induced-gram-matrix, lem:induced-gram-matrix-posDef}
-  The matrix inverse $g^{ij}(x) := (g_{ij}(x))^{-1}$. Genuine inverse at
-  immersion points; defaults to the zero matrix off-immersion (mathlib's
-  convention for non-invertible matrices). Used to raise indices on covariant
-  tensors and to take metric traces such as $H = g^{ij} h_{ij}$.
-\end{definition}
-
-\begin{lemma}[$g^{ij}$ is the matrix inverse of $g_{ij}$ at immersion points]
-  \label{lem:induced-inverse-metric-mul}
-  \lean{HuiskenMonotonicity.inducedInverseMetricMatrix_mul_inducedGramMatrix_of_injective}
-  \leanok
-  \uses{def:induced-inverse-metric, lem:induced-gram-matrix-posDef}
-  At an immersion point, $g^{ij} \cdot g_{jk} = \delta^i_k$ (matrix
-  identity).
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{lemma}[inverse metric is symmetric]
-  \label{lem:induced-inverse-metric-isSymm}
-  \lean{HuiskenMonotonicity.inducedInverseMetricMatrix_isSymm}
-  \leanok
-  \uses{def:induced-inverse-metric, lem:induced-gram-matrix-isSymm}
-  $g^{ij} = g^{ji}$, since the inverse of a symmetric matrix is symmetric.
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{definition}[second fundamental form matrix]
-  \label{def:second-fundamental-form-matrix}
-  \lean{HuiskenMonotonicity.secondFundamentalFormMatrix}
-  \leanok
-  For a coordinate immersion $F : \mathbb{R}^n \to E$ and a chosen normal
-  field $\nu$, the scalar second fundamental form has entries
-  \[
-    h_{ij}(x)=-\left\langle D^2F_x(e_i,e_j),\,\nu(x)\right\rangle .
-  \]
-  The minus sign is the lower-normal convention used throughout the
-  formalization.
-\end{definition}
-
-\begin{definition}[graph position]
-  \label{def:graph-position}
-  \lean{HuiskenMonotonicity.graphPosition}
-  \leanok
-  For $f : \mathbb{R}^n \to \mathbb{R}$, the graph immersion is
-  $X_f(x) = (x, f(x)) \in \mathbb{R}^{n+1}$.
-\end{definition}
-
-\begin{definition}[graph mean curvature]
-  \label{def:graph-mc-scalar}
-  \lean{HuiskenMonotonicity.meanCurvatureGraph}
-  \leanok
-  Lower-normal scalar mean curvature
-  $H(x) = \mathrm{div}(\nabla f / \sqrt{1 + \|\nabla f\|^2})$ at $x$.
-\end{definition}
-
-\begin{definition}[graph unit normal]
-  \label{def:graph-unit-normal}
-  \lean{HuiskenMonotonicity.graphUnitNormal}
-  \leanok
-  \uses{def:graph-position}
-  Lower unit normal $\nu = (\nabla f, -1) / \sqrt{1 + \|\nabla f\|^2}$.
-  Norm verified to equal $1$.
-\end{definition}
-
-\begin{lemma}[second fundamental form of a graph]
-  \label{lem:graph-second-fundamental-form}
-  \lean{HuiskenMonotonicity.secondFundamentalFormMatrix_graphPosition}
-  \leanok
-  \uses{def:second-fundamental-form-matrix, def:graph-position,
-        def:graph-unit-normal}
-  If $f$ is $C^2$ and
-  $v=\sqrt{1+\|\nabla f\|^2}$, then the downward-oriented graph satisfies
-  \[
-    h_{ij}=\frac{\partial_i\partial_j f}{v}.
-  \]
-\end{lemma}
-\begin{proof}\leanok
-  The second derivative of the graph position has only a height component.
-  Pairing it with $(\nabla f,-1)/v$ and applying the sign in the definition
-  gives the result.
-\end{proof}
-
-\begin{theorem}[graph scalar mean curvature is the metric trace]
-  \label{thm:graph-scalar-metric-trace}
-  \lean{HuiskenMonotonicity.meanCurvatureGraph_eq_inducedMetricTrace}
-  \leanok
-  \uses{def:induced-gram-matrix, def:graph-mc-scalar,
-        lem:graph-second-fundamental-form}
-  For a $C^2$ graph, the divergence definition of scalar mean curvature agrees
-  with the geometric contraction
-  \[
-    H=\sum_{i,j}g^{ij}h_{ij},
-  \]
-  where $g^{ij}$ is the inverse of the generic induced Gram matrix of the
-  graph position.
-\end{theorem}
-\begin{proof}\leanok
-  Differentiate $\partial_i f/v$, expand the derivative of $v$, and use
-  $g^{ij}=\delta_{ij}-(\partial_i f)(\partial_j f)/v^2$. The resulting
-  Hessian trace and rank-one correction agree term by term.
-\end{proof}
-
-\begin{definition}[normal-valued second fundamental form of a graph]
-  \label{def:graph-second-fundamental-form-vector}
-  \lean{HuiskenMonotonicity.graphSecondFundamentalFormVectorMatrix}
-  \leanok
-  \uses{lem:graph-second-fundamental-form, def:graph-unit-normal}
-  With the scalar convention above, the ambient normal-valued entries are
-  \[
-    \vec h_{ij}=-h_{ij}\nu.
-  \]
-  This sign makes their metric trace equal to the mean curvature vector.
-\end{definition}
-
-\begin{definition}[vector trace of the graph second fundamental form]
-  \label{def:graph-second-fundamental-form-vector-trace}
-  \lean{HuiskenMonotonicity.graphSecondFundamentalFormVectorTrace}
-  \leanok
-  \uses{def:graph-second-fundamental-form-vector}
-  The explicit inverse graph metric contracts the normal-valued matrix:
-  \[
-    \operatorname{tr}_g\vec h=\sum_{i,j}g^{ij}\vec h_{ij}.
-  \]
-\end{definition}
-
-\begin{definition}[graph mean curvature vector]
-  \label{def:graph-mc-vector}
-  \lean{HuiskenMonotonicity.graphMeanCurvatureVector}
-  \leanok
-  \uses{def:graph-mc-scalar, def:graph-unit-normal}
-  Mean curvature vector $\vec{H} = -H \cdot \nu$ along the unit normal.
-\end{definition}
-
-\begin{theorem}[vector trace equals graph mean curvature]
-  \label{thm:graph-vector-metric-trace}
-  \lean{HuiskenMonotonicity.graphSecondFundamentalFormVectorTrace_eq_meanCurvatureVector}
-  \leanok
-  \uses{thm:graph-scalar-metric-trace,
-        def:graph-second-fundamental-form-vector-trace,
-        def:graph-mc-vector}
-  For a $C^2$ graph,
-  \[
-    \operatorname{tr}_g\vec h
-      =-\left(\sum_{i,j}g^{ij}h_{ij}\right)\nu
-      =-H\nu
-      =\vec H.
-  \]
-\end{theorem}
-\begin{proof}\leanok
-  Factor the common normal through the two finite sums and apply the scalar
-  trace theorem.
-\end{proof}
-
-\begin{theorem}[induced-metric vector trace equals graph mean curvature]
-  \label{thm:graph-induced-vector-metric-trace}
-  \lean{HuiskenMonotonicity.inducedMetricTrace_graphSecondFundamentalFormVector_eq_meanCurvatureVector}
-  \leanok
-  \uses{def:induced-gram-matrix, thm:graph-vector-metric-trace}
-  Replacing the explicit inverse graph metric by the inverse of the generic
-  induced Gram matrix gives the same normal-valued trace $\vec H$.
-\end{theorem}
-\begin{proof}\leanok
-  The generic induced Gram matrix of the graph position equals the explicit
-  graph metric, whose matrix inverse is the explicit $g^{ij}$.
-\end{proof}
-
-\begin{lemma}[graph mean curvature is normal]
-  \label{lem:graph-mc-normal}
-  \lean{HuiskenMonotonicity.graphMeanCurvatureVector_normal}
-  \leanok
-  \uses{def:graph-mc-vector}
-  For any ambient vector $Y$, $\langle \vec{H},\, Y - \pi_\nu(Y)\rangle = 0$,
-  where $\pi_\nu$ is orthogonal projection onto the line spanned by $\nu$.
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{lemma}[normal projection of vertical velocity]
-  \label{lem:vertical-mcf-normal}
-  \lean{HuiskenMonotonicity.graphNormalProjection_vertical_mcfVelocity}
-  \leanok
-  \uses{def:graph-mc-vector}
-  Let $v = \sqrt{1 + \|\nabla f\|^2}$. The normal projection of the purely
-  vertical vector $(0, vH)$ equals $\vec{H}$. Equivalently, the scalar
-  graphical MCF equation $\partial_t f = vH$ produces a vertical velocity
-  whose normal component is exactly the mean curvature vector.
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{definition}[coordinate graphical MCF]
-  \label{def:coord-graph-mcf}
-  \lean{HuiskenMonotonicity.IsCoordinateGraphMeanCurvatureFlow}
-  \leanok
-  \uses{def:graph-mc-scalar}
-  A time-dependent height $f : \mathbb{R} \to \mathbb{R}^n \to \mathbb{R}$
-  satisfies \emph{coordinate graphical MCF} if, for each $x$ and each $t$,
-  $\partial_t f(t, x) = v(t, x) \cdot H(t, x)$, where $v$ is the area factor
-  and $H$ is the scalar mean curvature.
-\end{definition}
-
-\begin{lemma}[time derivative of the graph position]
-  \label{lem:graph-position-deriv}
-  \lean{HuiskenMonotonicity.hasDerivAt_graphPosition_of_isCoordMCF}
-  \leanok
-  \uses{def:graph-position, def:coord-graph-mcf}
-  Under coordinate graphical MCF, the time derivative of $X_f(x) = (x, f(t,x))$
-  along a fixed base point $x$ is the vertical vector
-  $(0, v \cdot H)$, where $v$ and $H$ are evaluated at $(t, x)$.
-\end{lemma}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{theorem}[graphical MCF projects to the geometric mean curvature]
-  \label{thm:graph-velocity-proj-mc}
-  \lean{HuiskenMonotonicity.graphNormalProjection_velocity_eq_meanCurvatureVector}
-  \leanok
-  \uses{lem:graph-position-deriv, lem:vertical-mcf-normal}
-  Under coordinate graphical MCF, the orthogonal projection of the time
-  derivative of the graph position onto the unit-normal line equals the
-  geometric mean curvature vector $\vec{H}$. Combining the previous two
-  results, this is the precise sense in which the scalar PDE
-  $\partial_t f = v H$ is a faithful parametrisation of mean curvature
-  flow on the graph hypersurface.
-\end{theorem}
-\begin{proof}\leanok Verified in Lean. \end{proof}
-
-\begin{theorem}[monotonicity data for a coordinate graph]
-  \label{thm:coord-graph-monotonicity-data}
-  \lean{HuiskenMonotonicity.coordinateGraphMonotonicityData}
-  \leanok
-  \uses{def:graph-position, def:graph-mc-vector, def:monotonicity-data,
-        lem:graph-mc-normal}
-  For any time-dependent height function $f$, the graph immersion family
-  carries a complete \texttt{MonotonicityData} structure: the surface
-  measure is Lebesgue weighted by the area factor $v$, the mean curvature
-  is the geometric vector $\vec{H}$, and the normal-position projection is
-  the orthogonal projection of $X_f(x)$ onto the unit-normal line.
-  Both coherence axioms (orthogonal decomposition and $\vec{H} \perp F^T$)
-  hold by construction.
-\end{theorem}
-\begin{proof}\leanok
-  \uses{lem:graph-mc-normal}
-  Both axioms reduce to general orthogonality lemmas for the projection
-  $\pi_\nu$ onto a non-zero direction $\nu$: the difference $Y - \pi_\nu(Y)$
-  is orthogonal to $\pi_\nu(Y)$ (proving \texttt{posDecomp}), and any scalar
-  multiple of $\nu$ is orthogonal to $Y - \pi_\nu(Y)$ (proving
-  \texttt{meanCurvature\_normal}). Verified in Lean.
-\end{proof}
-
-\begin{thebibliography}{99}
-  \bibitem{huisken1990} G.\ Huisken, \emph{Asymptotic behavior for
-  singularities of the mean curvature flow}, J.\ Differential Geom.\ \textbf{31}
-  (1990), no.\ 1, 285--299.
-\end{thebibliography}

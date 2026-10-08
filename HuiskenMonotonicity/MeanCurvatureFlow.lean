@@ -7,7 +7,6 @@ Authors: Kashif Rasul
 import HuiskenMonotonicity.FirstVariationIntegral
 import HuiskenMonotonicity.TransportFormula
 import HuiskenMonotonicity.MetricEvolution
-import HuiskenMonotonicity.Monotonicity
 
 /-!
 # Huisken's monotonicity formula for a mean curvature flow
@@ -93,6 +92,57 @@ theorem hasDerivAt_backwardHeatKernel_curve (m : ℕ) (t₀ : ℝ) {t : ℝ} (h�
   ring
 
 end Kernel
+
+/-! ## Huisken's pointwise identity
+
+Pure algebra in the inner product space `E`: if `F^T ⟂ F^⊥` and `H ⟂ F^T`, then the
+chain-rule integrand differs from the squared-norm integrand by a multiple of the
+first-variation integrand. -/
+
+section Algebra
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- Pointwise identity: the chain-rule integrand equals the negated squared-norm
+integrand plus `(1/(2τ))` times the first-variation integrand. Uses only the two
+orthogonality axioms. -/
+lemma huisken_pointwise_identity
+    (n : ℕ) (τ : ℝ) (hτ : τ ≠ 0)
+    (Fpt Fperp H : E) (ρ : ℝ)
+    (hPosDecomp : @inner ℝ E _ (Fpt - Fperp) Fperp = 0)
+    (hMCNormal : @inner ℝ E _ H (Fpt - Fperp) = 0) :
+    ρ * ((n : ℝ) / (2 * τ) - ‖Fpt‖ ^ 2 / (4 * τ ^ 2)
+          - @inner ℝ E _ Fpt H / (2 * τ) - ‖H‖ ^ 2) =
+      -(ρ * ‖H + (1 / (2 * τ)) • Fperp‖ ^ 2)
+        + (1 / (2 * τ)) *
+            (ρ * ((n : ℝ) - ‖Fpt - Fperp‖ ^ 2 / (2 * τ) + @inner ℝ E _ H Fpt)) := by
+  -- Expand ‖H + (1/(2τ)) • F^⊥‖² = ‖H‖² + ⟨H, F^⊥⟩/τ + ‖F^⊥‖²/(4τ²).
+  have h_norm_sq :
+      ‖H + (1 / (2 * τ)) • Fperp‖ ^ 2 =
+        ‖H‖ ^ 2 + @inner ℝ E _ H Fperp / τ + ‖Fperp‖ ^ 2 / (4 * τ ^ 2) := by
+    rw [@norm_add_sq_real E _ _ H ((1 / (2 * τ)) • Fperp), real_inner_smul_right,
+        norm_smul, mul_pow, Real.norm_eq_abs, sq_abs]
+    field_simp
+    ring
+  -- Expand ‖F‖² = ‖F^T‖² + ‖F^⊥‖². From posDecomp, ⟨F^T, F^⊥⟩ = 0, so
+  -- ‖F‖² = ‖F^T + F^⊥‖² = ‖F^T‖² + 2⟨F^T, F^⊥⟩ + ‖F^⊥‖² = ‖F^T‖² + ‖F^⊥‖².
+  have hFsplit : Fpt = (Fpt - Fperp) + Fperp := by abel
+  have h_F_norm :
+      ‖Fpt‖ ^ 2 = ‖Fpt - Fperp‖ ^ 2 + ‖Fperp‖ ^ 2 := by
+    conv_lhs => rw [hFsplit]
+    rw [@norm_add_sq_real E _ _ (Fpt - Fperp) Fperp, hPosDecomp]
+    ring
+  -- From `H ⟂ F^T`: ⟨H, F⟩ = ⟨H, F^T + F^⊥⟩ = 0 + ⟨H, F^⊥⟩ = ⟨H, F^⊥⟩.
+  have h_inner_split :
+      @inner ℝ E _ H Fpt = @inner ℝ E _ H Fperp := by
+    conv_lhs => rw [hFsplit]
+    rw [inner_add_right, hMCNormal, zero_add]
+  have h_inner_sym : @inner ℝ E _ Fpt H = @inner ℝ E _ H Fpt := real_inner_comm _ _
+  rw [h_norm_sq, h_F_norm, h_inner_sym, h_inner_split]
+  field_simp
+  ring
+
+end Algebra
 
 universe u v w
 

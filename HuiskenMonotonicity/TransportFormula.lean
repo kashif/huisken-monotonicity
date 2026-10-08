@@ -158,18 +158,14 @@ theorem cutoffIntegrand_eventuallyEq (F : SmoothImmersionFamily I M E) (n : ℕ)
   funext x
   rw [cutoffIntegrand, hs, one_mul]
 
-/-- **The transport formula for the surface measure of a mean curvature flow.**
+/-- **The transport formula for the surface measure of an immersion family.**
 
 For `t < t₀`,
 
 `d/dt ∫ ρ(F(·,t)) dμ_t = ∫ (∂_t ρ(F(·,t)) + ½ tr(g⁻¹ ∂_t g) · ρ(F(·,t))) dμ_t`,
 
-with `μ_t` the surface measure of the induced metric. This is the hypothesis `hChainRule`
-of `huisken_monotonicity`, now a theorem.
-
-The weight `½ tr(g⁻¹ ∂_t g)` is evaluated by
-`traceTimeDerivMetric_inducedMetricFamily`, which gives `-⟪V, Hvec⟫`, and `-‖Hvec‖²` under
-mean curvature flow. -/
+with `μ_t` the surface measure of the induced metric. Under mean curvature flow the weight
+`½ tr(g⁻¹ ∂_t g)` is `-‖Hvec‖²` (`traceTimeDerivMetric_of_isMeanCurvatureFlow`). -/
 theorem hasDerivAt_integral_backwardHeatKernel
     [I.Boundaryless] [T2Space M] [SigmaCompactSpace M] [CompactSpace M]
     (F : SmoothImmersionFamily I M E)

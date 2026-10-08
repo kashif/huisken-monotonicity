@@ -78,7 +78,7 @@ to any frame. -/
 def IsFrameInverse (F : E₁ → E) (b : Idx → E₁) (x : E₁) (gInv : Idx → Idx → ℝ) : Prop :=
   ∀ i j : Idx, ∑ k, gInv i k * frameGram F b x k j = if i = j then 1 else 0
 
-/-! ## Divergence, mean curvature, gradient, tangential norm -/
+/-! ## Divergence, mean curvature, tangential norm -/
 
 /-- **Tangential divergence** of a field `ξ` on the model space:
 
@@ -93,13 +93,6 @@ noncomputable def tangentialDivergence
 noncomputable def meanCurvatureVectorFrame
     (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) : E :=
   ∑ i, ∑ j, gInv i j • secondDerivative F x (b i) (b j)
-
-/-- The **tangential gradient** of a scalar function:
-
-  `∇_M f = ∑ i, ∑ j, g^{ij} (∂_i f) ∂_j F`. -/
-noncomputable def tangentialGradient
-    (F : E₁ → E) (f : E₁ → ℝ) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) : E :=
-  ∑ i, ∑ j, (gInv i j * fderiv ℝ f x (b i)) • frameTangent F b x j
 
 /-- The **squared tangential norm** of an ambient vector `v`:
 
@@ -138,51 +131,13 @@ theorem tangentialDivergence_of_isNormalAlong
     real_inner_smul_right]
   ring
 
-/-! ## Gradient, product rule, and the position field -/
-
-/-- Pairing the tangential gradient against a vector contracts to the same inverse-metric
-sum, which is what makes the projection-free formulation work. -/
-lemma inner_tangentialGradient
-    (F : E₁ → E) (f : E₁ → ℝ) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) :
-    @inner ℝ E _ (tangentialGradient F f b gInv x) v =
-      ∑ i, ∑ j, gInv i j *
-        (fderiv ℝ f x (b i) * @inner ℝ E _ (frameTangent F b x j) v) := by
-  simp only [tangentialGradient, sum_inner, real_inner_smul_left]
-  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-  ring
-
-/-- **Product rule for the tangential divergence.**
-
-  `div_M (f • ξ) = ⟪∇_M f, ξ⟫ + f * div_M ξ`. -/
-theorem tangentialDivergence_smul
-    (F : E₁ → E) {f : E₁ → ℝ} {ξ : E₁ → E} (b : Idx → E₁) (gInv : Idx → Idx → ℝ)
-    {x : E₁} (hf : DifferentiableAt ℝ f x) (hξ : DifferentiableAt ℝ ξ x) :
-    tangentialDivergence F (fun y => f y • ξ y) b gInv x =
-      @inner ℝ E _ (tangentialGradient F f b gInv x) (ξ x) +
-        f x * tangentialDivergence F ξ b gInv x := by
-  have hd : ∀ i : Idx,
-      fderiv ℝ (fun y => f y • ξ y) x (b i) =
-        (fderiv ℝ f x (b i)) • ξ x + f x • fderiv ℝ ξ x (b i) := by
-    intro i
-    have h : HasFDerivAt (fun y => f y • ξ y)
-        (f x • fderiv ℝ ξ x + (fderiv ℝ f x).smulRight (ξ x)) x :=
-      hf.hasFDerivAt.smul hξ.hasFDerivAt
-    rw [h.fderiv]
-    simp [add_comm]
-  rw [inner_tangentialGradient, tangentialDivergence, tangentialDivergence,
-    Finset.mul_sum, ← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [Finset.mul_sum, ← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl fun j _ => ?_
-  rw [hd i, inner_add_left, real_inner_smul_left, real_inner_smul_left,
-    real_inner_comm (frameTangent F b x j) (ξ x)]
-  ring
+/-! ## The position field -/
 
 /-- **`div_M F = dim M`**: the tangential divergence of the position vector is the number of
 frame directions.
 
-This is where the bare `n` in Huisken's first-variation integrand comes from: applying the
-divergence theorem to `Y = ρ F / τ` produces `ρ * div_M F = n * ρ` as one of its terms.
+This is where the bare `n` in Huisken's first-variation integrand comes from, through
+Beltrami's formula `Δ(|F|²/2) = n + ⟪F, Hvec⟫`.
 
 The proof is that the contraction `g^{ij} g_ij` is the trace of the identity. -/
 theorem tangentialDivergence_self

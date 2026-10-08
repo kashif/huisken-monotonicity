@@ -36,18 +36,6 @@ noncomputable def backwardHeatKernel
     {E : Type*} [SeminormedAddCommGroup E] (n : ℕ) (t₀ t : ℝ) (x : E) : ℝ :=
   (4 * π * (t₀ - t)) ^ (-(n : ℝ) / 2) * Real.exp (-‖x‖ ^ 2 / (4 * (t₀ - t)))
 
-/-- The **rescaled** backward heat kernel `ρ̃(x) = exp(-‖x‖² / 2)` used in the
-rescaled monotonicity formula (Huisken Cor 3.2). Under the parabolic rescaling
-`F̃ = (2τ)^(-1/2) F`, evaluating `backwardHeatKernel n t₀ t` at `F̃` modulo the
-constant prefactor `(2π)^(-n/2)` gives this kernel. -/
-noncomputable def rescaledHeatKernel {E : Type*} [SeminormedAddCommGroup E] (x : E) : ℝ :=
-  Real.exp (-‖x‖ ^ 2 / 2)
-
-/-- Convenience abbreviation for the time-to-go `τ = t₀ - t`. -/
-noncomputable def heatKernelTau (t₀ t : ℝ) : ℝ := t₀ - t
-
-@[simp] lemma heatKernelTau_def (t₀ t : ℝ) : heatKernelTau t₀ t = t₀ - t := rfl
-
 section Positivity
 
 variable {E : Type*} [SeminormedAddCommGroup E] {n : ℕ} {t₀ t : ℝ}
@@ -59,10 +47,6 @@ lemma backwardHeatKernel_pos (hτ : t < t₀) (x : E) :
     have : 0 < t₀ - t := sub_pos.mpr hτ
     positivity
   exact mul_pos (Real.rpow_pos_of_pos h _) (Real.exp_pos _)
-
-lemma backwardHeatKernel_ne_zero (hτ : t < t₀) (x : E) :
-    backwardHeatKernel n t₀ t x ≠ 0 :=
-  (backwardHeatKernel_pos hτ x).ne'
 
 end Positivity
 
@@ -85,8 +69,7 @@ the divergence theorem on `M_t` (first variation formula) to leave the clean for
   `(d/dt) ∫_{M_t} ρ dμ_t = -∫_{M_t} ρ · |H + F^⊥/(2τ)|² dμ_t`.
 
 Only the first three statements are about the kernel itself; the fourth is the
-geometric step that requires mathlib infrastructure mathlib does not yet provide
-(see `HuiskenMonotonicity.Flow`). -/
+geometric step, carried out in `MeanCurvatureFlow.lean`. -/
 
 section Derivatives
 
@@ -626,5 +609,35 @@ theorem isOpen_lt_fst_backwardHeatKernel
   isOpen_lt continuous_fst continuous_const
 
 end JointSmoothness
+
+/-! ## The spatial gradient, in Fréchet form -/
+
+section Gradient
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The spatial differential of the backward heat kernel:
+
+  `dρ_x(v) = -(ρ(x)/(2τ)) ⟪x, v⟫`.
+
+`hasDerivAt_backwardHeatKernel_dir` gives this as a derivative along a line; this is the
+same fact as a Fréchet derivative, obtained by composing with that line. -/
+theorem fderiv_backwardHeatKernel
+    (m : ℕ) (t₀ : ℝ) {t : ℝ} (hτ : t < t₀) (x v : E) :
+    fderiv ℝ (fun y : E => backwardHeatKernel m t₀ t y) x v =
+      -(backwardHeatKernel m t₀ t x / (2 * (t₀ - t))) * @inner ℝ E _ x v := by
+  have hdiff : HasFDerivAt (fun y : E => backwardHeatKernel m t₀ t y)
+      (fderiv ℝ (fun y : E => backwardHeatKernel m t₀ t y) x) x :=
+    ((contDiff_backwardHeatKernel m t₀ hτ).differentiable (by norm_num) x).hasFDerivAt
+  have hline : HasDerivAt (fun s : ℝ => x + s • v) v 0 := by
+    simpa using ((hasDerivAt_id (0 : ℝ)).smul_const v).const_add x
+  have hbase : x + (0 : ℝ) • v = x := by simp
+  have hdiff' : HasFDerivAt (fun y : E => backwardHeatKernel m t₀ t y)
+      (fderiv ℝ (fun y : E => backwardHeatKernel m t₀ t y) x) (x + (0 : ℝ) • v) := by
+    rw [hbase]; exact hdiff
+  have hcomp := hdiff'.comp_hasDerivAt 0 hline
+  exact hcomp.unique (hasDerivAt_backwardHeatKernel_dir m t₀ hτ x v)
+
+end Gradient
 
 end HuiskenMonotonicity
