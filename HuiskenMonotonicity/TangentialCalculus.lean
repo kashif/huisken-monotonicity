@@ -253,6 +253,21 @@ theorem inner_normalPart_frameTangent
     @inner ℝ E _ (normalPart F b gInv x v) (frameTangent F b x j) = 0 := by
   rw [normalPart, inner_sub_left, inner_tangentialPart_frameTangent hinv hsymm, sub_self]
 
+/-- For a spanning frame, the normal part is orthogonal to every tangent vector `dF_x(w)`:
+`w ↦ ⟪v^⊥, dF_x w⟫` is linear and vanishes on the frame. -/
+theorem inner_normalPart_fderiv
+    {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
+    (hb : Submodule.span ℝ (Set.range b) = ⊤)
+    (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
+    (v : E) (w : E₁) :
+    @inner ℝ E _ (normalPart F b gInv x v) (fderiv ℝ F x w) = 0 := by
+  set L : E₁ →L[ℝ] ℝ := (innerSL ℝ (normalPart F b gInv x v)).comp (fderiv ℝ F x) with hL
+  have hker : Submodule.span ℝ (Set.range b) ≤ LinearMap.ker (L : E₁ →ₗ[ℝ] ℝ) := by
+    rw [Submodule.span_le]
+    rintro _ ⟨j, rfl⟩
+    simpa [hL, frameTangent] using inner_normalPart_frameTangent hinv hsymm v j
+  simpa [hL] using hker (hb ▸ Submodule.mem_top : w ∈ Submodule.span ℝ (Set.range b))
+
 /-- The normal part is orthogonal to the tangential part of any vector. -/
 theorem inner_normalPart_tangentialPart
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
@@ -345,18 +360,9 @@ theorem tangentialDivergence_tangentialPart_position {F : E₁ → E} {x : E₁}
       fun y => F y - normalPart F b (gInv y) y (F y) := by
     funext y
     simp [normalPart]
-  -- the normal part is normal along F near x: `v ↦ ⟪N, dF v⟫` is linear and vanishes on the
-  -- spanning frame
   have hnormal : IsNormalAlongNear F (fun y => normalPart F b (gInv y) y (F y)) x := by
     filter_upwards [hinv] with y hy v
-    set L : E₁ →L[ℝ] ℝ :=
-      (innerSL ℝ (normalPart F b (gInv y) y (F y))).comp (fderiv ℝ F y) with hL
-    have hker : Submodule.span ℝ (Set.range b) ≤ LinearMap.ker (L : E₁ →ₗ[ℝ] ℝ) := by
-      rw [Submodule.span_le]
-      rintro _ ⟨j, rfl⟩
-      simpa [hL, frameTangent] using inner_normalPart_frameTangent hy (hsymm y) (F y) j
-    have hv : v ∈ LinearMap.ker (L : E₁ →ₗ[ℝ] ℝ) := hker (hb ▸ Submodule.mem_top)
-    simpa [hL] using hv
+    exact inner_normalPart_fderiv hb hy (hsymm y) (F y) v
   rw [hT, tangentialDivergence_sub F b (gInv x) hFd hN,
     tangentialDivergence_self F b hinv.self_of_nhds,
     tangentialDivergence_of_isNormalAlong hF hN hnormal b (gInv x),

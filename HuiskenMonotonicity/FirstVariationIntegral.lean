@@ -79,6 +79,51 @@ def tangentialSqNorm (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) : ℝ :
     (fun k l => chartInvGramOnE (F.inducedMetric t) p k l (extChartAt I p p))
     (extChartAt I p p) (F p t)
 
+/-- The normal part `F^⊥` of the position vector at `p`, read in the chart at `p`. -/
+def normalPosition (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) : E :=
+  normalPart (F.chartRep t p) (chartModelBasis E₁)
+    (fun k l => chartInvGramOnE (F.inducedMetric t) p k l (extChartAt I p p))
+    (extChartAt I p p) (F p t)
+
+section Orthogonality
+
+variable [I.Boundaryless]
+
+/-- The position vector minus its normal part is its tangential part. -/
+theorem sub_normalPosition (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) :
+    F p t - F.normalPosition t p =
+      tangentialPart (F.chartRep t p) (chartModelBasis E₁)
+        (fun k l => chartInvGramOnE (F.inducedMetric t) p k l (extChartAt I p p))
+        (extChartAt I p p) (F p t) := by
+  simp [normalPosition, normalPart]
+
+/-- `F = Fᵀ + F^⊥` is an orthogonal splitting. -/
+theorem inner_sub_normalPosition (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) :
+    @inner ℝ E _ (F p t - F.normalPosition t p) (F.normalPosition t p) = 0 := by
+  rw [sub_normalPosition, real_inner_comm, normalPosition]
+  exact inner_normalPart_tangentialPart (isFrameInverse_chartInvGramOnE F t p
+    (mem_extChartAt_target p)) (fun i j => chartInvGramOnE_symm (I := I) _ p i j _) _ _
+
+/-- The mean curvature vector is orthogonal to `Fᵀ`. -/
+theorem inner_meanCurvature_sub_normalPosition (F : SmoothImmersionFamily I M E) (t : ℝ)
+    (p : M) : @inner ℝ E _ (F.meanCurvature t p) (F p t - F.normalPosition t p) = 0 := by
+  rw [sub_normalPosition, meanCurvature, meanCurvatureNormal]
+  exact inner_normalPart_tangentialPart (isFrameInverse_chartInvGramOnE F t p
+    (mem_extChartAt_target p)) (fun i j => chartInvGramOnE_symm (I := I) _ p i j _) _ _
+
+/-- `‖F - F^⊥‖² = ‖Fᵀ‖²`. -/
+theorem norm_sub_normalPosition_sq (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) :
+    ‖F p t - F.normalPosition t p‖ ^ 2 = F.tangentialSqNorm t p := by
+  have hsplit : @inner ℝ E _ (F p t - F.normalPosition t p) (F p t) =
+      @inner ℝ E _ (F p t - F.normalPosition t p) (F p t - F.normalPosition t p) +
+        @inner ℝ E _ (F p t - F.normalPosition t p) (F.normalPosition t p) := by
+    rw [← inner_add_right, sub_add_cancel]
+  rw [← real_inner_self_eq_norm_sq, tangentialSqNorm,
+    ← inner_tangentialPart_self (fun i j => chartInvGramOnE_symm (I := I) _ p i j _),
+    ← sub_normalPosition, hsplit, inner_sub_normalPosition, add_zero]
+
+end Orthogonality
+
 /-! ## The Laplacian of `|F|²/2` -/
 
 /-- Half the squared length of the position vector, `u = |F|²/2`, as a smooth function on the
@@ -212,6 +257,54 @@ theorem tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel [I.Boundaryless
 
 /-! ## The first variation identity -/
 
+/-- The first-variation integrand is `X(ρ) + ρ div X` for `X = ∇(|F|²/2)`. -/
+theorem firstVariation_integrand_eq [I.Boundaryless] (F : SmoothImmersionFamily I M E)
+    (m : ℕ) (t₀ : ℝ) {t : ℝ} (hτ : t < t₀) (p : M) :
+    backwardHeatKernel m t₀ t (F p t) *
+        ((Module.finrank ℝ E₁ : ℝ) - F.tangentialSqNorm t p / (2 * (t₀ - t)) +
+          @inner ℝ E _ (F p t) (F.meanCurvature t p)) =
+      tangentSectionAction (gradG (F.inducedMetric t) (F.halfSqNorm t))
+          (fun q => backwardHeatKernel m t₀ t (F q t)) p +
+        backwardHeatKernel m t₀ t (F p t) *
+          divergenceG (F.inducedMetric t) (gradG (F.inducedMetric t) (F.halfSqNorm t)) p := by
+  rw [tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel F m t₀ hτ p,
+    ← Δ_g_def, laplacian_halfSqNorm F t p]
+  ring
+
+section Closed
+
+variable [I.Boundaryless] [CompactSpace M] (F : SmoothImmersionFamily I M E) (m : ℕ) (t₀ : ℝ)
+  {t : ℝ} (hτ : t < t₀)
+
+include hτ in
+/-- The kernel pulled back along a time slice is smooth. -/
+theorem contMDiff_backwardHeatKernel_comp :
+    ContMDiff I 𝓘(ℝ) ∞ fun p => backwardHeatKernel m t₀ t (F p t) :=
+  ((contDiff_backwardHeatKernel m t₀ hτ).of_le le_top).comp_contMDiff
+    ((F.contMDiff_timeSlice t).of_le le_top)
+
+omit [I.Boundaryless] in
+/-- On a closed manifold, every continuous function is integrable for the surface measure. -/
+theorem integrable_of_continuous {f : M → ℝ} (hf : Continuous f) :
+    Integrable f (F.surfaceMeasure t) := by
+  haveI : IsFiniteMeasureOnCompacts (F.surfaceMeasure t) :=
+    riemannianVolumeMeasure_isFiniteMeasureOnCompacts (I := I) (M := M) (F.inducedMetricFamily t)
+  exact hf.integrable_of_hasCompactSupport
+    (isCompact_univ.of_isClosed_subset (isClosed_tsupport _) (Set.subset_univ _))
+
+include hτ in
+/-- The first-variation integrand is integrable on a closed manifold. -/
+theorem integrable_firstVariation :
+    Integrable (fun p => backwardHeatKernel m t₀ t (F p t) *
+        ((Module.finrank ℝ E₁ : ℝ) - F.tangentialSqNorm t p / (2 * (t₀ - t)) +
+          @inner ℝ E _ (F p t) (F.meanCurvature t p))) (F.surfaceMeasure t) := by
+  have hρ := contMDiff_backwardHeatKernel_comp F m t₀ hτ
+  simp only [firstVariation_integrand_eq F m t₀ hτ]
+  exact integrable_of_continuous F
+    ((tangentSectionAction_contMDiff _ hρ).continuous.add
+      (hρ.continuous.mul (divergence_g_contMDiff _ _).continuous))
+
+include hτ in
 /-- **The first variation identity for Huisken's integral.** On a closed parameter manifold,
 
   `∫ ρ (n - ‖Fᵀ‖² / (2τ) + ⟪F, Hvec⟫) dμ = 0`.
@@ -219,39 +312,29 @@ theorem tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel [I.Boundaryless
 This is the divergence theorem applied to the test field `ρ F`, in the form of the library's
 integration by parts `∫ X(ρ) dμ = -∫ ρ div X dμ` with `X = ∇(|F|²/2)`: the integrand is
 `X(ρ) + ρ Δ(|F|²/2)`. -/
-theorem integral_firstVariation [I.Boundaryless] [CompactSpace M]
-    (F : SmoothImmersionFamily I M E) (m : ℕ) (t₀ : ℝ) {t : ℝ} (hτ : t < t₀) :
+theorem integral_firstVariation :
     ∫ p, backwardHeatKernel m t₀ t (F p t) *
         ((Module.finrank ℝ E₁ : ℝ) - F.tangentialSqNorm t p / (2 * (t₀ - t)) +
           @inner ℝ E _ (F p t) (F.meanCurvature t p)) ∂(F.surfaceMeasure t) = 0 := by
   set g := F.inducedMetric t
   set X := gradG g (F.halfSqNorm t)
-  set ρ : M → ℝ := fun p => backwardHeatKernel m t₀ t (F p t)
-  have hρ : ContMDiff I 𝓘(ℝ) ∞ ρ :=
-    ((contDiff_backwardHeatKernel m t₀ hτ).of_le le_top).comp_contMDiff
-      ((F.contMDiff_timeSlice t).of_le le_top)
-  have hcpt : ∀ f : M → ℝ, HasCompactSupport f := fun f =>
-    isCompact_univ.of_isClosed_subset (isClosed_tsupport _) (Set.subset_univ _)
+  have hρ := contMDiff_backwardHeatKernel_comp F m t₀ hτ
   have hX : HasCompactSupport X :=
     isCompact_univ.of_isClosed_subset (isClosed_tsupport _) (Set.subset_univ _)
-  haveI := riemannianVolumeMeasure_isFiniteMeasureOnCompacts (I := I) (M := M) g
-  have hμ : F.surfaceMeasure t = riemannianVolumeMeasure (I := I) (M := M) g := rfl
-  have hint₁ : Integrable (tangentSectionAction X ρ) (riemannianVolumeMeasure (I := I) (M := M) g) :=
-    (tangentSectionAction_contMDiff X hρ).continuous.integrable_of_hasCompactSupport (hcpt _)
-  have hint₂ : Integrable (fun p => ρ p * divergenceG g X p)
-      (riemannianVolumeMeasure (I := I) (M := M) g) :=
-    (hρ.continuous.mul (divergence_g_contMDiff g X).continuous).integrable_of_hasCompactSupport
-      (hcpt _)
-  have hpt : ∀ p, ρ p * ((Module.finrank ℝ E₁ : ℝ) - F.tangentialSqNorm t p / (2 * (t₀ - t)) +
-        @inner ℝ E _ (F p t) (F.meanCurvature t p)) =
-      tangentSectionAction X ρ p + ρ p * divergenceG g X p := by
-    intro p
-    rw [tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel F m t₀ hτ p,
-      ← Δ_g_def, laplacian_halfSqNorm F t p]
-    ring
-  rw [hμ, integral_congr_ae (Filter.Eventually.of_forall hpt), integral_add hint₁ hint₂,
-    integral_tangentSectionAction_eq_neg_integral_smul_divergence g hρ X hX]
+  have h₁ : Integrable (fun p => tangentSectionAction X
+      (fun q => backwardHeatKernel m t₀ t (F q t)) p) (F.surfaceMeasure t) :=
+    integrable_of_continuous F (tangentSectionAction_contMDiff X hρ).continuous
+  have h₂ : Integrable (fun p => backwardHeatKernel m t₀ t (F p t) * divergenceG g X p)
+      (F.surfaceMeasure t) :=
+    integrable_of_continuous F (hρ.continuous.mul (divergence_g_contMDiff g X).continuous)
+  simp only [firstVariation_integrand_eq F m t₀ hτ]
+  rw [integral_add h₁ h₂]
+  change ∫ p, _ ∂(riemannianVolumeMeasure (I := I) (M := M) g) +
+    ∫ p, _ ∂(riemannianVolumeMeasure (I := I) (M := M) g) = 0
+  rw [integral_tangentSectionAction_eq_neg_integral_smul_divergence g hρ X hX]
   ring
+
+end Closed
 
 end SmoothImmersionFamily
 

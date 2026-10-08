@@ -38,10 +38,7 @@ file applies it to the Euclidean metric on the ambient space to obtain
 
 `volume_variation_formula` differentiates the metric family in time at *every* real time
 (see `MetricFamilyRegularAt`), so it needs a family defined on all of `ℝ`. The
-constructions here therefore take the immersion condition as an argument quantified over
-every time, rather than only over `F.IsValidTime`. Supplying junk values outside `[0, T)`
-would not do: the regularity hypothesis quantifies over all `t : ℝ`, not just interior
-times.
+immersion condition of `SmoothImmersionFamily` is therefore quantified over every time.
 
 ## Measurable structure
 
@@ -138,174 +135,13 @@ theorem chartGramMatrix_inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ
 The chart Gram matrix is a Gram matrix of Fréchet derivatives: `mfderiv` of a time slice,
 viewed on the model space, is the `fderiv` of the chart representation
 `F_t ∘ (extChartAt I x).symm`. That identification turns the entries of the chart Gram
-matrix into `frameGram` of the chart representation, which is the form the metric evolution
-results of `MetricEvolution.lean` consume.
-
-The frame used is `chartBasisVecFiber x · x`, the chart frame at its own base point. Its
-value is never needed: the tangential calculus is stated for an arbitrary frame, so the
-frame may be carried along opaquely. -/
+matrix into `frameGram` of the chart representation against the model basis, which is the
+form the metric evolution results of `MetricEvolution.lean` consume. -/
 
 /-- The chart representation of the time slice `F_t` around `x`, as a map between model
 spaces. -/
 def chartRep (F : SmoothImmersionFamily I M E) (t : ℝ) (x : M) : E₁ → E :=
   fun y => F ((extChartAt I x).symm y) t
-
-/-- The chart frame of the chart around `x₀`, evaluated at `x`, read in the model space.
-
-`MetricFamilyRegularAt` quantifies over `x₀` and over all `x` in the trivialization base
-set, so the frame has to be allowed off the diagonal even though `traceTimeDerivMetric`
-itself only uses `x₀ = x`. The chart in which the derivative is taken is always the one at
-`x`; only the frame comes from `x₀`. -/
-def chartFrameAt (x₀ x : M) (i : Fin (Module.finrank ℝ E₁)) : E₁ :=
-  Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x
-
-/-- The chart frame at its own base point, read in the model space. -/
-def chartFrame (x : M) (i : Fin (Module.finrank ℝ E₁)) : E₁ :=
-  chartFrameAt (I := I) x x i
-
-/-- The chart Gram matrix of the induced metric is `frameGram` of the chart representation.
-
-This is the identification that lets `hasDerivAt_frameGram_of_isNormalAlong` and
-`trace_metricEvolution` evaluate `traceTimeDerivMetric`, which is defined through
-`chartGramMatrix` at `x₀ = x`. -/
-theorem chartGramMatrix_inducedMetric_eq_frameGram [BoundarylessManifold I M]
-    (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
-    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t) x₀ x i j =
-      frameGram (F.chartRep t x) (chartFrameAt (I := I) x₀ x) (extChartAt I x x) i j := by
-  have hmd : MDifferentiableAt I 𝓘(ℝ, E) (fun q => F q t) x :=
-    (F.contMDiff_timeSlice t).mdifferentiableAt (by simp)
-  have hint : I.IsInteriorPoint x := BoundarylessManifold.isInteriorPoint
-  have h := DifferentialGeometry.Manifold.mfderiv_eq_fderiv_extChartAt_of_isInteriorPoint
-    I hmd hint
-  rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply]
-  simp only [chartFrameAt]
-  congr 1
-  · exact congrArg
-      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x)) h
-  · exact congrArg
-      (fun L : E₁ →L[ℝ] E => L (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) h
-
-/-! ### The time derivative of the chart Gram entries
-
-With the chart Gram matrix identified as a `frameGram`, the metric evolution equation
-applies to it directly. The velocity is supplied as a family `V` of fields on the model
-space, which is what the chart representation produces. -/
-
-/-- The chart Gram entries of the induced metric family evolve by `-2 ⟪V, D²F(b_i, b_j)⟫`,
-the entries whose trace `traceTimeDerivMetric` takes. -/
-theorem hasDerivAt_chartGramMatrix_inducedMetricFamily [BoundarylessManifold I M]
-    (F : SmoothImmersionFamily I M E)
-    {V : ℝ → E₁ → E} {t : ℝ} (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁))
-    (hF2 : ContDiffAt ℝ 2 (F.chartRep t x) (extChartAt I x x))
-    (hV : DifferentiableAt ℝ (V t) (extChartAt I x x))
-    (hnormal : IsNormalAlongNear (F.chartRep t x) (V t) (extChartAt I x x))
-    (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
-      HasDerivAt
-        (fun s => frameTangent (F.chartRep s x) (chartFrameAt (I := I) x₀ x)
-          (extChartAt I x x) k)
-        (frameTangent (V t) (chartFrameAt (I := I) x₀ x) (extChartAt I x x) k) t) :
-    HasDerivAt
-      (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily s) x₀ x i j)
-      (-2 * @inner ℝ E _ (V t (extChartAt I x x))
-        (secondDerivative (F.chartRep t x) (extChartAt I x x)
-          (chartFrameAt (I := I) x₀ x i) (chartFrameAt (I := I) x₀ x j))) t := by
-  have hfun : (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily s) x₀ x i j)
-      = fun s => frameGram (F.chartRep s x) (chartFrameAt (I := I) x₀ x)
-          (extChartAt I x x) i j := by
-    funext s
-    rw [inducedMetricFamily_apply]
-    exact chartGramMatrix_inducedMetric_eq_frameGram F s x₀ x i j
-  rw [hfun]
-  exact hasDerivAt_frameGram_of_isNormalAlong
-    (F := fun s => F.chartRep s x) (V := V) (chartFrameAt (I := I) x₀ x) i j
-    hF2 hV hnormal hcomm
-
-/-- The inverse chart Gram matrix of the induced metric family, as a `Matrix`.
-
-Naming it is not cosmetic: in a position expecting `Idx → Idx → ℝ` the notation `⁻¹` would
-elaborate as the pointwise `Pi.instInv` rather than `Matrix.inv`, which is not what
-`traceTimeDerivMetric` uses. -/
-noncomputable def chartGramInv (F : SmoothImmersionFamily I M E)
-    (t : ℝ) (x : M) :
-    Matrix (Fin (Module.finrank ℝ E₁)) (Fin (Module.finrank ℝ E₁)) ℝ :=
-  (Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetricFamily t) x x)⁻¹
-
-/-- **The transport weight of the induced metric family.**
-
-`traceTimeDerivMetric`, the quantity `volume_variation_formula` halves to form its weight,
-evaluates to `-2 ⟪V, Hvec⟫` for a velocity normal along the immersion. Under mean curvature
-flow `V = Hvec`, so the weight becomes `-‖Hvec‖²`, the classical evolution of the volume
-element. -/
-theorem traceTimeDerivMetric_inducedMetricFamily [BoundarylessManifold I M]
-    (F : SmoothImmersionFamily I M E)
-    {V : ℝ → E₁ → E} {t : ℝ} (x : M)
-    (hF2 : ContDiffAt ℝ 2 (F.chartRep t x) (extChartAt I x x))
-    (hV : DifferentiableAt ℝ (V t) (extChartAt I x x))
-    (hnormal : IsNormalAlongNear (F.chartRep t x) (V t) (extChartAt I x x))
-    (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
-      HasDerivAt
-        (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
-          (extChartAt I x x) k)
-        (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t) :
-    traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x =
-      -2 * @inner ℝ E _ (V t (extChartAt I x x))
-        (meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-          (F.chartGramInv t x) (extChartAt I x x)) := by
-  have hderiv : ∀ i j : Fin (Module.finrank ℝ E₁),
-      deriv (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-        (F.inducedMetricFamily s) x x i j) t =
-        -2 * @inner ℝ E _ (V t (extChartAt I x x))
-          (secondDerivative (F.chartRep t x) (extChartAt I x x)
-            (chartFrame (I := I) x i) (chartFrame (I := I) x j)) :=
-    fun i j =>
-      (hasDerivAt_chartGramMatrix_inducedMetricFamily F x x i j hF2 hV hnormal
-        hcomm).deriv
-  rw [traceTimeDerivMetric_eq, Matrix.trace]
-  simp only [Matrix.diag_apply, Matrix.mul_apply, Matrix.of_apply, chartGramInv]
-  calc ∑ i, ∑ j,
-        F.chartGramInv t x i j *
-          deriv (fun s => Tensor.Coordinates.chartGramMatrix (I := I)
-            (F.inducedMetricFamily s) x x j i) t
-      = ∑ i, ∑ j,
-          F.chartGramInv t x i j *
-            (-2 * @inner ℝ E _ (V t (extChartAt I x x))
-              (secondDerivative (F.chartRep t x) (extChartAt I x x)
-                (chartFrame (I := I) x i) (chartFrame (I := I) x j))) := by
-        refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-        rw [hderiv j i, secondDerivative_symm_of_contDiffAt hF2]
-    _ = -2 * @inner ℝ E _ (V t (extChartAt I x x))
-          (meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-            (F.chartGramInv t x) (extChartAt I x x)) :=
-        trace_metricEvolution (F := F.chartRep t x) (V := V t)
-          (x := extChartAt I x x) (chartFrame (I := I) x) (F.chartGramInv t x)
-
-/-- **Mean curvature flow: the transport weight is `-‖Hvec‖²`.**
-
-`volume_variation_formula` halves this, so its weight is `-‖Hvec‖²`, which is the classical
-statement `∂_t dμ = -H² dμ` that Huisken's proof cites. -/
-theorem traceTimeDerivMetric_inducedMetricFamily_meanCurvatureFlow
-    [BoundarylessManifold I M]
-    (F : SmoothImmersionFamily I M E)
-    {V : ℝ → E₁ → E} {t : ℝ} (x : M)
-    (hF2 : ContDiffAt ℝ 2 (F.chartRep t x) (extChartAt I x x))
-    (hV : DifferentiableAt ℝ (V t) (extChartAt I x x))
-    (hnormal : IsNormalAlongNear (F.chartRep t x) (V t) (extChartAt I x x))
-    (hcomm : ∀ k : Fin (Module.finrank ℝ E₁),
-      HasDerivAt
-        (fun s => frameTangent (F.chartRep s x) (chartFrame (I := I) x)
-          (extChartAt I x x) k)
-        (frameTangent (V t) (chartFrame (I := I) x) (extChartAt I x x) k) t)
-    (hmcf : V t (extChartAt I x x) =
-      meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-        (F.chartGramInv t x) (extChartAt I x x)) :
-    traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x =
-      -2 * ‖meanCurvatureVectorFrame (F.chartRep t x) (chartFrame (I := I) x)
-        (F.chartGramInv t x) (extChartAt I x x)‖ ^ 2 := by
-  rw [traceTimeDerivMetric_inducedMetricFamily F x hF2 hV hnormal hcomm, hmcf,
-    real_inner_self_eq_norm_sq]
 
 /-! ### Smoothness of the space-time chart representation
 
@@ -345,12 +181,11 @@ theorem contDiffOn_spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M
     (hsymm.comp hsnd.contMDiffOn hmaps).prodMk hfst.contMDiffOn
   exact (F.contMDiff_spaceTime.comp_contMDiffOn hg).contDiffOn
 
-/-! ### The uniform identification
+/-! ### The chart Gram entries as a `frameGram`
 
-The identification used for `traceTimeDerivMetric` reads the derivative in the chart at the
-point itself. The continuity fields of `MetricFamilyRegularAt` instead need the chart Gram
-entries in one *fixed* chart at `x₀`, uniformly in the point. The two differ by the tangent
-coordinate change, so the uniform version is a separate statement.
+The continuity fields of `MetricFamilyRegularAt` need the chart Gram entries in one *fixed*
+chart at `x₀`, uniformly in the point; `traceTimeDerivMetric` needs them at `x₀ = x`. One
+statement serves both.
 
 The library already proves it, as
 `Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv`: the Fréchet
@@ -359,14 +194,11 @@ trivializations. With a vector-space target the outer chart and trivialization a
 and what remains is exactly the statement that the chart frame is carried to the model
 basis. -/
 
-/-- **The uniform identification.** In the chart fixed at `x₀`, the chart Gram entries are
-the `frameGram` of the chart representation against the *constant* model basis, evaluated at
-the chart coordinate of `x`.
+/-- In the chart fixed at `x₀`, the chart Gram entries are the `frameGram` of the chart
+representation against the *constant* model basis, evaluated at the chart coordinate of `x`.
 
-This is what the continuity fields of `MetricFamilyRegularAt` need: with the frame constant
-and the chart fixed, the entries are a function of `(t, y) ∈ ℝ × E₁` to which
-`contDiffOn_spaceTimeChartRep` applies. The earlier identification instead uses the chart at
-`x` itself, which suffices for `traceTimeDerivMetric` but is not uniform in the point.
+With the frame constant and the chart fixed, the entries are a function of
+`(t, y) ∈ ℝ × E₁` to which `contDiffOn_spaceTimeChartRep` applies.
 
 The work is done by the library's
 `Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv`, specialised to a
