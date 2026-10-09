@@ -143,7 +143,7 @@ variable {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 variable {f : M → N} {x : M}
 
 private theorem isImmersionAtOfComplement_mfderiv_hasLeftInverse
-    (h : Manifold.IsImmersionAtOfComplement F I J ⊤ f x) :
+    (h : Manifold.IsImmersionAtOfComplement F I J ∞ f x) :
     (mfderiv I J f x).HasLeftInverse := by
   suffices (mfderiv I 𝓘(𝕜, E'') ((h.codChart.extend J) ∘ f) x).HasLeftInverse by
     apply hasLeftInverse_mfderiv_of_comp
@@ -175,7 +175,7 @@ private theorem isImmersionAtOfComplement_mfderiv_hasLeftInverse
 /-- A smooth immersion has injective manifold differential at every point.
 
 Ported from mathlib PR `#41796`; remove this theorem when its upstream counterpart is available. -/
-theorem isImmersion_mfderiv_injective (h : Manifold.IsImmersion I J ⊤ f) (x : M) :
+theorem isImmersion_mfderiv_injective (h : Manifold.IsImmersion I J ∞ f) (x : M) :
     Function.Injective (mfderiv I J f x) :=
   (isImmersionAtOfComplement_mfderiv_hasLeftInverse
     (h.isImmersionOfComplement_complement x)).injective

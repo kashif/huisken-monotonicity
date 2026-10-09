@@ -37,27 +37,27 @@ variable (M : Type v) [TopologicalSpace M] [ChartedSpace H M]
 variable (E : Type w) [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- A smooth family of immersions `F_t : M → E`, indexed by all real times. -/
-structure SmoothImmersionFamily [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁]
+structure SmoothImmersionFamily [IsManifold I ∞ M] [FiniteDimensional ℝ E₁]
     [FiniteDimensional ℝ E] where
   /-- The space-time map. -/
   toFun : M → ℝ → E
   /-- Joint smoothness in space and time. -/
   contMDiff_spaceTime :
-    ContMDiff (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, E) ⊤ (Function.uncurry toFun)
+    ContMDiff (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, E) ∞ (Function.uncurry toFun)
   /-- Every time slice is a smooth immersion. -/
-  isImmersion : ∀ t : ℝ, IsImmersion I 𝓘(ℝ, E) ⊤ (fun p => toFun p t)
+  isImmersion : ∀ t : ℝ, IsImmersion I 𝓘(ℝ, E) ∞ (fun p => toFun p t)
 
 namespace SmoothImmersionFamily
 
 variable {I M E}
-variable [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
+variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
 instance : CoeFun (SmoothImmersionFamily I M E) (fun _ => M → ℝ → E) :=
   ⟨SmoothImmersionFamily.toFun⟩
 
 /-- Each time slice is smooth. -/
 theorem contMDiff_timeSlice (F : SmoothImmersionFamily I M E) (t : ℝ) :
-    ContMDiff I 𝓘(ℝ, E) ⊤ (fun p => F p t) :=
+    ContMDiff I 𝓘(ℝ, E) ∞ (fun p => F p t) :=
   F.contMDiff_spaceTime.curry_left
 
 /-- Each time slice has injective differential. This is the hypothesis the induced metric

@@ -49,7 +49,7 @@ variable {E₁ : Type u} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
 variable {H : Type v} [TopologicalSpace H] {I : ModelWithCorners ℝ E₁ H}
 variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-variable [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
+variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
 section Kernel
 
@@ -152,7 +152,7 @@ end Orthogonality
 parameter manifold. -/
 def halfSqNorm (F : SmoothImmersionFamily I M E) (t : ℝ) : C^∞⟮I, M; ℝ⟯ :=
   ⟨fun p => ‖F p t‖ ^ 2 / 2,
-    ((contDiff_norm_sq ℝ).div_const 2).comp_contMDiff ((F.contMDiff_timeSlice t).of_le le_top)⟩
+    ((contDiff_norm_sq ℝ).div_const 2).comp_contMDiff ((F.contMDiff_timeSlice t).of_le (by simp))⟩
 
 /-- In a chart, the coordinate derivatives of `|F|²/2` are `⟪F, ∂_l F⟫`. -/
 theorem partialDeriv_scalarOnE_halfSqNorm [I.Boundaryless] (F : SmoothImmersionFamily I M E)
@@ -302,8 +302,8 @@ include hτ in
 /-- The kernel pulled back along a time slice is smooth. -/
 theorem contMDiff_backwardHeatKernel_comp :
     ContMDiff I 𝓘(ℝ) ∞ fun p => backwardHeatKernel m t₀ t (F p t) :=
-  ((contDiff_backwardHeatKernel m t₀ hτ).of_le le_top).comp_contMDiff
-    ((F.contMDiff_timeSlice t).of_le le_top)
+  ((contDiff_backwardHeatKernel m t₀ hτ).of_le (by simp)).comp_contMDiff
+    ((F.contMDiff_timeSlice t).of_le (by simp))
 
 omit [I.Boundaryless] in
 /-- On a closed manifold, every continuous function is integrable for the surface measure. -/

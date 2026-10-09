@@ -46,7 +46,7 @@ variable {E₁ : Type u} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
 variable {H : Type v} [TopologicalSpace H] {I : ModelWithCorners ℝ E₁ H}
 variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-variable [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
+variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
 namespace SmoothImmersionFamily
 
@@ -81,7 +81,7 @@ theorem contDiffAt_chartRep [I.Boundaryless] (F : SmoothImmersionFamily I M E) (
   have hmem : ((t, y) : ℝ × E₁) ∈ (Set.univ : Set ℝ) ×ˢ (extChartAt I α).target :=
     ⟨Set.mem_univ _, hy⟩
   have hΦ : ContDiffAt ℝ 2 (F.spaceTimeChartRep α) (t, y) :=
-    ((F.contDiffOn_spaceTimeChartRep α).contDiffAt (hs.mem_nhds hmem)).of_le le_top
+    ((F.contDiffOn_spaceTimeChartRep α).contDiffAt (hs.mem_nhds hmem)).of_le (by simp)
   have hcomp : ContDiffAt ℝ 2 (F.spaceTimeChartRep α ∘ fun z : E₁ => ((t, z) : ℝ × E₁)) y :=
     hΦ.comp y (contDiffAt_const.prodMk contDiffAt_id)
   exact hcomp

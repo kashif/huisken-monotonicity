@@ -66,7 +66,7 @@ variable {H : Type v} [TopologicalSpace H]
 variable {I : ModelWithCorners ℝ E₁ H}
 variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-variable [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
+variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
 /-- The Borel σ-algebra, matching the local instance under which
 `DifferentialGeometry.Integral.Measure.riemannianVolumeMeasure` is stated. -/
@@ -88,7 +88,7 @@ the base point comes from `DifferentialGeometry.SmoothRiemannianMetric.pullbackI
 def inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ) :
     SmoothRiemannianMetric I M :=
   (euclideanMetric (E := E)).pullback (I := I) (fun p => F p t)
-    ((F.contMDiff_timeSlice t).of_le le_top) (F.mfderiv_injective t)
+    (F.contMDiff_timeSlice t) (F.mfderiv_injective t)
 
 @[simp]
 theorem inducedMetric_inner (F : SmoothImmersionFamily I M E) (t : ℝ)
@@ -162,20 +162,20 @@ theorem spaceTimeChartRep_apply (F : SmoothImmersionFamily I M E) (x₀ : M) (p 
 
 /-- The space-time chart representation is smooth on the chart target. -/
 theorem contDiffOn_spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M) :
-    ContDiffOn ℝ ⊤ (F.spaceTimeChartRep x₀)
+    ContDiffOn ℝ ∞ (F.spaceTimeChartRep x₀)
       (Set.univ ×ˢ (extChartAt I x₀).target) := by
-  have hsymm : ContMDiffOn 𝓘(ℝ, E₁) I ⊤ (extChartAt I x₀).symm (extChartAt I x₀).target :=
+  have hsymm : ContMDiffOn 𝓘(ℝ, E₁) I ∞ (extChartAt I x₀).symm (extChartAt I x₀).target :=
     contMDiffOn_extChartAt_symm x₀
   have hmaps : Set.MapsTo (fun p : ℝ × E₁ => p.2)
       (Set.univ ×ˢ (extChartAt I x₀).target) (extChartAt I x₀).target :=
     fun _ hp => hp.2
   -- Build the inner map with the self-model on `ℝ × E₁`, avoiding the product
   -- charted-space structure, whose instances do not match `chartedSpaceSelf`.
-  have hsnd : ContMDiff 𝓘(ℝ, ℝ × E₁) 𝓘(ℝ, E₁) ⊤ (fun p : ℝ × E₁ => p.2) :=
+  have hsnd : ContMDiff 𝓘(ℝ, ℝ × E₁) 𝓘(ℝ, E₁) ∞ (fun p : ℝ × E₁ => p.2) :=
     (contDiff_snd (𝕜 := ℝ)).contMDiff
-  have hfst : ContMDiff 𝓘(ℝ, ℝ × E₁) 𝓘(ℝ, ℝ) ⊤ (fun p : ℝ × E₁ => p.1) :=
+  have hfst : ContMDiff 𝓘(ℝ, ℝ × E₁) 𝓘(ℝ, ℝ) ∞ (fun p : ℝ × E₁ => p.1) :=
     (contDiff_fst (𝕜 := ℝ)).contMDiff
-  have hg : ContMDiffOn 𝓘(ℝ, ℝ × E₁) (I.prod 𝓘(ℝ, ℝ)) ⊤
+  have hg : ContMDiffOn 𝓘(ℝ, ℝ × E₁) (I.prod 𝓘(ℝ, ℝ)) ∞
       (fun p : ℝ × E₁ => ((extChartAt I x₀).symm p.2, p.1))
       (Set.univ ×ˢ (extChartAt I x₀).target) :=
     (hsymm.comp hsnd.contMDiffOn hmaps).prodMk hfst.contMDiffOn
@@ -382,7 +382,7 @@ theorem continuousOn_chartGramDeriv [I.Boundaryless]
   have hfd2 : ContinuousOn (fderiv ℝ (fderiv ℝ (F.spaceTimeChartRep x₀)))
       ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) :=
     ((F.contDiffOn_spaceTimeChartRep x₀).fderiv_of_isOpen hs
-      (m := 1) le_top).continuousOn_fderiv_of_isOpen hs (by norm_num)
+      (m := 1) (by simp)).continuousOn_fderiv_of_isOpen hs (by norm_num)
   have hev : ∀ v : E₁, ContinuousOn
       (fun p : ℝ × E₁ => fderiv ℝ (F.spaceTimeChartRep x₀) p ((0 : ℝ), v))
       ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) := fun v =>

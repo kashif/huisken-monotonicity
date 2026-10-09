@@ -47,7 +47,7 @@ variable {H : Type v} [TopologicalSpace H]
 variable {I : ModelWithCorners ℝ E₁ H}
 variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-variable [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
+variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
 /-- The Borel σ-algebra, matching the local instance under which the library states
 `riemannianVolumeMeasure`. -/
@@ -94,9 +94,9 @@ def cutoffIntegrand (F : SmoothImmersionFamily I M E) (n : ℕ) {t₀ t : ℝ} (
 /-- The space-time map of the family, read as a function of `(time, point)`. -/
 lemma contMDiffAt_flow_swap (F : SmoothImmersionFamily I M E) (p : ℝ × M) :
     ContMDiffAt (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, E) ∞ (fun q : ℝ × M => F q.2 q.1) p := by
-  have hswap : ContMDiff (𝓘(ℝ, ℝ).prod I) (I.prod 𝓘(ℝ, ℝ)) ⊤
+  have hswap : ContMDiff (𝓘(ℝ, ℝ).prod I) (I.prod 𝓘(ℝ, ℝ)) ∞
       (fun q : ℝ × M => (q.2, q.1)) := contMDiff_snd.prodMk contMDiff_fst
-  exact ((F.contMDiff_spaceTime.comp hswap).of_le le_top).contMDiffAt
+  exact ((F.contMDiff_spaceTime.comp hswap).of_le (by simp)).contMDiffAt
 
 /-- **The cut-off integrand is globally smooth.**
 
@@ -121,7 +121,7 @@ theorem contMDiff_cutoffIntegrand (F : SmoothImmersionFamily I M E) (n : ℕ)
     have hker : ContDiffAt ℝ ∞
         (fun y : ℝ × E => backwardHeatKernel n t₀ y.1 y.2) (p.1, F p.2 p.1) :=
       ((contDiffOn_backwardHeatKernel_prod n t₀).contDiffAt
-        ((isOpen_lt_fst_backwardHeatKernel (V := E) t₀).mem_nhds hlt)).of_le le_top
+        ((isOpen_lt_fst_backwardHeatKernel (V := E) t₀).mem_nhds hlt)).of_le (by simp)
     have hcomp : ContMDiffAt (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ) ∞
         ((fun y : ℝ × E => backwardHeatKernel n t₀ y.1 y.2) ∘
           fun q : ℝ × M => (q.1, F q.2 q.1)) p :=

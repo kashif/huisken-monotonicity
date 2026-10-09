@@ -150,7 +150,7 @@ variable {E₁ : Type u} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
 variable {H : Type v} [TopologicalSpace H] {I : ModelWithCorners ℝ E₁ H}
 variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-variable [IsManifold I ⊤ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
+variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
 /-- The Borel σ-algebra, matching the one under which `surfaceMeasure` is stated. -/
 local instance instMeasurableSpaceMeanCurvatureFlow : MeasurableSpace M := borel M
@@ -215,7 +215,7 @@ theorem differentiableAt_timeVelocity_spaceTimeChartRep (F : SmoothImmersionFami
   have hs := isOpen_univ_prod_extChartAt_target (I := I) α
   have hΦ : ContDiffAt ℝ 2 (F.spaceTimeChartRep α) (t, z) :=
     ((F.contDiffOn_spaceTimeChartRep α).contDiffAt
-      (hs.mem_nhds ⟨Set.mem_univ _, hz⟩)).of_le le_top
+      (hs.mem_nhds ⟨Set.mem_univ _, hz⟩)).of_le (by simp)
   have h1 : DifferentiableAt ℝ (fderiv ℝ (F.spaceTimeChartRep α)) (t, z) :=
     (hΦ.fderiv_right (m := 1) (by norm_num)).differentiableAt (by norm_num)
   exact (h1.comp z ((differentiableAt_const t).prodMk differentiableAt_id)).clm_apply
@@ -267,7 +267,7 @@ theorem traceTimeDerivMetric_of_isMeanCurvatureFlow (F : SmoothImmersionFamily I
   have hs := isOpen_univ_prod_extChartAt_target (I := I) x
   have hΦ : ContDiffAt ℝ 2 Φ (t, y) :=
     ((F.contDiffOn_spaceTimeChartRep x).contDiffAt
-      (hs.mem_nhds ⟨Set.mem_univ _, hy⟩)).of_le le_top
+      (hs.mem_nhds ⟨Set.mem_univ _, hy⟩)).of_le (by simp)
   have hF2 := contDiffAt_chartRep F t x hy
   have hV := F.differentiableAt_timeVelocity_spaceTimeChartRep x t hy
   have hnormal : IsNormalAlongNear (F.chartRep t x) (timeVelocity Φ t) y := by
