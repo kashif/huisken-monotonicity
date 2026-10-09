@@ -26,6 +26,7 @@ d/dt ∫_M ρ(F, t) dμ_t  =  -∫_M ρ(F, t) · ‖Hvec + (F - x₀)^⊥/(2(t�
 | monotonicity of the Gaussian density on an interval before `t₀` | `ImmersionFlowOn.antitoneOn_integral` |
 | Corollary 3.2, the rescaled flow `∂ₛF̃ = H̃ + F̃` with `ρ̃ = exp(-‖x‖²/2)` | `SmoothImmersionFamily.huisken_monotonicity_rescaled`, `ImmersionFlowOn.huisken_monotonicity_rescaled` |
 | monotonicity under the rescaled flow | `ImmersionFlowOn.antitoneOn_integral_rescaled` |
+| §2: the rescaling `F̃ = (2(T-t))^(-1/2) F`, `s = -½ log(T-t)` of a flow on `(a, T)` satisfies `∂ₛF̃ = H̃ + F̃` (Huisken (4)), so Corollary 3.2 applies to it | `ImmersionFlowOn.IsMeanCurvatureFlow.rescale`, `ImmersionFlowOn.antitoneOn_integral_rescale` |
 | the shrinking sphere `√(1 - 2nt) Sⁿ` moves by mean curvature, so the hypotheses are met | `shrinkingSphere_isMeanCurvatureFlow`, `shrinkingSphere_antitoneOn_integral` |
 
 The differential geometry (Riemannian metrics, volume measures and their variation,
@@ -49,6 +50,7 @@ mathlib; the extrinsic calculus of an immersion into a Euclidean space is develo
 | [`Translation`](HuiskenMonotonicity/Translation.lean) | arbitrary centre `x₀` |
 | [`RescaledFlow`](HuiskenMonotonicity/RescaledFlow.lean) | `dμₛ/ds = (n - H²) μₛ`, Corollary 3.2 |
 | [`IntervalFlow`](HuiskenMonotonicity/IntervalFlow.lean) | flows on an open set of times; monotonicity |
+| [`Rescaling`](HuiskenMonotonicity/Rescaling.lean) | `H(cF) = c⁻¹ H(F)`; Huisken's rescaling and equation (4) |
 | [`Examples/ShrinkingSphere`](HuiskenMonotonicity/Examples/ShrinkingSphere.lean) | the shrinking sphere |
 | [`Upstream`](HuiskenMonotonicity/Upstream/) | API intended for `DifferentialGeometry` |
 
@@ -75,7 +77,8 @@ It follows Huisken's.
 
 The arbitrary centre (Huisken's Remark (i)) is a translation. Corollary 3.2 follows
 Huisken's own proof: "`dμₛ/ds = (n - H²) μₛ` and a calculation analogous to the proof of
-Theorem 3.1", with the rescaled kernel the backward heat kernel at `τ = 1/2`.
+Theorem 3.1", with the rescaled kernel the backward heat kernel at `τ = 1/2`. Equation (4)
+for the rescaled surfaces follows, as in Huisken's §2, from `H(cF) = c⁻¹ H(F)`.
 
 The mean curvature vector is read in the chart at each point. Under the flow it equals
 the time velocity (minus the position, for the rescaled flow), hence is continuous, which

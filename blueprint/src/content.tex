@@ -385,6 +385,18 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   is non-increasing.
 \end{corollary}
 
+\begin{theorem}[Huisken's rescaling, \S 2]
+  \label{thm:rescaling}
+  \lean{HuiskenMonotonicity.SmoothImmersion.meanCurvature_dilate, HuiskenMonotonicity.ImmersionFlowOn.rescale, HuiskenMonotonicity.ImmersionFlowOn.IsMeanCurvatureFlow.rescale, HuiskenMonotonicity.ImmersionFlowOn.antitoneOn_integral_rescale}
+  \leanok
+  \uses{def:flow-on, cor:rescaled}
+  For a mean curvature flow on $(a, T)$, the surfaces
+  $\tilde F(\cdot, s) = (2(T - t))^{-1/2} F(\cdot, t)$, $s = -\tfrac12 \log(T - t)$, defined
+  for $s > -\tfrac12 \log(T - a)$, satisfy $\partial_s \tilde F = \tilde H + \tilde F$
+  (Huisken's equation (4)), because $\vec H(cF) = c^{-1} \vec H(F)$. Hence
+  $s \mapsto \int_M \tilde\rho\,d\tilde\mu_s$ is non-increasing.
+\end{theorem}
+
 \chapter{The shrinking sphere}
 
 \begin{lemma}[mean curvature of a sphere]

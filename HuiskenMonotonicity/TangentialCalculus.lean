@@ -207,6 +207,46 @@ theorem tangentialNormSq_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ
   funext b gInv x v
   simp only [tangentialNormSq, frameTangent, h]
 
+/-! Under a dilation `F ↦ c F` the metric scales by `c²`, so the inverse metric by `c⁻²`; the
+tangential and normal projections are unchanged, and the mean curvature vector scales by
+`c⁻¹`. -/
+
+theorem tangentialPart_smul_vec (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁)
+    (a : ℝ) (v : E) :
+    tangentialPart F b gInv x (a • v) = a • tangentialPart F b gInv x v := by
+  simp only [tangentialPart, Finset.smul_sum, smul_smul, real_inner_smul_left]
+  refine Finset.sum_congr rfl fun k _ => Finset.sum_congr rfl fun l _ => ?_
+  ring_nf
+
+theorem normalPart_smul_vec (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁)
+    (a : ℝ) (v : E) :
+    normalPart F b gInv x (a • v) = a • normalPart F b gInv x v := by
+  rw [normalPart, normalPart, tangentialPart_smul_vec, smul_sub]
+
+theorem tangentialPart_dilate (F : E₁ → E) {c : ℝ} (hc : c ≠ 0) (b : Idx → E₁)
+    (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) :
+    tangentialPart (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x v =
+      tangentialPart F b gInv x v := by
+  simp only [tangentialPart, frameTangent, fderiv_const_smul_field, Pi.smul_apply,
+    ContinuousLinearMap.smul_apply, real_inner_smul_right, smul_smul]
+  refine Finset.sum_congr rfl fun k _ => Finset.sum_congr rfl fun l _ => ?_
+  congr 1
+  field_simp
+
+theorem meanCurvatureNormal_dilate (F : E₁ → E) {c : ℝ} (hc : c ≠ 0) (b : Idx → E₁)
+    (gInv : Idx → Idx → ℝ) (x : E₁) :
+    meanCurvatureNormal (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x =
+      c⁻¹ • meanCurvatureNormal F b gInv x := by
+  have hH : meanCurvatureVectorFrame (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x =
+      c⁻¹ • meanCurvatureVectorFrame F b gInv x := by
+    simp only [meanCurvatureVectorFrame, secondDerivative, fderiv_const_smul_field,
+      Pi.smul_apply, ContinuousLinearMap.smul_apply, Finset.smul_sum, smul_smul]
+    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    congr 1
+    field_simp
+  rw [meanCurvatureNormal, hH, normalPart, tangentialPart_dilate F hc, tangentialPart_smul_vec,
+    ← smul_sub, meanCurvatureNormal, normalPart]
+
 /-- The tangential part pairs with each frame vector as the vector itself does. -/
 theorem inner_tangentialPart_frameTangent
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
