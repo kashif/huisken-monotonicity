@@ -38,18 +38,20 @@ local instance instMeasurableSpaceTranslation : MeasurableSpace M := borel M
 
 local instance instBorelSpaceTranslation : BorelSpace M := ⟨rfl⟩
 
-/-- Translation `x ↦ x - c` of the ambient space, as a diffeomorphism. -/
-def translationDiffeomorph (c : E) : Diffeomorph 𝓘(ℝ, E) 𝓘(ℝ, E) E E ∞ where
-  toEquiv := Equiv.subRight c
-  contMDiff_toFun := (contDiff_id.sub contDiff_const).contMDiff
-  contMDiff_invFun := (contDiff_id.add contDiff_const).contMDiff
+/-- Translating a map into `E` does not change its differential. -/
+theorem mfderiv_sub_const {f : M → E} {p : M} (hf : MDifferentiableAt I 𝓘(ℝ, E) f p) (c : E) :
+    mfderiv I 𝓘(ℝ, E) (fun q => f q - c) p = mfderiv I 𝓘(ℝ, E) f p := by
+  change mfderiv I 𝓘(ℝ, E) (f - fun _ => c) p = _
+  rw [mfderiv_sub hf mdifferentiableAt_const, mfderiv_const]
+  exact sub_zero (mfderiv I 𝓘(ℝ, E) f p : E₁ →L[ℝ] E)
 
 namespace SmoothImmersion
 
 /-- The translate `f - c` of a smooth immersion. -/
 def translate (f : SmoothImmersion I M E) (c : E) : SmoothImmersion I M E :=
-  ⟨fun p => f p - c, f.contMDiff.sub contMDiff_const,
-    f.isImmersion.comp_diffeomorph (translationDiffeomorph c)⟩
+  ⟨fun p => f p - c, f.contMDiff.sub contMDiff_const, fun p => by
+    rw [mfderiv_sub_const (f.contMDiff.mdifferentiableAt (by simp)) c]
+    exact f.mfderiv_injective p⟩
 
 @[simp]
 theorem translate_apply (f : SmoothImmersion I M E) (c : E) (p : M) :
@@ -58,11 +60,8 @@ theorem translate_apply (f : SmoothImmersion I M E) (c : E) (p : M) :
 
 /-- Translation does not change the differential. -/
 theorem mfderiv_translate (f : SmoothImmersion I M E) (c : E) (p : M) :
-    mfderiv I 𝓘(ℝ, E) (f.translate c) p = mfderiv I 𝓘(ℝ, E) f p := by
-  have hf : MDifferentiableAt I 𝓘(ℝ, E) f p := f.contMDiff.mdifferentiableAt (by simp)
-  change mfderiv I 𝓘(ℝ, E) (⇑f - fun _ => c) p = _
-  rw [mfderiv_sub hf mdifferentiableAt_const, mfderiv_const]
-  exact sub_zero (mfderiv I 𝓘(ℝ, E) f p : E₁ →L[ℝ] E)
+    mfderiv I 𝓘(ℝ, E) (f.translate c) p = mfderiv I 𝓘(ℝ, E) f p :=
+  mfderiv_sub_const (f.contMDiff.mdifferentiableAt (by simp)) c
 
 variable [T2Space M]
 
@@ -108,7 +107,7 @@ namespace SmoothImmersionFamily
 /-- The translate `F - c` of a smooth immersion family. -/
 def translate (F : SmoothImmersionFamily I M E) (c : E) : SmoothImmersionFamily I M E :=
   ⟨fun p t => F p t - c, F.contMDiff_spaceTime.sub contMDiff_const,
-    fun t => ((F.slice t).translate c).isImmersion⟩
+    fun t => ((F.slice t).translate c).mfderiv_injective⟩
 
 @[simp]
 theorem translate_apply (F : SmoothImmersionFamily I M E) (c : E) (p : M) (t : ℝ) :

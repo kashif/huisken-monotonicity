@@ -45,8 +45,10 @@ structure SmoothImmersion [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [Fin
   toFun : M → E
   /-- Smoothness. -/
   contMDiff : ContMDiff I 𝓘(ℝ, E) ∞ toFun
-  /-- The immersion condition. -/
-  isImmersion : IsImmersion I 𝓘(ℝ, E) ∞ toFun
+  /-- The immersion condition: the differential is injective at every point. In finite
+  dimensions this is equivalent to mathlib's `IsImmersion` (see `ofIsImmersion`), and it is
+  exactly what the induced metric needs. -/
+  mfderiv_injective : ∀ p, Function.Injective (mfderiv I 𝓘(ℝ, E) toFun p)
 
 /-- A smooth family of immersions `F_t : M → E`, indexed by all real times. -/
 structure SmoothImmersionFamily [IsManifold I ∞ M] [FiniteDimensional ℝ E₁]
@@ -56,8 +58,9 @@ structure SmoothImmersionFamily [IsManifold I ∞ M] [FiniteDimensional ℝ E₁
   /-- Joint smoothness in space and time. -/
   contMDiff_spaceTime :
     ContMDiff (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, E) ∞ (Function.uncurry toFun)
-  /-- Every time slice is a smooth immersion. -/
-  isImmersion : ∀ t : ℝ, IsImmersion I 𝓘(ℝ, E) ∞ (fun p => toFun p t)
+  /-- Every time slice is an immersion: its differential is injective. -/
+  mfderiv_injective : ∀ (t : ℝ) (p : M),
+    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => toFun q t) p)
 
 variable {I M E}
 variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
@@ -67,10 +70,9 @@ namespace SmoothImmersion
 instance : CoeFun (SmoothImmersion I M E) (fun _ => M → E) :=
   ⟨SmoothImmersion.toFun⟩
 
-/-- A smooth immersion has injective differential. -/
-theorem mfderiv_injective (f : SmoothImmersion I M E) (p : M) :
-    Function.Injective (mfderiv I 𝓘(ℝ, E) f p) :=
-  f.isImmersion.mfderiv_injective (by simp) p
+/-- A smooth immersion in the sense of mathlib's `IsImmersion`. -/
+def ofIsImmersion (f : M → E) (hf : IsImmersion I 𝓘(ℝ, E) ∞ f) : SmoothImmersion I M E :=
+  ⟨f, hf.contMDiff, hf.mfderiv_injective (by simp)⟩
 
 end SmoothImmersion
 
@@ -84,15 +86,9 @@ theorem contMDiff_timeSlice (F : SmoothImmersionFamily I M E) (t : ℝ) :
     ContMDiff I 𝓘(ℝ, E) ∞ (fun p => F p t) :=
   F.contMDiff_spaceTime.curry_left
 
-/-- Each time slice has injective differential. This is the hypothesis the induced metric
-family is built from, discharged once and for all. -/
-theorem mfderiv_injective (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) :
-    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p) :=
-  (F.isImmersion t).mfderiv_injective (by simp) p
-
 /-- The time slice `F_t`, as a smooth immersion. -/
 def slice (F : SmoothImmersionFamily I M E) (t : ℝ) : SmoothImmersion I M E :=
-  ⟨fun p => F p t, F.contMDiff_timeSlice t, F.isImmersion t⟩
+  ⟨fun p => F p t, F.contMDiff_timeSlice t, F.mfderiv_injective t⟩
 
 @[simp]
 theorem slice_apply (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) :

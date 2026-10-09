@@ -105,8 +105,9 @@ structure ImmersionFlowOn (J : Set ℝ) where
   toFun : M → ℝ → E
   /-- Joint smoothness on `M × J`. -/
   contMDiffOn : ContMDiffOn (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, E) ∞ (Function.uncurry toFun) (univ ×ˢ J)
-  /-- Every time slice in `J` is an immersion. -/
-  isImmersion : ∀ t ∈ J, IsImmersion I 𝓘(ℝ, E) ∞ (fun p => toFun p t)
+  /-- Every time slice in `J` is an immersion: its differential is injective. -/
+  mfderiv_injective : ∀ t ∈ J, ∀ p : M,
+    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => toFun q t) p)
 
 namespace ImmersionFlowOn
 
@@ -119,7 +120,7 @@ instance : CoeFun (ImmersionFlowOn I M E J) (fun _ => M → ℝ → E) :=
 def slice (G : ImmersionFlowOn I M E J) (t : ℝ) (ht : t ∈ J) : SmoothImmersion I M E :=
   ⟨fun p => G p t,
     G.contMDiffOn.comp_contMDiff (contMDiff_id.prodMk contMDiff_const) fun _ => ⟨mem_univ _, ht⟩,
-    G.isImmersion t ht⟩
+    G.mfderiv_injective t ht⟩
 
 /-- `G` moves by mean curvature: `∂_t G = Hvec` at every point and every time of `J`. -/
 def IsMeanCurvatureFlow [T2Space M] (G : ImmersionFlowOn I M E J) : Prop :=
@@ -140,7 +141,7 @@ def extendAt (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) :
   ⟨fun p s => G p (φ s),
     G.contMDiffOn.comp_contMDiff (contMDiff_fst.prodMk (hφ.1.contMDiff.comp contMDiff_snd))
       fun q => ⟨mem_univ _, hφ.2.1 q.2⟩,
-    fun s => G.isImmersion (φ s) (hφ.2.1 s)⟩
+    fun s => G.mfderiv_injective (φ s) (hφ.2.1 s)⟩
 
 /-- The extension agrees with `G` at all times near `t`. -/
 theorem eventually_extendAt (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) :
