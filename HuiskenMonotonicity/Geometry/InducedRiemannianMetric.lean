@@ -27,12 +27,12 @@ manifold charts. `DifferentialGeometry` supplies that. Its
 the chart-smoothness discharged by `SmoothRiemannianMetric.pullbackInner_contMDiff`. This
 file applies it to the Euclidean metric on the ambient space to obtain
 
-* `inducedMetric` — the bundled `SmoothRiemannianMetric I M` of a single time slice;
+* `SmoothImmersion.inducedMetric` — the bundled `SmoothRiemannianMetric I M` of an
+  immersion, and `SmoothImmersionFamily.inducedMetric` for a time slice;
 * `inducedMetricFamily` — the time-indexed family, in the shape
   `ℝ → SmoothRiemannianMetric I M` required by
   `DifferentialGeometry.Integral.Measure.volume_variation_formula`;
-* `surfaceMeasure` — the Riemannian volume measure `dμ_t`, replacing the placeholder
-  `HuiskenMonotonicity.SurfaceMeasure`.
+* `surfaceMeasure` — the Riemannian volume measure `dμ_t`.
 
 ## The global-in-time immersion hypothesis
 
@@ -74,29 +74,117 @@ local instance : MeasurableSpace M := borel M
 
 local instance : BorelSpace M := ⟨rfl⟩
 
+namespace SmoothImmersion
+
+section Metric
+
+variable [T2Space M]
+
+/-- The Riemannian metric induced on `M` by a smooth immersion `f`, bundled as a
+`SmoothRiemannianMetric`.
+
+This is the pullback of the ambient Euclidean metric along `f`. The smooth dependence on
+the base point comes from `DifferentialGeometry.SmoothRiemannianMetric.pullbackInner_contMDiff`. -/
+def inducedMetric (f : SmoothImmersion I M E) : SmoothRiemannianMetric I M :=
+  (euclideanMetric (E := E)).pullback (I := I) f f.contMDiff f.mfderiv_injective
+
+@[simp]
+theorem inducedMetric_inner (f : SmoothImmersion I M E) (p : M) (v w : TangentSpace I p) :
+    f.inducedMetric.inner p v w =
+      @inner ℝ E _ (mfderiv I 𝓘(ℝ, E) f p v) (mfderiv I 𝓘(ℝ, E) f p w) :=
+  rfl
+
+/-- The chart Gram matrix of the induced metric is the Gram matrix of the chart frame pushed
+forward by `df`. -/
+theorem chartGramMatrix_inducedMetric (f : SmoothImmersion I M E)
+    (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
+    Tensor.Coordinates.chartGramMatrix (I := I) f.inducedMetric x₀ x i j =
+      @inner ℝ E _
+        (mfderiv I 𝓘(ℝ, E) f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x))
+        (mfderiv I 𝓘(ℝ, E) f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) := by
+  rw [Tensor.Coordinates.chartGramMatrix_apply, inducedMetric_inner]
+
+/-! ### The chart representation
+
+`mfderiv` of `f`, viewed on the model space, is the `fderiv` of the chart representation
+`f ∘ (extChartAt I x).symm`. That identification turns the entries of the chart Gram matrix
+into `frameGram` of the chart representation against the model basis. -/
+
+/-- The chart representation of `f` around `x`, as a map between model spaces. -/
+def chartRep (f : SmoothImmersion I M E) (x : M) : E₁ → E :=
+  fun y => f ((extChartAt I x).symm y)
+
+/-- The chart representation is smooth on the chart target. -/
+theorem contDiffOn_chartRep (f : SmoothImmersion I M E) (x₀ : M) :
+    ContDiffOn ℝ ∞ (f.chartRep x₀) (extChartAt I x₀).target :=
+  (f.contMDiff.comp_contMDiffOn (contMDiffOn_extChartAt_symm x₀)).contDiffOn
+
+/-- The chart representation is `C²` at points of the chart target. -/
+theorem contDiffAt_chartRep [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {y : E₁}
+    (hy : y ∈ (extChartAt I α).target) : ContDiffAt ℝ 2 (f.chartRep α) y :=
+  ((f.contDiffOn_chartRep α).contDiffAt
+    ((isOpen_extChartAt_target (I := I) α).mem_nhds hy)).of_le (by simp)
+
+/-- In the chart fixed at `x₀`, the chart Gram entries are the `frameGram` of the chart
+representation against the *constant* model basis, evaluated at the chart coordinate of `x`.
+
+The work is done by the library's
+`Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv`, specialised to a
+vector-space target, where the outer chart and trivialization are trivial. -/
+theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
+    (f : SmoothImmersion I M E)
+    (x₀ : M) {x : M} (hx : x ∈ (extChartAt I x₀).source)
+    (i j : Fin (Module.finrank ℝ E₁)) :
+    Tensor.Coordinates.chartGramMatrix (I := I) f.inducedMetric x₀ x i j =
+      frameGram (f.chartRep x₀) (Tensor.Coordinates.chartModelBasis E₁)
+        (extChartAt I x₀ x) i j := by
+  have hcont : ContinuousAt f x := f.contMDiff.continuous.continuousAt
+  have hfx : f x ∈ (extChartAt 𝓘(ℝ, E) (f x)).source := by simp
+  have h := DifferentialGeometry.Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv
+    (I := I) (J := 𝓘(ℝ, E)) f x₀ (f x) x hx hfx hcont
+  -- the outer chart and trivialization are trivial for a vector-space target
+  rw [extChartAt_model_space_eq_id, TangentBundle.continuousLinearMapAt_model_space] at h
+  have key : ∀ k : Fin (Module.finrank ℝ E₁),
+      fderiv ℝ (f.chartRep x₀) (extChartAt I x₀ x)
+          (Tensor.Coordinates.chartModelBasis E₁ k) =
+        mfderiv I 𝓘(ℝ, E) f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ k x) := by
+    intro k
+    have happ := DFunLike.congr_fun h (Tensor.Coordinates.chartModelBasis E₁ k)
+    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.one_apply,
+      PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
+    exact happ
+  rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply,
+    key i, key j]
+
+/-- The chart-representation form of the chart Gram entries. -/
+theorem chartGramOnE_inducedMetric [I.Boundaryless] (f : SmoothImmersion I M E)
+    (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) {y : E₁}
+    (hy : y ∈ (extChartAt I x₀).target) :
+    chartGramOnE (I := I) f.inducedMetric x₀ i j y =
+      frameGram (f.chartRep x₀) (Tensor.Coordinates.chartModelBasis E₁) y i j := by
+  have hmem : (extChartAt I x₀).symm y ∈ (extChartAt I x₀).source :=
+    (extChartAt I x₀).map_target hy
+  have hyy : extChartAt I x₀ ((extChartAt I x₀).symm y) = y := (extChartAt I x₀).right_inv hy
+  rw [chartGramOnE, f.chartGramMatrix_inducedMetric_eq_frameGram_modelBasis x₀ hmem i j, hyy]
+
+end Metric
+
+/-- The surface measure of `f`: the Riemannian volume measure of the induced metric. -/
+def surfaceMeasure [T2Space M] [SigmaCompactSpace M] (f : SmoothImmersion I M E) :
+    Measure M :=
+  riemannianVolumeMeasure I M f.inducedMetric
+
+end SmoothImmersion
+
 namespace SmoothImmersionFamily
 
 section Metric
 
 variable [T2Space M]
 
-/-- The Riemannian metric induced on `M` by the time slice `F_t`, bundled as a
-`SmoothRiemannianMetric`.
-
-This is the pullback of the ambient Euclidean metric along `F_t`. The smooth dependence on
-the base point comes from `DifferentialGeometry.SmoothRiemannianMetric.pullbackInner_contMDiff`. -/
-def inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ) :
-    SmoothRiemannianMetric I M :=
-  (euclideanMetric (E := E)).pullback (I := I) (fun p => F p t)
-    (F.contMDiff_timeSlice t) (F.mfderiv_injective t)
-
-@[simp]
-theorem inducedMetric_inner (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (p : M) (v w : TangentSpace I p) :
-    (F.inducedMetric t).inner p v w =
-      @inner ℝ E _ (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p v)
-        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p w) :=
-  rfl
+/-- The Riemannian metric induced on `M` by the time slice `F_t`. -/
+def inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ) : SmoothRiemannianMetric I M :=
+  (F.slice t).inducedMetric
 
 /-- The time-indexed family of induced metrics, in the shape consumed by
 `DifferentialGeometry.Integral.Measure.volume_variation_formula`. -/
@@ -110,38 +198,9 @@ theorem inducedMetricFamily_apply (F : SmoothImmersionFamily I M E)
     F.inducedMetricFamily t = F.inducedMetric t :=
   rfl
 
-/-! ### The chart Gram matrix of the induced metric
-
-`DifferentialGeometry.Integral.Measure.traceTimeDerivMetric`, the weight consumed by
-`volume_variation_formula`, is the trace of `G⁻¹ ∂ₜG` where `G` is
-`Tensor.Coordinates.chartGramMatrix` of the metric family at `x₀ = x`. The identification
-below is the first step in evaluating that weight for the induced metric: the chart Gram
-matrix is the matrix of inner products of the pushed-forward chart frame vectors. -/
-
-/-- The chart Gram matrix of the induced metric is the Gram matrix of the chart frame pushed
-forward by `dF_t`. -/
-theorem chartGramMatrix_inducedMetric (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
-    Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t) x₀ x i j =
-      @inner ℝ E _
-        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
-          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x))
-        (mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
-          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) := by
-  rw [Tensor.Coordinates.chartGramMatrix_apply, inducedMetric_inner]
-
-/-! ### The chart representation
-
-The chart Gram matrix is a Gram matrix of Fréchet derivatives: `mfderiv` of a time slice,
-viewed on the model space, is the `fderiv` of the chart representation
-`F_t ∘ (extChartAt I x).symm`. That identification turns the entries of the chart Gram
-matrix into `frameGram` of the chart representation against the model basis, which is the
-form the metric evolution results of `MetricEvolution.lean` consume. -/
-
-/-- The chart representation of the time slice `F_t` around `x`, as a map between model
-spaces. -/
+/-- The chart representation of the time slice `F_t` around `x`. -/
 def chartRep (F : SmoothImmersionFamily I M E) (t : ℝ) (x : M) : E₁ → E :=
-  fun y => F ((extChartAt I x).symm y) t
+  (F.slice t).chartRep x
 
 /-! ### Smoothness of the space-time chart representation
 
@@ -181,54 +240,16 @@ theorem contDiffOn_spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M
     (hsymm.comp hsnd.contMDiffOn hmaps).prodMk hfst.contMDiffOn
   exact (F.contMDiff_spaceTime.comp_contMDiffOn hg).contDiffOn
 
-/-! ### The chart Gram entries as a `frameGram`
-
-The continuity fields of `MetricFamilyRegularAt` need the chart Gram entries in one *fixed*
-chart at `x₀`, uniformly in the point; `traceTimeDerivMetric` needs them at `x₀ = x`. One
-statement serves both.
-
-The library already proves it, as
-`Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv`: the Fréchet
-derivative of a map written in fixed charts is the manifold derivative conjugated by the
-trivializations. With a vector-space target the outer chart and trivialization are trivial,
-and what remains is exactly the statement that the chart frame is carried to the model
-basis. -/
-
-/-- In the chart fixed at `x₀`, the chart Gram entries are the `frameGram` of the chart
-representation against the *constant* model basis, evaluated at the chart coordinate of `x`.
-
-With the frame constant and the chart fixed, the entries are a function of
-`(t, y) ∈ ℝ × E₁` to which `contDiffOn_spaceTimeChartRep` applies.
-
-The work is done by the library's
-`Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv`, specialised to a
-vector-space target, where the outer chart and trivialization are trivial. -/
+/-- In the chart fixed at `x₀`, the chart Gram entries of `F_t` are the `frameGram` of its
+chart representation against the model basis. -/
 theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
     (F : SmoothImmersionFamily I M E) (t : ℝ)
     (x₀ : M) {x : M} (hx : x ∈ (extChartAt I x₀).source)
     (i j : Fin (Module.finrank ℝ E₁)) :
     Tensor.Coordinates.chartGramMatrix (I := I) (F.inducedMetric t) x₀ x i j =
       frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁)
-        (extChartAt I x₀ x) i j := by
-  have hcont : ContinuousAt (fun q => F q t) x :=
-    ((F.contMDiff_timeSlice t).continuous).continuousAt
-  have hfx : (fun q => F q t) x ∈ (extChartAt 𝓘(ℝ, E) (F x t)).source := by simp
-  have h := DifferentialGeometry.Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv
-    (I := I) (J := 𝓘(ℝ, E)) (fun q => F q t) x₀ (F x t) x hx hfx hcont
-  -- the outer chart and trivialization are trivial for a vector-space target
-  rw [extChartAt_model_space_eq_id, TangentBundle.continuousLinearMapAt_model_space] at h
-  have key : ∀ k : Fin (Module.finrank ℝ E₁),
-      fderiv ℝ (F.chartRep t x₀) (extChartAt I x₀ x)
-          (Tensor.Coordinates.chartModelBasis E₁ k) =
-        mfderiv I 𝓘(ℝ, E) (fun q => F q t) x
-          (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ k x) := by
-    intro k
-    have happ := DFunLike.congr_fun h (Tensor.Coordinates.chartModelBasis E₁ k)
-    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.one_apply,
-      PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
-    exact happ
-  rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply,
-    key i, key j]
+        (extChartAt I x₀ x) i j :=
+  (F.slice t).chartGramMatrix_inducedMetric_eq_frameGram_modelBasis x₀ hx i j
 
 /-! ### The regularity hypothesis, in chart-representation form
 
@@ -242,12 +263,8 @@ theorem chartGramOnE_inducedMetricFamily [I.Boundaryless]
     (x₀ : M) (i j : Fin (Module.finrank ℝ E₁)) (t : ℝ) {y : E₁}
     (hy : y ∈ (extChartAt I x₀).target) :
     chartGramOnE (I := I) (F.inducedMetricFamily t) x₀ i j y =
-      frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁) y i j := by
-  have hmem : (extChartAt I x₀).symm y ∈ (extChartAt I x₀).source :=
-    (extChartAt I x₀).map_target hy
-  have hyy : extChartAt I x₀ ((extChartAt I x₀).symm y) = y := (extChartAt I x₀).right_inv hy
-  rw [chartGramOnE, inducedMetricFamily_apply,
-    chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F t x₀ hmem i j, hyy]
+      frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁) y i j :=
+  (F.slice t).chartGramOnE_inducedMetric x₀ i j hy
 
 /-- The chart target, crossed with all times, is open. -/
 lemma isOpen_univ_prod_extChartAt_target [I.Boundaryless] (x₀ : M) :
@@ -422,20 +439,9 @@ section SurfaceMeasure
 
 variable [T2Space M] [SigmaCompactSpace M]
 
-/-- The surface measure `dμ_t` of the time slice `F_t`: the Riemannian volume measure of the
-induced metric.
-
-This replaces the placeholder `HuiskenMonotonicity.SurfaceMeasure`, whose `μ` field was
-unconstrained data. -/
-def surfaceMeasure (F : SmoothImmersionFamily I M E)
-    (t : ℝ) : Measure M :=
-  riemannianVolumeMeasure I M (F.inducedMetricFamily t)
-
-@[simp]
-theorem surfaceMeasure_apply (F : SmoothImmersionFamily I M E)
-    (t : ℝ) :
-    F.surfaceMeasure t = riemannianVolumeMeasure I M (F.inducedMetric t) :=
-  rfl
+/-- The surface measure `dμ_t` of the time slice `F_t`. -/
+def surfaceMeasure (F : SmoothImmersionFamily I M E) (t : ℝ) : Measure M :=
+  (F.slice t).surfaceMeasure
 
 /-- The surface measure is the Riemannian measure family of the induced metric family. This
 is the form in which `volume_variation_formula` expects the measure. -/

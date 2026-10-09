@@ -157,55 +157,60 @@ local instance instMeasurableSpaceMeanCurvatureFlow : MeasurableSpace M := borel
 
 local instance instBorelSpaceMeanCurvatureFlow : BorelSpace M := ⟨rfl⟩
 
-namespace SmoothImmersionFamily
+namespace SmoothImmersion
 
 variable [T2Space M] [I.Boundaryless]
 
 /-! ## Normality of the mean curvature vector in every chart -/
 
-/-- The mean curvature vector is orthogonal to every tangent vector `dF_t(w)`. -/
-theorem inner_meanCurvature_mfderiv (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M)
+/-- The mean curvature vector is orthogonal to every tangent vector `df(w)`. -/
+theorem inner_meanCurvature_mfderiv (f : SmoothImmersion I M E) (p : M)
     (w : TangentSpace I p) :
-    @inner ℝ E _ (F.meanCurvature t p) (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p w) = 0 := by
-  have hmd : MDifferentiableAt I 𝓘(ℝ, E) (fun q => F q t) p :=
-    (F.contMDiff_timeSlice t).mdifferentiableAt (by simp)
+    @inner ℝ E _ (f.meanCurvature p) (mfderiv I 𝓘(ℝ, E) f p w) = 0 := by
+  have hmd : MDifferentiableAt I 𝓘(ℝ, E) f p := f.contMDiff.mdifferentiableAt (by simp)
   have h := DifferentialGeometry.Manifold.mfderiv_eq_fderiv_extChartAt_of_isInteriorPoint I hmd
     BoundarylessManifold.isInteriorPoint
-  rw [show mfderiv I 𝓘(ℝ, E) (fun q => F q t) p w =
-      fderiv ℝ (fun y => F ((extChartAt I p).symm y) t) (extChartAt I p p) w from
+  rw [show mfderiv I 𝓘(ℝ, E) f p w =
+      fderiv ℝ (fun y => f ((extChartAt I p).symm y)) (extChartAt I p p) w from
     congrArg (fun L : E₁ →L[ℝ] E => L w) h]
   exact inner_normalPart_fderiv (chartModelBasis E₁).span_eq
-    (isFrameInverse_chartInvGramOnE F t p (mem_extChartAt_target p))
+    (f.isFrameInverse_chartInvGramOnE p (mem_extChartAt_target p))
     (fun i j => chartInvGramOnE_symm (I := I) _ p i j _) _ w
 
 /-- The mean curvature vector at a point is orthogonal to the tangent vectors of the chart
 representation in *any* chart containing it. -/
-theorem inner_meanCurvature_fderiv_chartRep (F : SmoothImmersionFamily I M E) (t : ℝ)
+theorem inner_meanCurvature_fderiv_chartRep (f : SmoothImmersion I M E)
     (α : M) {z : E₁} (hz : z ∈ (extChartAt I α).target) (v : E₁) :
-    @inner ℝ E _ (F.meanCurvature t ((extChartAt I α).symm z))
-      (fderiv ℝ (F.chartRep t α) z v) = 0 := by
+    @inner ℝ E _ (f.meanCurvature ((extChartAt I α).symm z))
+      (fderiv ℝ (f.chartRep α) z v) = 0 := by
   set x := (extChartAt I α).symm z
   have hx : x ∈ (extChartAt I α).source := (extChartAt I α).map_target hz
   have hzx : extChartAt I α x = z := (extChartAt I α).right_inv hz
-  have hcont : ContinuousAt (fun q => F q t) x :=
-    ((F.contMDiff_timeSlice t).continuous).continuousAt
-  have hfx : (fun q => F q t) x ∈ (extChartAt 𝓘(ℝ, E) (F x t)).source := by simp
+  have hcont : ContinuousAt f x := f.contMDiff.continuous.continuousAt
+  have hfx : f x ∈ (extChartAt 𝓘(ℝ, E) (f x)).source := by simp
   have h := DifferentialGeometry.Topology.Manifold.fderiv_fixed_chart_eq_trivialization_comp_mfderiv
-    (I := I) (J := 𝓘(ℝ, E)) (fun q => F q t) α (F x t) x hx hfx hcont
+    (I := I) (J := 𝓘(ℝ, E)) f α (f x) x hx hfx hcont
   rw [extChartAt_model_space_eq_id, TangentBundle.continuousLinearMapAt_model_space] at h
   have happ := DFunLike.congr_fun h v
   simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.one_apply,
     PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
   rw [hzx] at happ
-  change @inner ℝ E _ _ (fderiv ℝ (fun y => F ((extChartAt I α).symm y) t) z v) = 0
+  change @inner ℝ E _ _ (fderiv ℝ (fun y => f ((extChartAt I α).symm y)) z v) = 0
   rw [happ]
-  exact inner_meanCurvature_mfderiv F t x _
+  exact f.inner_meanCurvature_mfderiv x _
 
-/-! ## Mean curvature flow -/
+end SmoothImmersion
 
-/-- `F` moves by **mean curvature flow**: `∂_t F = Hvec` at every point and time. -/
-def IsMeanCurvatureFlow (F : SmoothImmersionFamily I M E) : Prop :=
-  ∀ p t, HasDerivAt (fun s => F p s) (F.meanCurvature t p) t
+namespace SmoothImmersionFamily
+
+variable [T2Space M] [I.Boundaryless]
+
+/-! ## Mean curvature flow at a time -/
+
+/-- `F` moves by **mean curvature flow at time `t`**: `∂_t F = Hvec` at every point, at the
+time `t`. The monotonicity formula at `t` needs the flow equation at `t` only. -/
+def IsMeanCurvatureFlowAt (F : SmoothImmersionFamily I M E) (t : ℝ) : Prop :=
+  ∀ p, HasDerivAt (fun s => F p s) ((F.slice t).meanCurvature p) t
 
 /-- The time velocity of the space-time chart representation is differentiable on the chart
 target. -/
@@ -221,12 +226,13 @@ theorem differentiableAt_timeVelocity_spaceTimeChartRep (F : SmoothImmersionFami
   exact (h1.comp z ((differentiableAt_const t).prodMk differentiableAt_id)).clm_apply
     (differentiableAt_const _)
 
-/-- Under mean curvature flow, the time velocity read in a chart is the mean curvature
-vector. -/
-theorem timeVelocity_spaceTimeChartRep (F : SmoothImmersionFamily I M E)
-    (hmcf : F.IsMeanCurvatureFlow) (α : M) (t : ℝ) {z : E₁}
+/-- Under mean curvature flow at `t`, the time velocity read in a chart is the mean
+curvature vector. -/
+theorem timeVelocity_spaceTimeChartRep (F : SmoothImmersionFamily I M E) {t : ℝ}
+    (hmcf : F.IsMeanCurvatureFlowAt t) (α : M) {z : E₁}
     (hz : z ∈ (extChartAt I α).target) :
-    timeVelocity (F.spaceTimeChartRep α) t z = F.meanCurvature t ((extChartAt I α).symm z) := by
+    timeVelocity (F.spaceTimeChartRep α) t z =
+      (F.slice t).meanCurvature ((extChartAt I α).symm z) := by
   have hs := isOpen_univ_prod_extChartAt_target (I := I) α
   have hd : DifferentiableAt ℝ (F.spaceTimeChartRep α) (t, z) :=
     ((F.contDiffOn_spaceTimeChartRep α).contDiffAt
@@ -234,12 +240,12 @@ theorem timeVelocity_spaceTimeChartRep (F : SmoothImmersionFamily I M E)
   have hc : HasDerivAt (F.spaceTimeChartRep α ∘ fun s => (s, z))
       (fderiv ℝ (F.spaceTimeChartRep α) (t, z) ((1 : ℝ), (0 : E₁))) t :=
     hd.hasFDerivAt.comp_hasDerivAt t ((hasDerivAt_id' t).prodMk (hasDerivAt_const t z))
-  exact hc.unique (hmcf ((extChartAt I α).symm z) t)
+  exact hc.unique (hmcf ((extChartAt I α).symm z))
 
-/-- Under mean curvature flow, the mean curvature vector is continuous: it is the time
+/-- Under mean curvature flow at `t`, the mean curvature vector is continuous: it is the time
 velocity, read in a chart. -/
-theorem continuous_meanCurvature (F : SmoothImmersionFamily I M E)
-    (hmcf : F.IsMeanCurvatureFlow) (t : ℝ) : Continuous (F.meanCurvature t) := by
+theorem continuous_meanCurvature (F : SmoothImmersionFamily I M E) {t : ℝ}
+    (hmcf : F.IsMeanCurvatureFlowAt t) : Continuous (F.slice t).meanCurvature := by
   rw [continuous_iff_continuousAt]
   intro p
   have hc : ContinuousAt (timeVelocity (F.spaceTimeChartRep p) t) (extChartAt I p p) :=
@@ -247,33 +253,34 @@ theorem continuous_meanCurvature (F : SmoothImmersionFamily I M E)
       (mem_extChartAt_target p)).continuousAt
   refine (hc.comp (continuousAt_extChartAt p)).congr ?_
   filter_upwards [extChartAt_source_mem_nhds (I := I) p] with q hq
-  change timeVelocity _ t (extChartAt I p q) = F.meanCurvature t q
-  rw [F.timeVelocity_spaceTimeChartRep hmcf p t ((extChartAt I p).map_source hq),
+  change timeVelocity _ t (extChartAt I p q) = (F.slice t).meanCurvature q
+  rw [F.timeVelocity_spaceTimeChartRep hmcf p ((extChartAt I p).map_source hq),
     (extChartAt I p).left_inv hq]
 
 /-- **The volume element under mean curvature flow.** The transport weight is
 `tr(g⁻¹ ∂_t g) = -2 ‖Hvec‖²`, i.e. `∂_t dμ = -‖Hvec‖² dμ`. -/
-theorem traceTimeDerivMetric_of_isMeanCurvatureFlow (F : SmoothImmersionFamily I M E)
-    (hmcf : F.IsMeanCurvatureFlow) (t : ℝ) (x : M) :
+theorem traceTimeDerivMetric_of_isMeanCurvatureFlowAt (F : SmoothImmersionFamily I M E)
+    {t : ℝ} (hmcf : F.IsMeanCurvatureFlowAt t) (x : M) :
     traceTimeDerivMetric (I := I) F.inducedMetricFamily t x =
-      -2 * ‖F.meanCurvature t x‖ ^ 2 := by
+      -2 * ‖(F.slice t).meanCurvature x‖ ^ 2 := by
+  set f := F.slice t
   set y := extChartAt I x x with hy_def
   set b := chartModelBasis E₁ with hb_def
   set Φ := F.spaceTimeChartRep x
   set gInv : Fin (Module.finrank ℝ E₁) → Fin (Module.finrank ℝ E₁) → ℝ :=
-    fun i j => chartInvGramOnE (F.inducedMetric t) x i j y with hgInv
+    fun i j => chartInvGramOnE f.inducedMetric x i j y with hgInv
   have hy : y ∈ (extChartAt I x).target := mem_extChartAt_target x
   have hsymm : (extChartAt I x).symm y = x := extChartAt_to_inv x
   have hs := isOpen_univ_prod_extChartAt_target (I := I) x
   have hΦ : ContDiffAt ℝ 2 Φ (t, y) :=
     ((F.contDiffOn_spaceTimeChartRep x).contDiffAt
       (hs.mem_nhds ⟨Set.mem_univ _, hy⟩)).of_le (by simp)
-  have hF2 := contDiffAt_chartRep F t x hy
+  have hF2 : ContDiffAt ℝ 2 (F.chartRep t x) y := f.contDiffAt_chartRep x hy
   have hV := F.differentiableAt_timeVelocity_spaceTimeChartRep x t hy
   have hnormal : IsNormalAlongNear (F.chartRep t x) (timeVelocity Φ t) y := by
     filter_upwards [(isOpen_extChartAt_target (I := I) x).mem_nhds hy] with z hz v
-    rw [F.timeVelocity_spaceTimeChartRep hmcf x t hz]
-    exact inner_meanCurvature_fderiv_chartRep F t x hz v
+    rw [F.timeVelocity_spaceTimeChartRep hmcf x hz]
+    exact f.inner_meanCurvature_fderiv_chartRep x hz v
   have hcomm : ∀ k, HasDerivAt (fun s => frameTangent (F.chartRep s x) b y k)
       (frameTangent (timeVelocity Φ t) b y k) t := fun k =>
     hasDerivAt_fderiv_spatialSlice_of_contDiffAt hΦ (b k)
@@ -293,9 +300,8 @@ theorem traceTimeDerivMetric_of_isMeanCurvatureFlow (F : SmoothImmersionFamily I
       (V := timeVelocity Φ) b i j hF2 hV hnormal hcomm).deriv
   have hinv : (chartGramMatrix (I := I) (F.inducedMetricFamily t) x x)⁻¹ = Matrix.of gInv := by
     ext i j
-    rw [inducedMetricFamily_apply]
-    change chartInvGramMatrix (I := I) (F.inducedMetric t) x x i j =
-      chartInvGramOnE (F.inducedMetric t) x i j y
+    change chartInvGramMatrix (I := I) f.inducedMetric x x i j =
+      chartInvGramOnE f.inducedMetric x i j y
     rw [chartInvGramOnE_def, hsymm]
   -- the trace is `-2 ⟪V, g^{ij} D²F(b_i, b_j)⟫`
   have htrace : traceTimeDerivMetric (I := I) F.inducedMetricFamily t x =
@@ -307,43 +313,44 @@ theorem traceTimeDerivMetric_of_isMeanCurvatureFlow (F : SmoothImmersionFamily I
     refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
     rw [hderiv j i, secondDerivative_symm_of_contDiffAt hF2]
   -- the velocity is the mean curvature vector, which sees only the normal part of the trace
-  have hVH : timeVelocity Φ t y = F.meanCurvature t x := by
-    rw [F.timeVelocity_spaceTimeChartRep hmcf x t hy, hsymm]
-  have hinvF := isFrameInverse_chartInvGramOnE F t x hy
+  have hVH : timeVelocity Φ t y = f.meanCurvature x := by
+    rw [F.timeVelocity_spaceTimeChartRep hmcf x hy, hsymm]
+  have hinvF : IsFrameInverse (F.chartRep t x) b y gInv := f.isFrameInverse_chartInvGramOnE x hy
   have hsymmG : ∀ i j, gInv i j = gInv j i := fun i j =>
     chartInvGramOnE_symm (I := I) _ x i j _
-  have hzero : ∀ l, @inner ℝ E _ (F.meanCurvature t x)
+  have hzero : ∀ l, @inner ℝ E _ (f.meanCurvature x)
       (frameTangent (F.chartRep t x) b y l) = 0 := fun l =>
     inner_normalPart_frameTangent hinvF hsymmG _ l
-  have hT0 : tangentialPart (F.chartRep t x) b gInv y (F.meanCurvature t x) = 0 := by
+  have hT0 : tangentialPart (F.chartRep t x) b gInv y (f.meanCurvature x) = 0 := by
     simp only [tangentialPart, hzero, mul_zero, zero_smul, Finset.sum_const_zero]
-  have hN : normalPart (F.chartRep t x) b gInv y (F.meanCurvature t x) =
-      F.meanCurvature t x := by
+  have hN : normalPart (F.chartRep t x) b gInv y (f.meanCurvature x) = f.meanCurvature x := by
     rw [normalPart, hT0, sub_zero]
-  have hHH := inner_meanCurvatureNormal_eq hinvF hsymmG (F.meanCurvature t x)
+  have hHH := inner_meanCurvatureNormal_eq hinvF hsymmG (f.meanCurvature x)
   rw [hN] at hHH
   rw [htrace, hVH, ← hHH]
   exact congrArg (fun r => -2 * r) (real_inner_self_eq_norm_sq _)
 
 /-! ## The monotonicity formula -/
 
-/-- **Huisken's monotonicity formula** (Huisken 1990, Theorem 3.1). For a mean curvature flow
-of a closed `n`-manifold and `t < t₀`,
+/-- **Huisken's monotonicity formula** (Huisken 1990, Theorem 3.1), centred at the origin.
+For a family of immersions of a closed `n`-manifold moving by mean curvature at time `t < t₀`,
 
   `d/dt ∫_M ρ(F, t) dμ_t = -∫_M ρ(F, t) ‖Hvec + F^⊥ / (2(t₀ - t))‖² dμ_t`. -/
-theorem huisken_monotonicity [CompactSpace M] (F : SmoothImmersionFamily I M E)
-    (hmcf : F.IsMeanCurvatureFlow) (t₀ : ℝ) {t : ℝ} (hτ : t < t₀) :
+theorem huisken_monotonicity_origin [CompactSpace M] (F : SmoothImmersionFamily I M E)
+    (t₀ : ℝ) {t : ℝ} (hτ : t < t₀) (hmcf : F.IsMeanCurvatureFlowAt t) :
     HasDerivAt
       (fun s => ∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (F p s)
         ∂(F.surfaceMeasure s))
       (-∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ t (F p t) *
-          ‖F.meanCurvature t p + (1 / (2 * (t₀ - t))) • F.normalPosition t p‖ ^ 2
+          ‖(F.slice t).meanCurvature p + (1 / (2 * (t₀ - t))) • (F.slice t).normalPosition p‖ ^ 2
         ∂(F.surfaceMeasure t)) t := by
   set n := Module.finrank ℝ E₁
+  set f := F.slice t
   have hτ0 : t₀ - t ≠ 0 := (sub_pos.mpr hτ).ne'
-  have hρ := (F.contMDiff_backwardHeatKernel_comp n t₀ hτ).continuous
+  have hρ : Continuous fun p => backwardHeatKernel n t₀ t (F p t) :=
+    (f.contMDiff_backwardHeatKernel_comp n t₀ hτ).continuous
   have hFc : Continuous fun p => F p t := (F.contMDiff_timeSlice t).continuous
-  have hHc := F.continuous_meanCurvature hmcf t
+  have hHc : Continuous f.meanCurvature := F.continuous_meanCurvature hmcf
   -- the transport formula, with the integrand evaluated along the flow
   have hT := hasDerivAt_integral_backwardHeatKernel F n hτ
   have hC : ∀ p, deriv (fun s => backwardHeatKernel n t₀ s (F p s)) t +
@@ -351,35 +358,43 @@ theorem huisken_monotonicity [CompactSpace M] (F : SmoothImmersionFamily I M E)
           backwardHeatKernel n t₀ t (F p t) =
       backwardHeatKernel n t₀ t (F p t) *
         ((n : ℝ) / (2 * (t₀ - t)) - ‖F p t‖ ^ 2 / (4 * (t₀ - t) ^ 2) -
-          @inner ℝ E _ (F p t) (F.meanCurvature t p) / (2 * (t₀ - t)) -
-          ‖F.meanCurvature t p‖ ^ 2) := by
+          @inner ℝ E _ (F p t) (f.meanCurvature p) / (2 * (t₀ - t)) -
+          ‖f.meanCurvature p‖ ^ 2) := by
     intro p
-    rw [(hasDerivAt_backwardHeatKernel_curve n t₀ hτ (hmcf p t)).deriv,
-      F.traceTimeDerivMetric_of_isMeanCurvatureFlow hmcf t p]
+    rw [(hasDerivAt_backwardHeatKernel_curve n t₀ hτ (hmcf p)).deriv,
+      F.traceTimeDerivMetric_of_isMeanCurvatureFlowAt hmcf p]
     ring
   -- Huisken's pointwise identity: chain-rule integrand = -(squared norm) + first variation
   have hsplit : ∀ p, backwardHeatKernel n t₀ t (F p t) *
         ((n : ℝ) / (2 * (t₀ - t)) - ‖F p t‖ ^ 2 / (4 * (t₀ - t) ^ 2) -
-          @inner ℝ E _ (F p t) (F.meanCurvature t p) / (2 * (t₀ - t)) -
-          ‖F.meanCurvature t p‖ ^ 2) =
+          @inner ℝ E _ (F p t) (f.meanCurvature p) / (2 * (t₀ - t)) -
+          ‖f.meanCurvature p‖ ^ 2) =
       -(backwardHeatKernel n t₀ t (F p t) *
-          ‖F.meanCurvature t p + (1 / (2 * (t₀ - t))) • F.normalPosition t p‖ ^ 2) +
+          ‖f.meanCurvature p + (1 / (2 * (t₀ - t))) • f.normalPosition p‖ ^ 2) +
         (1 / (2 * (t₀ - t))) * (backwardHeatKernel n t₀ t (F p t) *
-          ((n : ℝ) - F.tangentialSqNorm t p / (2 * (t₀ - t)) +
-            @inner ℝ E _ (F p t) (F.meanCurvature t p))) := by
+          ((n : ℝ) - f.tangentialSqNorm p / (2 * (t₀ - t)) +
+            @inner ℝ E _ (F p t) (f.meanCurvature p))) := by
     intro p
-    have h := huisken_pointwise_identity n (t₀ - t) hτ0 (F p t) (F.normalPosition t p)
-      (F.meanCurvature t p) (backwardHeatKernel n t₀ t (F p t))
-      (F.inner_sub_normalPosition t p) (F.inner_meanCurvature_sub_normalPosition t p)
-    rwa [F.norm_sub_normalPosition_sq t p, real_inner_comm (F p t) (F.meanCurvature t p)] at h
-  have hFV := F.integrable_firstVariation n t₀ hτ
+    have h := huisken_pointwise_identity n (t₀ - t) hτ0 (F p t) (f.normalPosition p)
+      (f.meanCurvature p) (backwardHeatKernel n t₀ t (F p t))
+      (f.inner_sub_normalPosition p) (f.inner_meanCurvature_sub_normalPosition p)
+    rwa [show ‖F p t - f.normalPosition p‖ ^ 2 = f.tangentialSqNorm p from
+      f.norm_sub_normalPosition_sq p, real_inner_comm (F p t) (f.meanCurvature p)] at h
+  have hFV : Integrable (fun p => backwardHeatKernel n t₀ t (F p t) *
+      ((n : ℝ) - f.tangentialSqNorm p / (2 * (t₀ - t)) +
+        @inner ℝ E _ (F p t) (f.meanCurvature p))) (F.surfaceMeasure t) :=
+    f.integrable_firstVariation n t₀ hτ
+  have hFV0 : ∫ p, backwardHeatKernel n t₀ t (F p t) *
+      ((n : ℝ) - f.tangentialSqNorm p / (2 * (t₀ - t)) +
+        @inner ℝ E _ (F p t) (f.meanCurvature p)) ∂(F.surfaceMeasure t) = 0 :=
+    f.integral_firstVariation n t₀ hτ
   have hCint : Integrable (fun p => backwardHeatKernel n t₀ t (F p t) *
       ((n : ℝ) / (2 * (t₀ - t)) - ‖F p t‖ ^ 2 / (4 * (t₀ - t) ^ 2) -
-        @inner ℝ E _ (F p t) (F.meanCurvature t p) / (2 * (t₀ - t)) -
-        ‖F.meanCurvature t p‖ ^ 2)) (F.surfaceMeasure t) :=
-    F.integrable_of_continuous (by fun_prop)
+        @inner ℝ E _ (F p t) (f.meanCurvature p) / (2 * (t₀ - t)) -
+        ‖f.meanCurvature p‖ ^ 2)) (F.surfaceMeasure t) :=
+    f.integrable_of_continuous (by fun_prop)
   have hS : Integrable (fun p => backwardHeatKernel n t₀ t (F p t) *
-      ‖F.meanCurvature t p + (1 / (2 * (t₀ - t))) • F.normalPosition t p‖ ^ 2)
+      ‖f.meanCurvature p + (1 / (2 * (t₀ - t))) • f.normalPosition p‖ ^ 2)
       (F.surfaceMeasure t) := by
     refine ((hFV.const_mul (1 / (2 * (t₀ - t)))).sub hCint).congr
       (Filter.Eventually.of_forall fun p => ?_)
@@ -389,18 +404,17 @@ theorem huisken_monotonicity [CompactSpace M] (F : SmoothImmersionFamily I M E)
         (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) F.inducedMetricFamily t p *
           backwardHeatKernel n t₀ t (F p t)) ∂(F.surfaceMeasure t) =
       -∫ p, backwardHeatKernel n t₀ t (F p t) *
-          ‖F.meanCurvature t p + (1 / (2 * (t₀ - t))) • F.normalPosition t p‖ ^ 2
+          ‖f.meanCurvature p + (1 / (2 * (t₀ - t))) • f.normalPosition p‖ ^ 2
         ∂(F.surfaceMeasure t) := by
     have hS' : Integrable (fun p => -(backwardHeatKernel n t₀ t (F p t) *
-        ‖F.meanCurvature t p + (1 / (2 * (t₀ - t))) • F.normalPosition t p‖ ^ 2))
+        ‖f.meanCurvature p + (1 / (2 * (t₀ - t))) • f.normalPosition p‖ ^ 2))
         (F.surfaceMeasure t) := hS.neg
     have hFV' : Integrable (fun p => (1 / (2 * (t₀ - t))) * (backwardHeatKernel n t₀ t (F p t) *
-        ((n : ℝ) - F.tangentialSqNorm t p / (2 * (t₀ - t)) +
-          @inner ℝ E _ (F p t) (F.meanCurvature t p)))) (F.surfaceMeasure t) :=
+        ((n : ℝ) - f.tangentialSqNorm p / (2 * (t₀ - t)) +
+          @inner ℝ E _ (F p t) (f.meanCurvature p)))) (F.surfaceMeasure t) :=
       hFV.const_mul _
     simp only [hC, hsplit]
-    rw [integral_add hS' hFV', integral_neg, integral_const_mul,
-      F.integral_firstVariation n t₀ hτ]
+    rw [integral_add hS' hFV', integral_neg, integral_const_mul, hFV0]
     ring
   rw [hval] at hT
   exact hT

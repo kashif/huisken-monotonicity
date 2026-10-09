@@ -48,56 +48,41 @@ variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
-namespace SmoothImmersionFamily
+namespace SmoothImmersion
 
 variable [T2Space M]
 
 /-- On the chart target, the library's inverse chart Gram matrix is an inverse metric for the
 model basis in the sense of `IsFrameInverse`. -/
-theorem isFrameInverse_chartInvGramOnE [I.Boundaryless] (F : SmoothImmersionFamily I M E)
-    (t : ℝ) (α : M) {z : E₁} (hz : z ∈ (extChartAt I α).target) :
-    IsFrameInverse (F.chartRep t α) (chartModelBasis E₁) z
-      (fun k l => chartInvGramOnE (F.inducedMetric t) α k l z) := by
+theorem isFrameInverse_chartInvGramOnE [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {z : E₁} (hz : z ∈ (extChartAt I α).target) :
+    IsFrameInverse (f.chartRep α) (chartModelBasis E₁) z
+      (fun k l => chartInvGramOnE (f.inducedMetric) α k l z) := by
   have hmem : (extChartAt I α).symm z ∈ (extChartAt I α).source :=
     (extChartAt I α).map_target hz
   have hbase : (extChartAt I α).symm z ∈ (trivializationAt E₁ (TangentSpace I) α).baseSet := by
     rw [trivializationAt_baseSet_eq_chartAt_source (I := I),
       ← extChartAt_source_eq_chartAt_source (I := I)]
     exact hmem
-  have hmul := chartInvGramMatrix_mul_chartGramMatrix (I := I) (F.inducedMetric t) α hbase
+  have hmul := chartInvGramMatrix_mul_chartGramMatrix (I := I) (f.inducedMetric) α hbase
   intro i j
   have hentry := congrFun (congrFun hmul i) j
   rw [Matrix.mul_apply, Matrix.one_apply] at hentry
   rw [← hentry]
   refine Finset.sum_congr rfl fun k _ => ?_
-  rw [← chartGramOnE_inducedMetricFamily F α k j t hz]
+  rw [← f.chartGramOnE_inducedMetric α k j hz]
   rfl
-
-/-- The chart representation of a time slice is `C²` at points of the chart target. -/
-theorem contDiffAt_chartRep [I.Boundaryless] (F : SmoothImmersionFamily I M E) (t : ℝ)
-    (α : M) {y : E₁} (hy : y ∈ (extChartAt I α).target) :
-    ContDiffAt ℝ 2 (F.chartRep t α) y := by
-  have hs := isOpen_univ_prod_extChartAt_target (I := I) α
-  have hmem : ((t, y) : ℝ × E₁) ∈ (Set.univ : Set ℝ) ×ˢ (extChartAt I α).target :=
-    ⟨Set.mem_univ _, hy⟩
-  have hΦ : ContDiffAt ℝ 2 (F.spaceTimeChartRep α) (t, y) :=
-    ((F.contDiffOn_spaceTimeChartRep α).contDiffAt (hs.mem_nhds hmem)).of_le (by simp)
-  have hcomp : ContDiffAt ℝ 2 (F.spaceTimeChartRep α ∘ fun z : E₁ => ((t, z) : ℝ × E₁)) y :=
-    hΦ.comp y (contDiffAt_const.prodMk contDiffAt_id)
-  exact hcomp
 
 /-- The library's partial derivative of a chart Gram entry is the Fréchet derivative of the
 corresponding `frameGram` entry, since the two functions agree on the open chart target. -/
-theorem partialDeriv_chartGramOnE [I.Boundaryless] (F : SmoothImmersionFamily I M E)
-    (t : ℝ) (α : M) {y : E₁} (hy : y ∈ (extChartAt I α).target)
+theorem partialDeriv_chartGramOnE [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {y : E₁} (hy : y ∈ (extChartAt I α).target)
     (i j k : Fin (Module.finrank ℝ E₁)) :
-    partialDeriv k (chartGramOnE (F.inducedMetric t) α i j) y =
-      fderiv ℝ (fun z => frameGram (F.chartRep t α) (chartModelBasis E₁) z i j) y
+    partialDeriv k (chartGramOnE (f.inducedMetric) α i j) y =
+      fderiv ℝ (fun z => frameGram (f.chartRep α) (chartModelBasis E₁) z i j) y
         (chartModelBasis E₁ k) := by
-  have hev : chartGramOnE (F.inducedMetric t) α i j =ᶠ[nhds y]
-      fun z => frameGram (F.chartRep t α) (chartModelBasis E₁) z i j := by
+  have hev : chartGramOnE (f.inducedMetric) α i j =ᶠ[nhds y]
+      fun z => frameGram (f.chartRep α) (chartModelBasis E₁) z i j := by
     filter_upwards [(isOpen_extChartAt_target (I := I) α).mem_nhds hy] with z hz
-    exact chartGramOnE_inducedMetricFamily F α i j t hz
+    exact f.chartGramOnE_inducedMetric α i j hz
   rw [partialDeriv, hev.fderiv_eq]
 
 /-- **The Voss-Weyl divergence is the extrinsic tangential divergence.**
@@ -110,37 +95,36 @@ The left-hand side is the library's `localDivergence` written out; the right-han
 extrinsic divergence of `TangentialCalculus.lean`. Both reduce to
 `∂_i Z^i + Z^i · ½ g^{kl} ∂_i g_{kl}`: the left by the library's form of Jacobi's formula,
 the right by the contracted Christoffel identity. -/
-theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (F : SmoothImmersionFamily I M E)
-    (t : ℝ) (α : M) {y : E₁} (hy : y ∈ (extChartAt I α).target)
+theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {y : E₁} (hy : y ∈ (extChartAt I α).target)
     {Z : Fin (Module.finrank ℝ E₁) → E₁ → ℝ} (hZ : ∀ k, DifferentiableAt ℝ (Z k) y) :
-    (∑ i, partialDeriv i (fun z => Z i z * chartDensityOnE (F.inducedMetric t) α z) y) /
-        chartDensityOnE (F.inducedMetric t) α y =
-      tangentialDivergence (F.chartRep t α)
-        (tangentField (F.chartRep t α) (chartModelBasis E₁) Z) (chartModelBasis E₁)
-        (fun k l => chartInvGramOnE (F.inducedMetric t) α k l y) y := by
-  set ρ := chartDensityOnE (F.inducedMetric t) α with hρ
+    (∑ i, partialDeriv i (fun z => Z i z * chartDensityOnE (f.inducedMetric) α z) y) /
+        chartDensityOnE (f.inducedMetric) α y =
+      tangentialDivergence (f.chartRep α)
+        (tangentField (f.chartRep α) (chartModelBasis E₁) Z) (chartModelBasis E₁)
+        (fun k l => chartInvGramOnE (f.inducedMetric) α k l y) y := by
+  set ρ := chartDensityOnE (f.inducedMetric) α with hρ
   have hopen := isOpen_extChartAt_target (I := I) α
   have hint : y ∈ interior (extChartAt I α).target := by rwa [hopen.interior_eq]
   have hρd : DifferentiableAt ℝ ρ y :=
-    ((chartDensityOnE_contDiffOn (I := I) (F.inducedMetric t) α).differentiableOn (by simp) y
+    ((chartDensityOnE_contDiffOn (I := I) (f.inducedMetric) α).differentiableOn (by simp) y
       hy).differentiableAt (hopen.mem_nhds hy)
   have hρpos : 0 < ρ y := by
     have hbase : (extChartAt I α).symm y ∈ (trivializationAt E₁ (TangentSpace I) α).baseSet := by
       rw [trivializationAt_baseSet_eq_chartAt_source (I := I),
         ← extChartAt_source_eq_chartAt_source (I := I)]
       exact (extChartAt I α).map_target hy
-    exact chartDensity_pos (I := I) (F.inducedMetric t) α hbase
+    exact chartDensity_pos (I := I) (f.inducedMetric) α hbase
   -- the left-hand side, term by term: product rule, then Jacobi's formula
   have hterm : ∀ i, partialDeriv i (fun z => Z i z * ρ z) y =
       (partialDeriv i (Z i) y + Z i y * ((1 / 2 : ℝ) * ∑ k, ∑ l,
-        chartInvGramOnE (F.inducedMetric t) α k l y *
-          partialDeriv i (chartGramOnE (F.inducedMetric t) α l k) y)) * ρ y := by
+        chartInvGramOnE (f.inducedMetric) α k l y *
+          partialDeriv i (chartGramOnE (f.inducedMetric) α l k) y)) * ρ y := by
     intro i
     have hmul : fderiv ℝ (fun z => Z i z * ρ z) y =
         Z i y • fderiv ℝ ρ y + ρ y • fderiv ℝ (Z i) y := fderiv_mul (hZ i) hρd
     have hjac := partialDeriv_chartDensityOnE_eq_sum_chartChristoffel_diag (I := I)
-      (F.inducedMetric t) α i hint
-    rw [sum_chartChristoffel_diag_eq_half_trace (I := I) (F.inducedMetric t) α i y] at hjac
+      (f.inducedMetric) α i hint
+    rw [sum_chartChristoffel_diag_eq_half_trace (I := I) (f.inducedMetric) α i y] at hjac
     rw [partialDeriv, hmul]
     simp only [ContinuousLinearMap.add_apply, ContinuousLinearMap.smul_apply, smul_eq_mul]
     rw [show fderiv ℝ ρ y (chartModelBasis E₁ i) = partialDeriv i ρ y from rfl, hjac]
@@ -148,24 +132,24 @@ theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (F : SmoothImmersionFa
     ring
   have hlhs : (∑ i, partialDeriv i (fun z => Z i z * ρ z) y) / ρ y =
       ∑ i, (partialDeriv i (Z i) y + Z i y * ((1 / 2 : ℝ) * ∑ k, ∑ l,
-        chartInvGramOnE (F.inducedMetric t) α k l y *
-          partialDeriv i (chartGramOnE (F.inducedMetric t) α l k) y)) := by
+        chartInvGramOnE (f.inducedMetric) α k l y *
+          partialDeriv i (chartGramOnE (f.inducedMetric) α l k) y)) := by
     simp only [hterm, ← Finset.sum_mul]
     rw [mul_div_cancel_right₀ _ hρpos.ne']
-  rw [hlhs, tangentialDivergence_tangentField (contDiffAt_chartRep F t α hy)
-    (chartModelBasis E₁) (isFrameInverse_chartInvGramOnE F t α hy)
-    (fun i j => chartInvGramOnE_symm (I := I) (F.inducedMetric t) α i j y) hZ,
+  rw [hlhs, tangentialDivergence_tangentField (f.contDiffAt_chartRep α hy)
+    (chartModelBasis E₁) (f.isFrameInverse_chartInvGramOnE α hy)
+    (fun i j => chartInvGramOnE_symm (I := I) (f.inducedMetric) α i j y) hZ,
     Finset.sum_add_distrib]
   congr 1
   refine Finset.sum_congr rfl fun i _ => ?_
   -- match the library's chart quantities to the frame quantities, then relabel
-  have hS : ∑ k, ∑ l, chartInvGramOnE (F.inducedMetric t) α k l y *
-        partialDeriv i (chartGramOnE (F.inducedMetric t) α l k) y =
-      ∑ k, ∑ l, chartInvGramOnE (F.inducedMetric t) α k l y *
-        fderiv ℝ (fun z => frameGram (F.chartRep t α) (chartModelBasis E₁) z k l) y
+  have hS : ∑ k, ∑ l, chartInvGramOnE (f.inducedMetric) α k l y *
+        partialDeriv i (chartGramOnE (f.inducedMetric) α l k) y =
+      ∑ k, ∑ l, chartInvGramOnE (f.inducedMetric) α k l y *
+        fderiv ℝ (fun z => frameGram (f.chartRep α) (chartModelBasis E₁) z k l) y
           (chartModelBasis E₁ i) := by
     refine Finset.sum_congr rfl fun k _ => Finset.sum_congr rfl fun l _ => ?_
-    rw [partialDeriv_chartGramOnE F t α hy, fderiv_frameGram_comm]
+    rw [f.partialDeriv_chartGramOnE α hy, fderiv_frameGram_comm]
   rw [hS]
   ring
 
@@ -173,26 +157,26 @@ theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (F : SmoothImmersionFa
 matrix as the inverse metric, the tangential divergence of the tangential part of the
 position vector is `n + ⟪F, Hvec⟫`. -/
 theorem tangentialDivergence_tangentialPart_chartRep [I.Boundaryless]
-    (F : SmoothImmersionFamily I M E) (t : ℝ) (α : M) {y : E₁}
+    (f : SmoothImmersion I M E) (α : M) {y : E₁}
     (hy : y ∈ (extChartAt I α).target) :
-    tangentialDivergence (F.chartRep t α)
-        (fun z => tangentialPart (F.chartRep t α) (chartModelBasis E₁)
-          (fun k l => chartInvGramOnE (F.inducedMetric t) α k l z) z (F.chartRep t α z))
-        (chartModelBasis E₁) (fun k l => chartInvGramOnE (F.inducedMetric t) α k l y) y =
-      (Module.finrank ℝ E₁ : ℝ) + @inner ℝ E _ (F.chartRep t α y)
-        (meanCurvatureNormal (F.chartRep t α) (chartModelBasis E₁)
-          (fun k l => chartInvGramOnE (F.inducedMetric t) α k l y) y) := by
+    tangentialDivergence (f.chartRep α)
+        (fun z => tangentialPart (f.chartRep α) (chartModelBasis E₁)
+          (fun k l => chartInvGramOnE (f.inducedMetric) α k l z) z (f.chartRep α z))
+        (chartModelBasis E₁) (fun k l => chartInvGramOnE (f.inducedMetric) α k l y) y =
+      (Module.finrank ℝ E₁ : ℝ) + @inner ℝ E _ (f.chartRep α y)
+        (meanCurvatureNormal (f.chartRep α) (chartModelBasis E₁)
+          (fun k l => chartInvGramOnE (f.inducedMetric) α k l y) y) := by
   have hopen := isOpen_extChartAt_target (I := I) α
-  have h := tangentialDivergence_tangentialPart_position (contDiffAt_chartRep F t α hy)
+  have h := tangentialDivergence_tangentialPart_position (f.contDiffAt_chartRep α hy)
     (chartModelBasis E₁) (chartModelBasis E₁).span_eq
-    (fun z k l => chartInvGramOnE (F.inducedMetric t) α k l z)
+    (fun z k l => chartInvGramOnE (f.inducedMetric) α k l z)
     (by filter_upwards [hopen.mem_nhds hy] with z hz
-        exact isFrameInverse_chartInvGramOnE F t α hz)
-    (fun z i j => chartInvGramOnE_symm (I := I) (F.inducedMetric t) α i j z)
-    (fun k l => ((chartInvGramOnE_contDiffOn (I := I) (F.inducedMetric t) α k l).contDiffAt
+        exact f.isFrameInverse_chartInvGramOnE α hz)
+    (fun z i j => chartInvGramOnE_symm (I := I) (f.inducedMetric) α i j z)
+    (fun k l => ((chartInvGramOnE_contDiffOn (I := I) (f.inducedMetric) α k l).contDiffAt
       (hopen.mem_nhds hy)).differentiableAt (by simp))
   simpa using h
 
-end SmoothImmersionFamily
+end SmoothImmersion
 
 end HuiskenMonotonicity
