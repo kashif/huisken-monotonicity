@@ -210,6 +210,17 @@ is applied to the chart representation of a time slice.
   tangential field $Z^k \partial_k F$.
 \end{theorem}
 
+\begin{theorem}[the mean curvature vector is the library's]
+  \label{thm:mean-curvature-bridge}
+  \lean{HuiskenMonotonicity.SmoothImmersion.meanCurvatureVectorAt_eq, DifferentialGeometry.Geometry.meanCurvatureVectorAt, DifferentialGeometry.Geometry.secondFundamentalFormAmbientAt_eq_modelValue}
+  \leanok
+  \uses{def:mean-curvature-M}
+  For an immersion $f$ into a Euclidean space, $\vec H$ is the metric trace of the
+  \texttt{DifferentialGeometry} second fundamental form of $f$, as a Riemannian isometric
+  immersion. In charts that form is $\partial^2 F + \Gamma_E - dF(\Gamma_M)$; the Euclidean
+  $\Gamma_E$ vanishes and $dF(\Gamma_M)$ is tangent.
+\end{theorem}
+
 \chapter{The first variation}
 
 \begin{definition}[mean curvature and normal position on $M$]

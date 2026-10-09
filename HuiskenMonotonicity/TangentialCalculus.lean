@@ -288,6 +288,43 @@ theorem inner_normalPart_fderiv
     simpa [hL, frameTangent] using inner_normalPart_frameTangent hinv hsymm v j
   simpa [hL] using hker (hb ▸ Submodule.mem_top : w ∈ Submodule.span ℝ (Set.range b))
 
+/-- The normal part is linear in the vector. -/
+noncomputable def normalPartₗ (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) :
+    E →ₗ[ℝ] E where
+  toFun := normalPart F b gInv x
+  map_add' v w := by
+    simp only [normalPart, tangentialPart, inner_add_left, mul_add, add_smul,
+      Finset.sum_add_distrib]
+    abel
+  map_smul' a v := normalPart_smul_vec F b gInv x a v
+
+@[simp]
+theorem normalPartₗ_apply (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) :
+    normalPartₗ F b gInv x v = normalPart F b gInv x v :=
+  rfl
+
+/-- A vector orthogonal to every frame vector is its own normal part. -/
+theorem normalPart_eq_self {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁} {v : E}
+    (hv : ∀ k, @inner ℝ E _ v (frameTangent F b x k) = 0) :
+    normalPart F b gInv x v = v := by
+  simp only [normalPart, tangentialPart, hv, mul_zero, zero_smul, Finset.sum_const_zero,
+    sub_zero]
+
+/-- For a spanning frame, the normal part kills tangent vectors `dF_x(w)`. -/
+theorem normalPart_fderiv_eq_zero {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
+    (hb : Submodule.span ℝ (Set.range b) = ⊤)
+    (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i) (w : E₁) :
+    normalPart F b gInv x (fderiv ℝ F x w) = 0 := by
+  set u := normalPart F b gInv x (fderiv ℝ F x w)
+  -- `u` is itself a tangent vector `dF_x(z)`
+  have hu : u = fderiv ℝ F x (w - ∑ k, ∑ l,
+      (gInv k l * @inner ℝ E _ (fderiv ℝ F x w) (frameTangent F b x l)) • b k) := by
+    simp only [u, normalPart, tangentialPart, map_sub, map_sum, map_smul, frameTangent]
+  have h0 : @inner ℝ E _ u u = 0 := by
+    conv_lhs => arg 3; rw [hu]
+    exact inner_normalPart_fderiv hb hinv hsymm _ _
+  exact inner_self_eq_zero.mp h0
+
 /-- The normal part is orthogonal to the tangential part of any vector. -/
 theorem inner_normalPart_tangentialPart
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}

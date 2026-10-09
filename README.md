@@ -28,6 +28,7 @@ d/dt ∫_M ρ(F, t) dμ_t  =  -∫_M ρ(F, t) · ‖Hvec + (F - x₀)^⊥/(2(t�
 | monotonicity under the rescaled flow | `ImmersionFlowOn.antitoneOn_integral_rescaled` |
 | §2: the rescaling `F̃ = (2(T-t))^(-1/2) F`, `s = -½ log(T-t)` of a flow on `(a, T)` satisfies `∂ₛF̃ = H̃ + F̃` (Huisken (4)), so Corollary 3.2 applies to it | `ImmersionFlowOn.IsMeanCurvatureFlow.rescale`, `ImmersionFlowOn.antitoneOn_integral_rescale` |
 | the shrinking sphere `√(1 - 2nt) Sⁿ` moves by mean curvature, so the hypotheses are met | `shrinkingSphere_isMeanCurvatureFlow`, `shrinkingSphere_antitoneOn_integral` |
+| `Hvec` is the mean curvature vector of `DifferentialGeometry`: the metric trace of its `secondFundamentalFormAt` | `SmoothImmersion.meanCurvatureVectorAt_eq` |
 
 The differential geometry (Riemannian metrics, volume measures and their variation,
 gradient, divergence, Laplacian, integration by parts) comes from the
@@ -47,6 +48,7 @@ mathlib; the extrinsic calculus of an immersion into a Euclidean space is develo
 | [`TransportFormula`](HuiskenMonotonicity/TransportFormula.lean) | `d/dt ∫ ρ dμ_t` via the library's volume variation formula |
 | [`FirstVariationIntegral`](HuiskenMonotonicity/FirstVariationIntegral.lean) | `Δ(\|F\|²/2) = n + ⟪F, Hvec⟫`, and `∫ ρ (n - ‖Fᵀ‖²/(2τ) + ⟪F, Hvec⟫) dμ = 0` |
 | [`MeanCurvatureFlow`](HuiskenMonotonicity/MeanCurvatureFlow.lean) | `∂ₜ dμ = -‖Hvec‖² dμ`, Theorem 3.1 at the origin |
+| [`MeanCurvatureBridge`](HuiskenMonotonicity/MeanCurvatureBridge.lean) | `Hvec` equals the library's mean curvature vector |
 | [`Translation`](HuiskenMonotonicity/Translation.lean) | arbitrary centre `x₀` |
 | [`RescaledFlow`](HuiskenMonotonicity/RescaledFlow.lean) | `dμₛ/ds = (n - H²) μₛ`, Corollary 3.2 |
 | [`IntervalFlow`](HuiskenMonotonicity/IntervalFlow.lean) | flows on an open set of times; monotonicity |
@@ -80,7 +82,9 @@ Huisken's own proof: "`dμₛ/ds = (n - H²) μₛ` and a calculation analogous 
 Theorem 3.1", with the rescaled kernel the backward heat kernel at `τ = 1/2`. Equation (4)
 for the rescaled surfaces follows, as in Huisken's §2, from `H(cF) = c⁻¹ H(F)`.
 
-The mean curvature vector is read in the chart at each point. Under the flow it equals
+The mean curvature vector is read in the chart at each point, and
+`SmoothImmersion.meanCurvatureVectorAt_eq` proves it is the library's: the trace of
+`secondFundamentalFormAt` of `f` as a Riemannian isometric immersion into Euclidean space. Under the flow it equals
 the time velocity (minus the position, for the rescaled flow), hence is continuous, which
 makes every integrand integrable on a closed manifold.
 

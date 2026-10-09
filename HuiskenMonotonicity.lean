@@ -7,6 +7,7 @@ import HuiskenMonotonicity.VossWeyl
 import HuiskenMonotonicity.MetricEvolution
 import HuiskenMonotonicity.FirstVariationIntegral
 import HuiskenMonotonicity.MeanCurvatureFlow
+import HuiskenMonotonicity.MeanCurvatureBridge
 import HuiskenMonotonicity.Translation
 import HuiskenMonotonicity.RescaledFlow
 import HuiskenMonotonicity.IntervalFlow

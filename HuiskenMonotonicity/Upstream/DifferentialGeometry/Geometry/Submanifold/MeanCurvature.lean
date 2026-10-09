@@ -1,5 +1,5 @@
 import DifferentialGeometry.Geometry.Submanifold.SecondFundamentalForm.Pointwise
-import DifferentialGeometry.Geometry.Coordinates.MetricCompatibility.Inverse
+import DifferentialGeometry.Geometry.Operator.Gradient.Basic
 
 /-!
 # The mean curvature vector of an isometric immersion
@@ -17,7 +17,8 @@ this is new API rather than a restatement.
 * `meanCurvatureVectorInBasis h basis gInv` — the trace `gInv i j • A (basis i) (basis j)`
   relative to a basis of the tangent space and a matrix of inverse-metric components.
 * `meanCurvatureVectorAt h x` — the mean curvature vector, obtained by instantiating the
-  above at the canonical coordinate frame `Tensor.Coordinates.coordinateFrameAtToBasis`.
+  above at the chart frame `chartFrameBasisAt x` and the library's inverse chart Gram matrix,
+  the convention of the library's chart Gram matrix, Voss-Weyl divergence and Laplacian.
 * `meanCurvatureVectorAmbientAt h x` — the same vector read in the ambient tangent space.
 
 ## Conventions
@@ -25,8 +26,7 @@ this is new API rather than a restatement.
 The basis-relative shape follows `Operator.metricTrace0S2TensorInBasis`, which traces a
 `(0, s+2)`-tensor as `∑ i, ∑ j, gInv i j • …`, and the correctness of the component matrix
 is expressed with the library's own `Tensor0SBundle.MetricInverseInBasis` predicate rather
-than a matrix inverse. The canonical instance reuses
-`Tensor.Coordinates.inverseMetricFlatModelInChart_metricInverseInBasis_center`, so no new
+than a matrix inverse. The canonical instance uses the library's `chartInvGramMatrix`, so no new
 inverse-metric construction is introduced.
 
 Tracing against a basis, rather than summing over a `gN`-orthonormal basis, avoids
@@ -103,35 +103,48 @@ theorem meanCurvatureVectorInBasis_eq_sum
         gInv i j • h.secondFundamentalFormAt x (basis i) (basis j) :=
   rfl
 
-/-- The inverse-metric components of the canonical coordinate frame at `x`. -/
-def coordinateInverseMetric (gN : SmoothRiemannianMetric IN N) (x : N) :
-    Tensor.Coordinates.CoordinateIdx (𝕜 := ℝ) EN →
-      Tensor.Coordinates.CoordinateIdx (𝕜 := ℝ) EN → ℝ :=
-  fun k l =>
-    Tensor.Coordinates.inverseMetricFlatModelInChartComponent (I := IN) gN x k l
-      (extChartAt IN x x)
+/-- The chart frame at `x`: the library's `chartBasisVecFiber x · x`, which is the model basis
+`chartModelBasis` read in the tangent space at the centre of the chart. It is the frame the
+library's chart Gram matrix, Voss-Weyl divergence and Laplacian use. -/
+def chartFrameBasisAt (x : N) : Module.Basis (Fin (Module.finrank ℝ EN)) ℝ (TangentSpace IN x) :=
+  (Tensor.Coordinates.chartModelBasis EN).map
+    (tangentSpaceModelContinuousLinearEquiv (I := IN) x).symm.toLinearEquiv
 
 omit [NeZero (Module.finrank ℝ EN)] [IN.Boundaryless] in
-/-- The canonical coordinate frame components really are the inverse metric. -/
-theorem metricInverseInBasis_coordinateInverseMetric
-    (gN : SmoothRiemannianMetric IN N) (x : N) :
-    Tensor0SBundle.MetricInverseInBasis (I := IN) gN x
-      (Tensor.Coordinates.coordinateFrameAtToBasis (𝕜 := ℝ) (I := IN) x)
-      (coordinateInverseMetric gN x) :=
-  Tensor.Coordinates.inverseMetricFlatModelInChart_metricInverseInBasis_center
-    (I := IN) gN x
+theorem chartFrameBasisAt_apply (x : N) (i : Fin (Module.finrank ℝ EN)) :
+    chartFrameBasisAt (IN := IN) x i = Tensor.Coordinates.chartBasisVecFiber (I := IN) x i x := by
+  rw [chartFrameBasisAt, Module.Basis.map_apply, Tensor.Coordinates.chartBasisVecFiber,
+    TangentBundle.symmL_trivializationAt_eq_core (mem_chart_source HN x)]
+  exact (tangentCoordChange_self (I := IN) (mem_extChartAt_source x)).symm
+
+omit [NeZero (Module.finrank ℝ EN)] [IN.Boundaryless] in
+/-- The library's inverse chart Gram matrix at the centre is the inverse metric in the chart
+frame. -/
+theorem metricInverseInBasis_chartInvGramMatrix (gN : SmoothRiemannianMetric IN N) (x : N) :
+    Tensor0SBundle.MetricInverseInBasis (I := IN) gN x (chartFrameBasisAt x)
+      (fun i j => Operator.chartInvGramMatrix (I := IN) gN x x i j) := by
+  have hx : x ∈ (trivializationAt EN (TangentSpace IN) x).baseSet :=
+    FiberBundle.mem_baseSet_trivializationAt' x
+  have h₁ := Operator.chartInvGramMatrix_mul_chartGramMatrix (I := IN) gN x hx
+  have h₂ := Operator.chartGramMatrix_mul_chartInvGramMatrix (I := IN) gN x hx
+  intro i j
+  have e₁ := congrFun (congrFun h₁ i) j
+  have e₂ := congrFun (congrFun h₂ i) j
+  simp only [Matrix.mul_apply, Matrix.one_apply, Tensor.Coordinates.chartGramMatrix_apply] at e₁ e₂
+  simp only [chartFrameBasisAt_apply]
+  exact ⟨e₁, e₂⟩
 
 /-- The **mean curvature vector** of an isometric immersion at `x`: the metric trace of the
-second fundamental form, taken in the canonical coordinate frame.
+second fundamental form, taken in the chart frame at `x` against the library's inverse chart
+Gram matrix.
 
 By construction the value lies in `h.normalSpaceAt x`, so the definition needs neither an
 orientation nor a unit normal, and applies in any codimension. -/
 def meanCurvatureVectorAt
     (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) :
     h.normalSpaceAt x :=
-  meanCurvatureVectorInBasis h
-    (Tensor.Coordinates.coordinateFrameAtToBasis (𝕜 := ℝ) (I := IN) x)
-    (coordinateInverseMetric gN x)
+  meanCurvatureVectorInBasis h (chartFrameBasisAt x)
+    (fun i j => Operator.chartInvGramMatrix (I := IN) gN x x i j)
 
 /-- The mean curvature vector regarded as an ambient tangent vector at `iota x`. -/
 def meanCurvatureVectorAmbientAt
@@ -145,9 +158,8 @@ omit [NeZero (Module.finrank ℝ EN)] [NeZero (Module.finrank ℝ E)]
 theorem meanCurvatureVectorAt_eq_inBasis
     (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) :
     meanCurvatureVectorAt h x =
-      meanCurvatureVectorInBasis h
-        (Tensor.Coordinates.coordinateFrameAtToBasis (𝕜 := ℝ) (I := IN) x)
-        (coordinateInverseMetric gN x) :=
+      meanCurvatureVectorInBasis h (chartFrameBasisAt x)
+        (fun i j => Operator.chartInvGramMatrix (I := IN) gN x x i j) :=
   rfl
 
 omit [NeZero (Module.finrank ℝ EN)] [NeZero (Module.finrank ℝ E)]
