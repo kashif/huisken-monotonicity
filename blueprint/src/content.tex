@@ -19,8 +19,10 @@ and every $t < t_0$,
 
 \section*{Formalization status}
 
-The theorem is proved with no hypotheses beyond the flow itself, in any codimension and
-without choosing a unit normal. \texttt{lake build} reports no \texttt{sorry}, and the
+The theorem is proved with no hypotheses beyond the flow itself, for an arbitrary centre,
+in any codimension and without choosing a unit normal, for flows on a time interval;
+together with the monotonicity it implies, Huisken's Corollary 3.2 for the rescaled flow,
+and the shrinking sphere as an instance. \texttt{lake build} reports no \texttt{sorry}, and the
 theorem depends only on Lean's standard axioms.
 
 \chapter{The backward heat kernel}
@@ -130,17 +132,19 @@ theorem depends only on Lean's standard axioms.
 
 \chapter{Immersions and the induced metric}
 
-\begin{definition}[smooth immersion family]
+\begin{definition}[smooth immersion, smooth immersion family]
   \label{def:smooth-immersion-family}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily}
+  \lean{HuiskenMonotonicity.SmoothImmersion, HuiskenMonotonicity.SmoothImmersionFamily, HuiskenMonotonicity.SmoothImmersionFamily.slice}
   \leanok
-  A map $F \colon M \times \mathbb{R} \to E$, smooth on the product manifold, every time
-  slice of which is an immersion.
+  A smooth map $f \colon M \to E$ with injective differential; and a map
+  $F \colon M \times \mathbb{R} \to E$, smooth on the product manifold, every time slice
+  $F_t$ of which is an immersion. All fixed-time geometry is attached to a single immersion,
+  and a family reads it off its slices.
 \end{definition}
 
 \begin{definition}[induced metric and surface measure]
   \label{def:induced-metric}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.inducedMetric, HuiskenMonotonicity.SmoothImmersionFamily.surfaceMeasure}
+  \lean{HuiskenMonotonicity.SmoothImmersion.inducedMetric, HuiskenMonotonicity.SmoothImmersion.surfaceMeasure}
   \leanok
   \uses{def:smooth-immersion-family}
   The pullback $g_t(v, w) = \langle dF_t\,v, dF_t\,w\rangle$ of the ambient inner
@@ -198,7 +202,7 @@ is applied to the chart representation of a time slice.
 
 \begin{theorem}[Voss--Weyl]
   \label{thm:voss-weyl}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.vossWeyl_eq_tangentialDivergence}
+  \lean{HuiskenMonotonicity.SmoothImmersion.vossWeyl_eq_tangentialDivergence}
   \leanok
   \uses{def:tangential-divergence, def:induced-metric}
   In a chart, the library's Voss--Weyl divergence
@@ -210,7 +214,7 @@ is applied to the chart representation of a time slice.
 
 \begin{definition}[mean curvature and normal position on $M$]
   \label{def:mean-curvature-M}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.meanCurvature, HuiskenMonotonicity.SmoothImmersionFamily.normalPosition, HuiskenMonotonicity.SmoothImmersionFamily.tangentialSqNorm}
+  \lean{HuiskenMonotonicity.SmoothImmersion.meanCurvature, HuiskenMonotonicity.SmoothImmersion.normalPosition, HuiskenMonotonicity.SmoothImmersion.tangentialSqNorm}
   \leanok
   \uses{def:tangential-divergence, def:induced-metric}
   $\vec H$, $F^\perp$ and $\|F^\top\|^2$ at $p \in M$, read in the chart at $p$.
@@ -218,7 +222,7 @@ is applied to the chart representation of a time slice.
 
 \begin{theorem}[Beltrami's formula on $M$]
   \label{thm:laplacian-half-sq-norm}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.laplacian_halfSqNorm}
+  \lean{HuiskenMonotonicity.SmoothImmersion.laplacian_halfSqNorm}
   \leanok
   \uses{thm:beltrami-frame, thm:voss-weyl, def:mean-curvature-M}
   The library's Laplacian of $u = |F|^2/2$ is $\Delta u = n + \langle F, \vec H\rangle$.
@@ -226,7 +230,7 @@ is applied to the chart representation of a time slice.
 
 \begin{lemma}[derivative of the kernel along $\nabla u$]
   \label{lem:X-rho}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel}
+  \lean{HuiskenMonotonicity.SmoothImmersion.tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel}
   \leanok
   \uses{def:mean-curvature-M, def:backward-heat-kernel}
   $\langle \nabla u, \nabla \rho\rangle = -\frac{\rho}{2\tau}\|F^\top\|^2$.
@@ -234,7 +238,7 @@ is applied to the chart representation of a time slice.
 
 \begin{theorem}[first variation identity]
   \label{thm:first-variation}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.integral_firstVariation}
+  \lean{HuiskenMonotonicity.SmoothImmersion.integral_firstVariation}
   \leanok
   \uses{thm:laplacian-half-sq-norm, lem:X-rho}
   On a closed manifold,
@@ -247,15 +251,16 @@ is applied to the chart representation of a time slice.
 
 \begin{definition}[mean curvature flow]
   \label{def:mcf}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.IsMeanCurvatureFlow}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.IsMeanCurvatureFlowAt}
   \leanok
   \uses{def:mean-curvature-M}
-  $\partial_t F(p, t) = \vec H(p, t)$ for all $p$ and $t$.
+  $\partial_t F(p, t) = \vec H(p, t)$ for all $p$, at the time $t$. The formula at $t$
+  needs the flow equation at $t$ only.
 \end{definition}
 
 \begin{lemma}[normality in every chart]
   \label{lem:normal-every-chart}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.inner_meanCurvature_fderiv_chartRep}
+  \lean{HuiskenMonotonicity.SmoothImmersion.inner_meanCurvature_fderiv_chartRep}
   \leanok
   \uses{def:mean-curvature-M}
   $\vec H(p)$ is orthogonal to the tangent vectors of the chart representation of $F_t$ in
@@ -264,7 +269,7 @@ is applied to the chart representation of a time slice.
 
 \begin{theorem}[evolution of the volume element]
   \label{thm:volume-evolution}
-  \lean{HuiskenMonotonicity.hasDerivAt_frameGram_of_isNormalAlong, HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_of_isMeanCurvatureFlow}
+  \lean{HuiskenMonotonicity.hasDerivAt_frameGram_of_isNormalAlong, HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_of_isMeanCurvatureFlowAt}
   \leanok
   \uses{def:mcf, lem:normal-every-chart, thm:weingarten}
   Under the flow $\partial_t g_{ij} = -2\langle \vec H, \partial_i\partial_j F\rangle$, so
@@ -307,12 +312,95 @@ is applied to the chart representation of a time slice.
 
 \begin{theorem}[Huisken's monotonicity formula]
   \label{thm:huisken-monotonicity}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.huisken_monotonicity_origin}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.huisken_monotonicity}
   \leanok
   \uses{thm:transport, thm:volume-evolution, lem:kernel-curve, lem:pointwise-identity, thm:first-variation}
-  For a mean curvature flow of a closed manifold and $t < t_0$,
+  For a family of immersions of a closed manifold moving by mean curvature at time $t$, and
+  the kernel centred at $(x_0, t_0)$ with $t < t_0$,
   \[
-    \frac{d}{dt}\int_M \rho(F, t)\,d\mu_t = -\int_M \rho(F, t)\,
-      \left\| \vec H + \frac{F^\perp}{2(t_0 - t)} \right\|^2 d\mu_t.
+    \frac{d}{dt}\int_M \rho_{x_0,t_0}(F, t)\,d\mu_t = -\int_M \rho_{x_0,t_0}(F, t)\,
+      \left\| \vec H + \frac{(F - x_0)^\perp}{2(t_0 - t)} \right\|^2 d\mu_t.
   \]
+  The centre is reduced to the origin by translating the family, which changes neither the
+  metric, nor the measure, nor $\vec H$ (Huisken's Remark (i) after Theorem 3.1).
+\end{theorem}
+
+\chapter{Flows on a time interval, and monotonicity}
+
+A mean curvature flow of a closed manifold exists only on a bounded time interval.
+
+\begin{definition}[flow on an open set of times]
+  \label{def:flow-on}
+  \lean{HuiskenMonotonicity.ImmersionFlowOn, HuiskenMonotonicity.ImmersionFlowOn.IsMeanCurvatureFlow}
+  \leanok
+  \uses{def:smooth-immersion-family, def:mcf}
+  A family of immersions smooth on $M \times J$ for an open $J \subseteq \mathbb{R}$, moving
+  by mean curvature at every time of $J$.
+\end{definition}
+
+\begin{theorem}[Theorem 3.1 on an interval]
+  \label{thm:huisken-interval}
+  \lean{HuiskenMonotonicity.ImmersionFlowOn.huisken_monotonicity}
+  \leanok
+  \uses{def:flow-on, thm:huisken-monotonicity}
+  The formula holds at every $t \in J$ with $t < t_0$: a smooth reparametrisation of time
+  that is the identity near $t$ extends the flow to all times without changing it near $t$.
+\end{theorem}
+
+\begin{corollary}[monotonicity]
+  \label{cor:antitone}
+  \lean{HuiskenMonotonicity.ImmersionFlowOn.antitoneOn_integral}
+  \leanok
+  \uses{thm:huisken-interval}
+  For an interval $J$, $t \mapsto \int_M \rho_{x_0,t_0}\,d\mu_t$ is non-increasing on
+  $J \cap (-\infty, t_0)$.
+\end{corollary}
+
+\chapter{The rescaled flow}
+
+\begin{definition}[rescaled flow, rescaled kernel]
+  \label{def:rescaled}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.IsRescaledMeanCurvatureFlowAt, HuiskenMonotonicity.rescaledHeatKernel}
+  \leanok
+  $\partial_s \tilde F = \tilde H + \tilde F$ (Huisken's equation (4)), and
+  $\tilde\rho(x) = e^{-|x|^2/2}$, the kernel at $\tau = 1/2$ up to a constant.
+\end{definition}
+
+\begin{lemma}[volume element under the rescaled flow]
+  \label{lem:rescaled-volume}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_of_isRescaledMeanCurvatureFlowAt, HuiskenMonotonicity.trace_frameGram_deriv_eq_two_mul_tangentialDivergence}
+  \leanok
+  \uses{def:rescaled, thm:normal-divergence, thm:div-position}
+  $\frac{d}{ds}\,d\mu_s = (n - \tilde H^2)\,d\mu_s$: the trace of the metric evolution is
+  $2 \operatorname{div}_M(\tilde H + \tilde F) = 2(n - |\tilde H|^2)$.
+\end{lemma}
+
+\begin{corollary}[Huisken's Corollary 3.2]
+  \label{cor:rescaled}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.huisken_monotonicity_rescaled, HuiskenMonotonicity.ImmersionFlowOn.huisken_monotonicity_rescaled, HuiskenMonotonicity.ImmersionFlowOn.antitoneOn_integral_rescaled}
+  \leanok
+  \uses{lem:rescaled-volume, thm:first-variation, lem:pointwise-identity}
+  $\frac{d}{ds}\int_M \tilde\rho\,d\mu_s = -\int_M \tilde\rho\,|\tilde H + \tilde F^\perp|^2\,d\mu_s$,
+  by the calculation of Theorem 3.1 at $\tau = 1/2$; so $s \mapsto \int_M \tilde\rho\,d\mu_s$
+  is non-increasing.
+\end{corollary}
+
+\chapter{The shrinking sphere}
+
+\begin{lemma}[mean curvature of a sphere]
+  \label{lem:sphere-mean-curvature}
+  \lean{HuiskenMonotonicity.SmoothImmersion.meanCurvature_eq_of_norm_eq}
+  \leanok
+  \uses{thm:beltrami-frame}
+  If $|f| = R$ and the normal space is spanned by $f$, then $\vec H = -\frac{n}{R^2} f$:
+  $f^\top = 0$, so Beltrami's formula gives $\langle f, \vec H\rangle = -n$.
+\end{lemma}
+
+\begin{theorem}[the shrinking sphere satisfies the hypotheses]
+  \label{thm:shrinking-sphere}
+  \lean{HuiskenMonotonicity.shrinkingSphere, HuiskenMonotonicity.shrinkingSphere_isMeanCurvatureFlow, HuiskenMonotonicity.shrinkingSphere_antitoneOn_integral}
+  \leanok
+  \uses{lem:sphere-mean-curvature, cor:antitone}
+  $F(p, t) = \sqrt{1 - 2nt}\,p$ on $S^n$, $2nt < 1$, moves by mean curvature, and its
+  Gaussian density is non-increasing.
 \end{theorem}
