@@ -640,4 +640,46 @@ theorem fderiv_backwardHeatKernel
 
 end Gradient
 
+/-! ## The rescaled kernel
+
+Under Huisken's rescaling `F̃ = (2(T - t))^(-1/2) F`, the kernel centred at `(0, T)` becomes,
+up to its normalising constant, the time-independent Gaussian `ρ̃(x) = exp(-‖x‖²/2)`
+(Huisken 1990, before Corollary 3.2). It is the kernel at `τ = 1/2`. -/
+
+section Rescaled
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+
+/-- The rescaled kernel `ρ̃(x) = exp(-‖x‖² / 2)`. -/
+noncomputable def rescaledHeatKernel (x : E) : ℝ :=
+  Real.exp (-‖x‖ ^ 2 / 2)
+
+lemma rescaledHeatKernel_pos (x : E) : 0 < rescaledHeatKernel x :=
+  Real.exp_pos _
+
+/-- `ρ̃` is the backward heat kernel at `τ = 1/2`, up to the constant `(2π)^(n/2)`. -/
+theorem rescaledHeatKernel_eq (n : ℕ) (x : E) :
+    rescaledHeatKernel x = (2 * Real.pi) ^ ((n : ℝ) / 2) * backwardHeatKernel n (1 / 2) 0 x := by
+  have h4 : (4 * Real.pi * (1 / 2 - 0) : ℝ) = 2 * Real.pi := by ring
+  have h2 : (4 * (1 / 2 - 0) : ℝ) = 2 := by norm_num
+  rw [rescaledHeatKernel, backwardHeatKernel, h4, h2, ← mul_assoc,
+    ← Real.rpow_add (by positivity)]
+  rw [show (n : ℝ) / 2 + -(n : ℝ) / 2 = 0 by ring, Real.rpow_zero, one_mul]
+
+open scoped ContDiff in
+theorem contDiff_rescaledHeatKernel : ContDiff ℝ ∞ (rescaledHeatKernel (E := E)) :=
+  Real.contDiff_exp.comp ((contDiff_norm_sq ℝ).neg.div_const 2)
+
+/-- **`ρ̃` along a moving point**: `d/ds ρ̃(γ s) = -ρ̃(γ) ⟪γ, γ'⟫`. -/
+theorem hasDerivAt_rescaledHeatKernel_curve {γ : ℝ → E} {γ' : E} {t : ℝ}
+    (hγ : HasDerivAt γ γ' t) :
+    HasDerivAt (fun s => rescaledHeatKernel (γ s))
+      (-rescaledHeatKernel (γ t) * @inner ℝ E _ (γ t) γ') t := by
+  have h := ((hγ.norm_sq).neg.div_const 2).exp
+  refine h.congr_deriv ?_
+  simp only [Pi.neg_apply, rescaledHeatKernel]
+  ring
+
+end Rescaled
+
 end HuiskenMonotonicity

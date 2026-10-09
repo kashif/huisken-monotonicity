@@ -165,7 +165,7 @@ For `t < t₀`,
 `d/dt ∫ ρ(F(·,t)) dμ_t = ∫ (∂_t ρ(F(·,t)) + ½ tr(g⁻¹ ∂_t g) · ρ(F(·,t))) dμ_t`,
 
 with `μ_t` the surface measure of the induced metric. Under mean curvature flow the weight
-`½ tr(g⁻¹ ∂_t g)` is `-‖Hvec‖²` (`traceTimeDerivMetric_of_isMeanCurvatureFlow`). -/
+`½ tr(g⁻¹ ∂_t g)` is `-‖Hvec‖²` (`traceTimeDerivMetric_of_isMeanCurvatureFlowAt`). -/
 theorem hasDerivAt_integral_backwardHeatKernel
     [I.Boundaryless] [T2Space M] [SigmaCompactSpace M] [CompactSpace M]
     (F : SmoothImmersionFamily I M E)
@@ -183,5 +183,28 @@ theorem hasDerivAt_integral_backwardHeatKernel
     (F.metricFamilyRegularAt_inducedMetricFamily t)
     (functionRegularAt_cutoffIntegrand F n h t)
     (cutoffIntegrand_eventuallyEq F n h)
+
+/-- **The transport formula for a time-independent kernel.** For a smooth `K : E → ℝ`,
+
+`d/dt ∫ K(F(·,t)) dμ_t = ∫ (∂_t K(F(·,t)) + ½ tr(g⁻¹ ∂_t g) · K(F(·,t))) dμ_t`.
+
+No cutoff is needed: the integrand is smooth at every time. This is the form used for the
+rescaled kernel `exp(-|x|²/2)` of Huisken's Corollary 3.2. -/
+theorem hasDerivAt_integral_comp
+    [I.Boundaryless] [T2Space M] [SigmaCompactSpace M] [CompactSpace M]
+    (F : SmoothImmersionFamily I M E) {K : E → ℝ} (hK : ContDiff ℝ ∞ K) (t : ℝ) :
+    HasDerivAt
+      (fun s : ℝ => ∫ x, K (F x s) ∂(F.surfaceMeasure s))
+      (∫ x, (deriv (fun s : ℝ => K (F x s)) t
+              + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x *
+                K (F x t))
+          ∂(F.surfaceMeasure t)) t := by
+  have hsmooth : ContMDiff (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ) ∞ (fun p : ℝ × M => K (F p.2 p.1)) :=
+    fun p => hK.contDiffAt.comp_contMDiffAt (contMDiffAt_flow_swap F p)
+  rw [F.surfaceMeasure_eq_riemannianMeasureFamily]
+  exact volume_variation_formula_of_eventuallyEq (I := I)
+    (F.metricFamilyRegularAt_inducedMetricFamily t)
+    (FunctionRegularAt.of_contMDiff (I := I) (fun s x => K (F x s)) hsmooth t)
+    (Filter.Eventually.of_forall fun _ => rfl)
 
 end HuiskenMonotonicity

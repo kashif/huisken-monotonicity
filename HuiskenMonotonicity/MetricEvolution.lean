@@ -107,6 +107,45 @@ theorem trace_metricEvolution
   refine Finset.sum_congr rfl fun j _ => ?_
   ring
 
+/-! ## The trace for a general velocity
+
+For a velocity that is not normal, as for the rescaled flow `∂_s F = Hvec + F`, the trace of
+the metric evolution is twice the tangential divergence of the velocity. -/
+
+/-- The trace of the metric evolution, for an arbitrary velocity, is twice the tangential
+divergence of the velocity.
+
+Symmetry of `gInv` is needed and is available for any genuine inverse metric. -/
+theorem trace_frameGram_deriv_eq_two_mul_tangentialDivergence
+    {F V : E₁ → E} (b : Idx → E₁) (gInv : Idx → Idx → ℝ) {x : E₁}
+    (hsymm : ∀ i j : Idx, gInv i j = gInv j i) :
+    ∑ i, ∑ j, gInv i j *
+        (@inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) +
+          @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j))) =
+      2 * tangentialDivergence F V b gInv x := by
+  have hsplit : ∑ i, ∑ j, gInv i j *
+        (@inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) +
+          @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j)))
+      = (∑ i, ∑ j, gInv i j *
+            @inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j))
+        + ∑ i, ∑ j, gInv i j *
+            @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j)) := by
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    ring
+  -- the second sum is the first, after swapping the summation indices
+  have hswap : ∑ i, ∑ j, gInv i j *
+        @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j))
+      = ∑ i, ∑ j, gInv i j *
+            @inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    rw [hsymm j i, real_inner_comm (frameTangent F b x j) (fderiv ℝ V x (b i))]
+  rw [hsplit, hswap, tangentialDivergence]
+  ring
+
 /-! ## Discharging the commutation hypothesis
 
 For a jointly twice-differentiable space-time map, the time derivative of a spatial
