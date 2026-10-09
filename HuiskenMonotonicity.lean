@@ -13,3 +13,4 @@ import HuiskenMonotonicity.IntervalFlow
 import HuiskenMonotonicity.TransportFormula
 import HuiskenMonotonicity.Upstream.DifferentialGeometry.Analysis.Integration.Measure.Family.Regularity
 import HuiskenMonotonicity.Upstream.DifferentialGeometry.Geometry.Submanifold.MeanCurvature
+import HuiskenMonotonicity.Examples.ShrinkingSphere
