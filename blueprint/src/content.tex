@@ -166,6 +166,11 @@ is applied to the chart representation of a time slice.
   $\langle d\xi_x(v), dF_x(w)\rangle = -\langle \xi(x), D^2F_x(v, w)\rangle$.
 \end{theorem}
 
+\begin{proof}
+  \leanok
+  Differentiate $\langle \xi, dF(w)\rangle \equiv 0$ in the direction $v$ and use the product rule.
+\end{proof}
+
 \begin{definition}[tangential divergence, normal part, mean curvature vector]
   \label{def:tangential-divergence}
   \lean{HuiskenMonotonicity.tangentialDivergence, HuiskenMonotonicity.tangentialPart, HuiskenMonotonicity.normalPart, HuiskenMonotonicity.meanCurvatureNormal}
@@ -183,6 +188,11 @@ is applied to the chart representation of a time slice.
   For $\xi$ normal along $F$, $\operatorname{div}_M \xi = -\langle \xi, \vec H\rangle$.
 \end{theorem}
 
+\begin{proof}
+  \leanok
+  Contract Theorem~\ref{thm:weingarten} with $g^{ij}$.
+\end{proof}
+
 \begin{theorem}[$\operatorname{div}_M F = n$]
   \label{thm:div-position}
   \lean{HuiskenMonotonicity.tangentialDivergence_self}
@@ -190,6 +200,11 @@ is applied to the chart representation of a time slice.
   \uses{def:tangential-divergence}
   The tangential divergence of the position vector is the dimension.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  $\operatorname{div}_M F = g^{ij} g_{ij} = n$.
+\end{proof}
 
 \begin{theorem}[Beltrami's formula for $|F|^2/2$]
   \label{thm:beltrami-frame}
@@ -199,6 +214,11 @@ is applied to the chart representation of a time slice.
   $\operatorname{div}_M F^\top = n + \langle F, \vec H\rangle$, by the split
   $F = F^\top + F^\perp$.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  Split $F^\top = F - F^\perp$: $\operatorname{div}_M F = n$, and $F^\perp$ is normal, so $\operatorname{div}_M F^\perp = -\langle F^\perp, \vec H\rangle = -\langle F, \vec H\rangle$.
+\end{proof}
 
 \begin{theorem}[Voss--Weyl]
   \label{thm:voss-weyl}
@@ -210,6 +230,11 @@ is applied to the chart representation of a time slice.
   tangential field $Z^k \partial_k F$.
 \end{theorem}
 
+\begin{proof}
+  \leanok
+  Both sides equal $\partial_i Z^i + Z^i \cdot \tfrac12 g^{kl}\partial_i g_{kl}$: the left by the library's Jacobi formula, the right by the contracted Christoffel identity.
+\end{proof}
+
 \begin{theorem}[the mean curvature vector is the library's]
   \label{thm:mean-curvature-bridge}
   \lean{HuiskenMonotonicity.SmoothImmersion.meanCurvatureVectorAt_eq, DifferentialGeometry.Geometry.meanCurvatureVectorAt, DifferentialGeometry.Geometry.secondFundamentalFormAmbientAt_eq_modelValue}
@@ -220,6 +245,11 @@ is applied to the chart representation of a time slice.
   immersion. In charts that form is $\partial^2 F + \Gamma_E - dF(\Gamma_M)$; the Euclidean
   $\Gamma_E$ vanishes and $dF(\Gamma_M)$ is tangent.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  In charts the library's second fundamental form differs from $\partial^2 F$ by $\Gamma_E = 0$ and by the tangent vector $dF(\Gamma_M)$; it is normal, so it is the normal part of $\partial^2 F$. Both traces use the same inverse metric.
+\end{proof}
 
 \chapter{The first variation}
 
@@ -239,6 +269,11 @@ is applied to the chart representation of a time slice.
   The library's Laplacian of $u = |F|^2/2$ is $\Delta u = n + \langle F, \vec H\rangle$.
 \end{theorem}
 
+\begin{proof}
+  \leanok
+  The library's Voss--Weyl formula for the Laplacian, Theorem~\ref{thm:voss-weyl}, and Theorem~\ref{thm:beltrami-frame} in the chart at the point.
+\end{proof}
+
 \begin{lemma}[derivative of the kernel along $\nabla u$]
   \label{lem:X-rho}
   \lean{HuiskenMonotonicity.SmoothImmersion.tangentSectionAction_gradG_halfSqNorm_backwardHeatKernel}
@@ -246,6 +281,11 @@ is applied to the chart representation of a time slice.
   \uses{def:mean-curvature-M, def:backward-heat-kernel}
   $\langle \nabla u, \nabla \rho\rangle = -\frac{\rho}{2\tau}\|F^\top\|^2$.
 \end{lemma}
+
+\begin{proof}
+  \leanok
+  The library's chart formula $\langle \nabla u, \nabla \rho\rangle = g^{ij}\partial_i u\,\partial_j \rho$, with $\partial_i u = \langle F, \partial_i F\rangle$ and $\partial_j \rho = -\frac{\rho}{2\tau}\langle F, \partial_j F\rangle$.
+\end{proof}
 
 \begin{theorem}[first variation identity]
   \label{thm:first-variation}
@@ -257,6 +297,11 @@ is applied to the chart representation of a time slice.
   by the library's integration by parts $\int X(\rho) = -\int \rho \operatorname{div} X$
   with $X = \nabla u$.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  Huisken applies the first variation formula to $Y = \rho F/\tau$. Here the integrand is $X(\rho) + \rho \operatorname{div} X$ for $X = \nabla u$, and the library's integration by parts gives $\int X(\rho) = -\int \rho \operatorname{div} X$.
+\end{proof}
 
 \chapter{Mean curvature flow}
 
@@ -278,6 +323,11 @@ is applied to the chart representation of a time slice.
   any chart containing $p$.
 \end{lemma}
 
+\begin{proof}
+  \leanok
+  The library's fixed-chart differential reduces the chart tangent vectors to $df$, and $\vec H$ is normal to the range of $df$.
+\end{proof}
+
 \begin{theorem}[evolution of the volume element]
   \label{thm:volume-evolution}
   \lean{HuiskenMonotonicity.hasDerivAt_frameGram_of_isNormalAlong, HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_of_isMeanCurvatureFlowAt}
@@ -286,6 +336,11 @@ is applied to the chart representation of a time slice.
   Under the flow $\partial_t g_{ij} = -2\langle \vec H, \partial_i\partial_j F\rangle$, so
   $\operatorname{tr}(g^{-1}\partial_t g) = -2\|\vec H\|^2$.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  $\partial_t g_{ij} = \langle \partial_i V, \partial_j F\rangle + \langle \partial_i F, \partial_j V\rangle$, and Theorem~\ref{thm:weingarten} for the normal velocity $V = \vec H$. This is Huisken's $\frac{d}{dt}\,d\mu_t = -H^2\,d\mu_t$.
+\end{proof}
 
 \begin{theorem}[transport formula]
   \label{thm:transport}
@@ -297,6 +352,11 @@ is applied to the chart representation of a time slice.
   library's volume variation formula.
 \end{theorem}
 
+\begin{proof}
+  \leanok
+  The library's volume variation formula, with the integrand cut off in time away from the singular time $t_0$.
+\end{proof}
+
 \begin{lemma}[the kernel along the flow]
   \label{lem:kernel-curve}
   \lean{HuiskenMonotonicity.hasDerivAt_backwardHeatKernel_curve}
@@ -305,6 +365,11 @@ is applied to the chart representation of a time slice.
   $\frac{d}{ds}\rho(\gamma(s), s) = \rho\left(\frac{n}{2\tau} - \frac{\|\gamma\|^2}{4\tau^2}
   - \frac{\langle \gamma, \gamma'\rangle}{2\tau}\right)$.
 \end{lemma}
+
+\begin{proof}
+  \leanok
+  The chain rule for the jointly smooth kernel.
+\end{proof}
 
 \chapter{Huisken's monotonicity formula}
 
@@ -321,6 +386,11 @@ is applied to the chart representation of a time slice.
   \]
 \end{lemma}
 
+\begin{proof}
+  \leanok
+  Expand $\|\vec H + F^\perp/(2\tau)\|^2$ and $\|F\|^2 = \|F^\top\|^2 + \|F^\perp\|^2$.
+\end{proof}
+
 \begin{theorem}[Huisken's monotonicity formula]
   \label{thm:huisken-monotonicity}
   \lean{HuiskenMonotonicity.SmoothImmersionFamily.huisken_monotonicity}
@@ -335,6 +405,11 @@ is applied to the chart representation of a time slice.
   The centre is reduced to the origin by translating the family, which changes neither the
   metric, nor the measure, nor $\vec H$ (Huisken's Remark (i) after Theorem 3.1).
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  As in Huisken: Theorem~\ref{thm:transport} with Theorem~\ref{thm:volume-evolution} and Lemma~\ref{lem:kernel-curve}, then Lemma~\ref{lem:pointwise-identity}; the first-variation term integrates to zero by Theorem~\ref{thm:first-variation}. The centre is reduced to the origin by a translation.
+\end{proof}
 
 \chapter{Flows on a time interval, and monotonicity}
 
@@ -358,6 +433,11 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   that is the identity near $t$ extends the flow to all times without changing it near $t$.
 \end{theorem}
 
+\begin{proof}
+  \leanok
+  Reparametrise time by a smooth $\varphi \colon \mathbb{R} \to J$ equal to the identity near $t$, and apply Theorem~\ref{thm:huisken-monotonicity}.
+\end{proof}
+
 \begin{corollary}[monotonicity]
   \label{cor:antitone}
   \lean{HuiskenMonotonicity.ImmersionFlowOn.antitoneOn_integral}
@@ -366,6 +446,11 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   For an interval $J$, $t \mapsto \int_M \rho_{x_0,t_0}\,d\mu_t$ is non-increasing on
   $J \cap (-\infty, t_0)$.
 \end{corollary}
+
+\begin{proof}
+  \leanok
+  The derivative is $-\int \rho \|\cdot\|^2 \le 0$ on the convex open set $J \cap (-\infty, t_0)$.
+\end{proof}
 
 \chapter{The rescaled flow}
 
@@ -386,6 +471,11 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   $2 \operatorname{div}_M(\tilde H + \tilde F) = 2(n - |\tilde H|^2)$.
 \end{lemma}
 
+\begin{proof}
+  \leanok
+  The trace of the metric evolution is $2\operatorname{div}_M(\tilde H + \tilde F) = 2(n - |\tilde H|^2)$, by Theorems~\ref{thm:normal-divergence} and~\ref{thm:div-position}.
+\end{proof}
+
 \begin{corollary}[Huisken's Corollary 3.2]
   \label{cor:rescaled}
   \lean{HuiskenMonotonicity.SmoothImmersionFamily.huisken_monotonicity_rescaled, HuiskenMonotonicity.ImmersionFlowOn.huisken_monotonicity_rescaled, HuiskenMonotonicity.ImmersionFlowOn.antitoneOn_integral_rescaled}
@@ -395,6 +485,11 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   by the calculation of Theorem 3.1 at $\tau = 1/2$; so $s \mapsto \int_M \tilde\rho\,d\mu_s$
   is non-increasing.
 \end{corollary}
+
+\begin{proof}
+  \leanok
+  Huisken: ``The identity follows from $d\mu_s/ds = (n - H^2)\mu_s$ and a calculation analogous to the proof of Theorem 3.1.'' Since $\tilde\rho$ is the kernel at $\tau = 1/2$ up to a constant, Theorem~\ref{thm:first-variation} and Lemma~\ref{lem:pointwise-identity} apply at $\tau = 1/2$.
+\end{proof}
 
 \begin{theorem}[Huisken's rescaling, \S 2]
   \label{thm:rescaling}
@@ -408,6 +503,11 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   $s \mapsto \int_M \tilde\rho\,d\tilde\mu_s$ is non-increasing.
 \end{theorem}
 
+\begin{proof}
+  \leanok
+  The chain rule in time and the product rule with the factor $e^s/\sqrt2$, together with $\vec H(cF) = c^{-1}\vec H(F)$: the metric scales by $c^2$, its inverse by $c^{-2}$, the second derivative by $c$, and the normal projection is unchanged.
+\end{proof}
+
 \chapter{The shrinking sphere}
 
 \begin{lemma}[mean curvature of a sphere]
@@ -419,6 +519,11 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   $f^\top = 0$, so Beltrami's formula gives $\langle f, \vec H\rangle = -n$.
 \end{lemma}
 
+\begin{proof}
+  \leanok
+  $|f|$ is constant, so $f^\top = 0$ and Theorem~\ref{thm:beltrami-frame} gives $0 = n + \langle f, \vec H\rangle$; $\vec H$ is normal, hence a multiple of $f$.
+\end{proof}
+
 \begin{theorem}[the shrinking sphere satisfies the hypotheses]
   \label{thm:shrinking-sphere}
   \lean{HuiskenMonotonicity.shrinkingSphere, HuiskenMonotonicity.shrinkingSphere_isMeanCurvatureFlow, HuiskenMonotonicity.shrinkingSphere_antitoneOn_integral}
@@ -427,3 +532,13 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   $F(p, t) = \sqrt{1 - 2nt}\,p$ on $S^n$, $2nt < 1$, moves by mean curvature, and its
   Gaussian density is non-increasing.
 \end{theorem}
+
+\begin{proof}
+  \leanok
+  By Lemma~\ref{lem:sphere-mean-curvature}, $\vec H = -\frac{n}{R}\,p$ on the sphere of radius $R(t) = \sqrt{1 - 2nt}$, and $\partial_t(R\,p) = -\frac{n}{R}\,p$. Corollary~\ref{cor:antitone} applies.
+\end{proof}
+
+\begin{thebibliography}{1}
+\bibitem{huisken1990} G.~Huisken, \emph{Asymptotic behavior for singularities of the mean
+  curvature flow}, J. Differential Geom. \textbf{31} (1990), no.~1, 285--299.
+\end{thebibliography}
