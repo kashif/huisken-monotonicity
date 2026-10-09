@@ -7,6 +7,7 @@ import HuiskenMonotonicity.VossWeyl
 import HuiskenMonotonicity.MetricEvolution
 import HuiskenMonotonicity.FirstVariationIntegral
 import HuiskenMonotonicity.MeanCurvatureFlow
+import HuiskenMonotonicity.Translation
 import HuiskenMonotonicity.TransportFormula
 import HuiskenMonotonicity.Upstream.DifferentialGeometry.Analysis.Integration.Measure.Family.Regularity
 import HuiskenMonotonicity.Upstream.DifferentialGeometry.Geometry.Submanifold.MeanCurvature

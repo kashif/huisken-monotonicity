@@ -101,11 +101,15 @@ def tangentialSqNorm (f : SmoothImmersion I M E) (p : M) : ℝ :=
     (fun k l => chartInvGramOnE (f.inducedMetric) p k l (extChartAt I p p))
     (extChartAt I p p) (f p)
 
-/-- The normal part `F^⊥` of the position vector at `p`, read in the chart at `p`. -/
-def normalPosition (f : SmoothImmersion I M E) (p : M) : E :=
+/-- The normal part `v^⊥` of an ambient vector at `p`, read in the chart at `p`. -/
+def normalComponent (f : SmoothImmersion I M E) (p : M) (v : E) : E :=
   normalPart (f.chartRep p) (chartModelBasis E₁)
-    (fun k l => chartInvGramOnE (f.inducedMetric) p k l (extChartAt I p p))
-    (extChartAt I p p) (f p)
+    (fun k l => chartInvGramOnE f.inducedMetric p k l (extChartAt I p p))
+    (extChartAt I p p) v
+
+/-- The normal part `F^⊥` of the position vector at `p`. -/
+def normalPosition (f : SmoothImmersion I M E) (p : M) : E :=
+  f.normalComponent p (f p)
 
 section Orthogonality
 
@@ -117,7 +121,7 @@ theorem sub_normalPosition (f : SmoothImmersion I M E) (p : M) :
       tangentialPart (f.chartRep p) (chartModelBasis E₁)
         (fun k l => chartInvGramOnE (f.inducedMetric) p k l (extChartAt I p p))
         (extChartAt I p p) (f p) := by
-  simp [normalPosition, normalPart]
+  simp [normalPosition, normalComponent, normalPart]
 
 /-- `F = Fᵀ + F^⊥` is an orthogonal splitting. -/
 theorem inner_sub_normalPosition (f : SmoothImmersion I M E) (p : M) :

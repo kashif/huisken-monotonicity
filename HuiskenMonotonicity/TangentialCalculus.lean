@@ -182,6 +182,31 @@ noncomputable def meanCurvatureNormal
     (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) : E :=
   normalPart F b gInv x (meanCurvatureVectorFrame F b gInv x)
 
+/-! The frame quantities see `F` only through its derivative, so they are unchanged by
+translating `F`. -/
+
+theorem tangentialPart_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
+    (tangentialPart F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E → E) = tangentialPart G := by
+  funext b gInv x v
+  simp only [tangentialPart, frameTangent, h]
+
+theorem normalPart_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
+    (normalPart F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E → E) = normalPart G := by
+  funext b gInv x v
+  simp only [normalPart, tangentialPart_congr h]
+
+theorem meanCurvatureNormal_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
+    (meanCurvatureNormal F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E) =
+      meanCurvatureNormal G := by
+  funext b gInv x
+  simp only [meanCurvatureNormal, meanCurvatureVectorFrame, secondDerivative, h,
+    normalPart_congr h]
+
+theorem tangentialNormSq_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
+    (tangentialNormSq F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E → ℝ) = tangentialNormSq G := by
+  funext b gInv x v
+  simp only [tangentialNormSq, frameTangent, h]
+
 /-- The tangential part pairs with each frame vector as the vector itself does. -/
 theorem inner_tangentialPart_frameTangent
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}

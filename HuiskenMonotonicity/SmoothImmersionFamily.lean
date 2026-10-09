@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kashif Rasul
 -/
 
-import HuiskenMonotonicity.Upstream.ImmersionInjective
 import Mathlib.Geometry.Manifold.Immersion
 import Mathlib.Analysis.InnerProductSpace.Basic
 
@@ -71,7 +70,7 @@ instance : CoeFun (SmoothImmersion I M E) (fun _ => M → E) :=
 /-- A smooth immersion has injective differential. -/
 theorem mfderiv_injective (f : SmoothImmersion I M E) (p : M) :
     Function.Injective (mfderiv I 𝓘(ℝ, E) f p) :=
-  Upstream.isImmersion_mfderiv_injective f.isImmersion p
+  f.isImmersion.mfderiv_injective (by simp) p
 
 end SmoothImmersion
 
@@ -89,7 +88,7 @@ theorem contMDiff_timeSlice (F : SmoothImmersionFamily I M E) (t : ℝ) :
 family is built from, discharged once and for all. -/
 theorem mfderiv_injective (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) :
     Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => F q t) p) :=
-  Upstream.isImmersion_mfderiv_injective (F.isImmersion t) p
+  (F.isImmersion t).mfderiv_injective (by simp) p
 
 /-- The time slice `F_t`, as a smooth immersion. -/
 def slice (F : SmoothImmersionFamily I M E) (t : ℝ) : SmoothImmersion I M E :=
