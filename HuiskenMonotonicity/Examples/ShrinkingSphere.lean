@@ -48,7 +48,7 @@ variable [T2Space M] [I.Boundaryless]
 space at each point is spanned by the position vector, then `Hvec = -(n / R²) f`. -/
 theorem SmoothImmersion.meanCurvature_eq_of_norm_eq (f : SmoothImmersion I M E) {R : ℝ}
     (hR : R ≠ 0) (hnorm : ∀ p, ‖f p‖ = R)
-    (hnormal : ∀ p (v : E), (∀ w, ⟪v, mfderiv I 𝓘(ℝ, E) f p w⟫ = 0) → v ∈ ℝ ∙ f p)
+    (hnormal : ∀ p (v : E), (∀ w, ⟪v, mvfderiv I f p w⟫ = 0) → v ∈ ℝ ∙ f p)
     (p : M) :
     f.meanCurvature p = -((finrank ℝ E₁ : ℝ) / R ^ 2) • f p := by
   set y := extChartAt I p p with hy_def
@@ -93,7 +93,7 @@ theorem SmoothImmersion.meanCurvature_eq_of_norm_eq (f : SmoothImmersion I M E) 
     linarith
   -- `Hvec` is normal, hence a multiple of the position vector
   obtain ⟨c, hc⟩ := Submodule.mem_span_singleton.mp
-    (hnormal p _ fun w ↦ f.inner_meanCurvature_mfderiv p w)
+    (hnormal p _ fun w ↦ f.inner_meanCurvature_mvfderiv p w)
   rw [← hc] at hFH ⊢
   rw [real_inner_smul_right, real_inner_self_eq_norm_sq, hnorm] at hFH
   have hR2 : R ^ 2 ≠ 0 := pow_ne_zero 2 hR
@@ -160,11 +160,11 @@ theorem contDiffAt_shrinkingSphereRadius {t : ℝ} (ht : t ∈ shrinkingSphereTi
   exact (contDiffAt_const.sub (contDiffAt_const.mul contDiffAt_id)).sqrt h1
 
 /-- The differential of the scaled inclusion of the sphere. -/
-theorem mfderiv_smul_coe_sphere (R : ℝ) (p : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
-    mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))
+theorem mvfderiv_smul_coe_sphere (R : ℝ) (p : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
+    mvfderiv (𝓡 n)
         (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 ↦ R • (q : EuclideanSpace ℝ
           (Fin (n + 1)))) p =
-      R • mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))
+      R • mvfderiv (𝓡 n)
         ((↑) : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → EuclideanSpace ℝ (Fin (n + 1)))
         p :=
   (((contMDiff_coe_sphere (m := ∞) p).mdifferentiableAt (by simp)).hasMFDerivAt.const_smul
@@ -188,11 +188,11 @@ def shrinkingSphere :
           (q.1 : EuclideanSpace ℝ (Fin (n + 1)))) (p, t) :=
       (contMDiff_coe_sphere (p, t).1).comp (p, t) contMDiffAt_fst
     exact (hR.smul hp).contMDiffWithinAt
-  mfderiv_injective t ht p := by
-    rw [mfderiv_smul_coe_sphere]
-    intro v w hvw
-    exact injective_mvfderiv_subtypeVal_sphere p
-      (smul_right_injective _ (shrinkingSphereRadius_pos n ht).ne' hvw)
+  mfderiv_injective t ht p v w hvw :=
+    injective_mvfderiv_subtypeVal_sphere p <|
+      smul_right_injective (EuclideanSpace ℝ (Fin (n + 1))) (shrinkingSphereRadius_pos n ht).ne' <|
+        (DFunLike.congr_fun (mvfderiv_smul_coe_sphere n _ p) v).symm.trans
+          (hvw.trans (DFunLike.congr_fun (mvfderiv_smul_coe_sphere n _ p) w))
 
 /-- The mean curvature vector of the sphere of radius `R(t)` is `-(n / R(t)²) F`. -/
 theorem shrinkingSphere_meanCurvature {t : ℝ} (ht : t ∈ shrinkingSphereTimes n)
@@ -207,8 +207,7 @@ theorem shrinkingSphere_meanCurvature {t : ℝ} (ht : t ∈ shrinkingSphereTimes
     rw [norm_smul, Real.norm_of_nonneg hR.le, norm_eq_of_mem_sphere q, mul_one]
   have hnormal : ∀ (q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1)
       (v : EuclideanSpace ℝ (Fin (n + 1))),
-      (∀ w, ⟪v, mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))
-        ((shrinkingSphere n).slice t ht) q w⟫ = 0) →
+      (∀ w, ⟪v, mvfderiv (𝓡 n) ((shrinkingSphere n).slice t ht) q w⟫ = 0) →
         v ∈ ℝ ∙ ((shrinkingSphere n).slice t ht q) := by
     intro q v hv
     change v ∈ ℝ ∙ (shrinkingSphereRadius n t • (q : EuclideanSpace ℝ (Fin (n + 1))))
@@ -219,12 +218,11 @@ theorem shrinkingSphere_meanCurvature {t : ℝ} (ht : t ∈ shrinkingSphereTimes
     rw [← range_mvfderiv_subtypeVal (n := n) q] at hu
     obtain ⟨w, rfl⟩ := hu
     have h := hv w
-    change ⟪v, mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))
+    change ⟪v, mvfderiv (𝓡 n)
       (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 ↦
         shrinkingSphereRadius n t • (q : EuclideanSpace ℝ (Fin (n + 1)))) q w⟫ = 0 at h
-    rw [mfderiv_smul_coe_sphere] at h
-    change ⟪v, shrinkingSphereRadius n t • _⟫ = 0 at h
-    erw [real_inner_smul_right, mul_eq_zero] at h
+    rw [mvfderiv_smul_coe_sphere, smul_apply, real_inner_smul_right,
+      mul_eq_zero] at h
     exact (real_inner_comm _ _).trans (h.resolve_left hR.ne')
   rw [SmoothImmersion.meanCurvature_eq_of_norm_eq _ hR.ne' hnorm hnormal p,
     finrank_euclideanSpace_fin]

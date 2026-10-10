@@ -91,7 +91,7 @@ def inducedMetric (f : SmoothImmersion I M E) : SmoothRiemannianMetric I M :=
 @[simp]
 theorem inducedMetric_inner (f : SmoothImmersion I M E) (p : M) (v w : TangentSpace I p) :
     f.inducedMetric.inner p v w =
-      @inner ℝ E _ (mfderiv I 𝓘(ℝ, E) f p v) (mfderiv I 𝓘(ℝ, E) f p w) :=
+      ⟪mvfderiv I f p v, mvfderiv I f p w⟫_ℝ :=
   rfl
 
 /-- The chart Gram matrix of the induced metric is the Gram matrix of the chart frame pushed
@@ -99,9 +99,8 @@ forward by `df`. -/
 theorem chartGramMatrix_inducedMetric (f : SmoothImmersion I M E)
     (x₀ x : M) (i j : Fin (Module.finrank ℝ E₁)) :
     Tensor.Coordinates.chartGramMatrix (I := I) f.inducedMetric x₀ x i j =
-      @inner ℝ E _
-        (mfderiv I 𝓘(ℝ, E) f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x))
-        (mfderiv I 𝓘(ℝ, E) f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)) := by
+      ⟪mvfderiv I f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ i x),
+        mvfderiv I f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ j x)⟫_ℝ := by
   rw [Tensor.Coordinates.chartGramMatrix_apply, inducedMetric_inner]
 
 /-! ### The chart representation
@@ -149,7 +148,7 @@ theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
   have key : ∀ k : Fin (Module.finrank ℝ E₁),
       fderiv ℝ (f.chartRep x₀) (extChartAt I x₀ x)
           (Tensor.Coordinates.chartModelBasis E₁ k) =
-        mfderiv I 𝓘(ℝ, E) f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ k x) := by
+        mvfderiv I f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ k x) := by
     intro k
     have happ := DFunLike.congr_fun h (Tensor.Coordinates.chartModelBasis E₁ k)
     simp only [PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ

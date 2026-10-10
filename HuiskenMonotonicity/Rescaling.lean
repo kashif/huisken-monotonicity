@@ -54,17 +54,17 @@ local instance instBorelSpaceRescaling : BorelSpace M := ⟨rfl⟩
 namespace SmoothImmersion
 
 /-- The differential of a dilated map. -/
-theorem mfderiv_const_smul (f : SmoothImmersion I M E) (c : ℝ) (p : M) :
-    mfderiv I 𝓘(ℝ, E) (fun q ↦ c • f q) p = c • mfderiv I 𝓘(ℝ, E) f p :=
+theorem mvfderiv_const_smul (f : SmoothImmersion I M E) (c : ℝ) (p : M) :
+    mvfderiv I (fun q ↦ c • f q) p = c • mvfderiv I f p :=
   ((f.contMDiff.mdifferentiableAt (by simp)).hasMFDerivAt.const_smul c).mfderiv
 
 /-- The dilate `c f` of a smooth immersion, `c ≠ 0`. -/
 def dilate (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠ 0) : SmoothImmersion I M E :=
   ⟨fun p ↦ c • f p,
-    (contMDiff_const : ContMDiff I 𝓘(ℝ, ℝ) ∞ fun _ : M ↦ c).smul f.contMDiff, fun p ↦ by
-    rw [f.mfderiv_const_smul c p]
-    intro v w hvw
-    exact f.mfderiv_injective p (smul_right_injective _ hc hvw)⟩
+    (contMDiff_const : ContMDiff I 𝓘(ℝ, ℝ) ∞ fun _ : M ↦ c).smul f.contMDiff, fun p v w hvw ↦
+    f.mfderiv_injective p <| smul_right_injective E hc <|
+      (DFunLike.congr_fun (f.mvfderiv_const_smul c p) v).symm.trans
+        (hvw.trans (DFunLike.congr_fun (f.mvfderiv_const_smul c p) w))⟩
 
 @[simp]
 theorem dilate_apply (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠ 0) (p : M) :
@@ -78,14 +78,12 @@ theorem chartGramMatrix_dilate (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠
     (α x : M) :
     chartGramMatrix (I := I) (f.dilate hc).inducedMetric α x =
       (c ^ 2) • chartGramMatrix (I := I) f.inducedMetric α x := by
-  have hu : ∀ u : TangentSpace I x, (mfderiv I 𝓘(ℝ, E) (f.dilate hc) x u : E) =
-      c • (mfderiv I 𝓘(ℝ, E) f x u : E) := fun u ↦ by
-    rw [show ⇑(f.dilate hc) = fun q ↦ c • f q from rfl, f.mfderiv_const_smul c x]
-    rfl
+  have hu : ∀ u : TangentSpace I x, mvfderiv I (f.dilate hc) x u = c • mvfderiv I f x u :=
+    fun u ↦ by rw [show ⇑(f.dilate hc) = fun q ↦ c • f q from rfl, f.mvfderiv_const_smul c x]; rfl
   ext i j
   rw [Matrix.smul_apply, chartGramMatrix_inducedMetric, chartGramMatrix_inducedMetric,
     smul_eq_mul, hu, hu]
-  erw [real_inner_smul_left, real_inner_smul_right]
+  rw [real_inner_smul_left, real_inner_smul_right]
   ring
 
 /-- The inverse chart Gram matrix of a dilate is `c⁻²` times that of the immersion. -/

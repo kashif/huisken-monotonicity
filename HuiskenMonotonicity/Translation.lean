@@ -40,18 +40,20 @@ local instance instBorelSpaceTranslation : BorelSpace M := ⟨rfl⟩
 
 omit [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E] in
 /-- Translating a map into `E` does not change its differential. -/
-theorem mfderiv_sub_const {f : M → E} {p : M} (hf : MDifferentiableAt I 𝓘(ℝ, E) f p) (c : E) :
-    mfderiv I 𝓘(ℝ, E) (fun q ↦ f q - c) p = mfderiv I 𝓘(ℝ, E) f p := by
-  change mfderiv I 𝓘(ℝ, E) (f - fun _ ↦ c) p = _
-  rw [mfderiv_sub hf mdifferentiableAt_const, mfderiv_const]
-  exact sub_zero (mfderiv I 𝓘(ℝ, E) f p : E₁ →L[ℝ] E)
+theorem mvfderiv_sub_const {f : M → E} {p : M} (hf : MDifferentiableAt I 𝓘(ℝ, E) f p) (c : E) :
+    mvfderiv I (fun q ↦ f q - c) p = mvfderiv I f p := by
+  change mvfderiv I (f - fun _ ↦ c) p = _
+  rw [mvfderiv, mvfderiv, mfderiv_sub hf mdifferentiableAt_const, mfderiv_const]
+  ext v
+  exact sub_zero _
 
 namespace SmoothImmersion
 
 /-- The translate `f - c` of a smooth immersion. -/
 def translate (f : SmoothImmersion I M E) (c : E) : SmoothImmersion I M E :=
   ⟨fun p ↦ f p - c, f.contMDiff.sub contMDiff_const, fun p ↦ by
-    rw [mfderiv_sub_const (f.contMDiff.mdifferentiableAt (by simp)) c]
+    change Function.Injective (mvfderiv I (fun q ↦ f q - c) p)
+    rw [mvfderiv_sub_const (f.contMDiff.mdifferentiableAt (by simp)) c]
     exact f.mfderiv_injective p⟩
 
 @[simp]
@@ -60,9 +62,9 @@ theorem translate_apply (f : SmoothImmersion I M E) (c : E) (p : M) :
   rfl
 
 /-- Translation does not change the differential. -/
-theorem mfderiv_translate (f : SmoothImmersion I M E) (c : E) (p : M) :
-    mfderiv I 𝓘(ℝ, E) (f.translate c) p = mfderiv I 𝓘(ℝ, E) f p :=
-  mfderiv_sub_const (f.contMDiff.mdifferentiableAt (by simp)) c
+theorem mvfderiv_translate (f : SmoothImmersion I M E) (c : E) (p : M) :
+    mvfderiv I (f.translate c) p = mvfderiv I f p :=
+  mvfderiv_sub_const (f.contMDiff.mdifferentiableAt (by simp)) c
 
 variable [T2Space M]
 
@@ -70,8 +72,7 @@ variable [T2Space M]
 theorem inducedMetric_translate (f : SmoothImmersion I M E) (c : E) :
     (f.translate c).inducedMetric = f.inducedMetric := by
   ext p v w
-  simp only [inducedMetric_inner, mfderiv_translate]
-  rfl
+  simp only [inducedMetric_inner, mvfderiv_translate]
 
 /-- Translation does not change the surface measure. -/
 theorem surfaceMeasure_translate [SigmaCompactSpace M] (f : SmoothImmersion I M E) (c : E) :

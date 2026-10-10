@@ -166,13 +166,13 @@ variable [T2Space M] [I.Boundaryless]
 /-! ## Normality of the mean curvature vector in every chart -/
 
 /-- The mean curvature vector is orthogonal to every tangent vector `df(w)`. -/
-theorem inner_meanCurvature_mfderiv (f : SmoothImmersion I M E) (p : M)
+theorem inner_meanCurvature_mvfderiv (f : SmoothImmersion I M E) (p : M)
     (w : TangentSpace I p) :
-    ⟪f.meanCurvature p, mfderiv I 𝓘(ℝ, E) f p w⟫_ℝ = 0 := by
+    ⟪f.meanCurvature p, mvfderiv I f p w⟫_ℝ = 0 := by
   have hmd : MDifferentiableAt I 𝓘(ℝ, E) f p := f.contMDiff.mdifferentiableAt (by simp)
   have h := DifferentialGeometry.Manifold.mfderiv_eq_fderiv_extChartAt_of_isInteriorPoint I hmd
     BoundarylessManifold.isInteriorPoint
-  rw [show mfderiv I 𝓘(ℝ, E) f p w =
+  rw [show mvfderiv I f p w =
       fderiv ℝ (fun y ↦ f ((extChartAt I p).symm y)) (extChartAt I p p) w from
     congrArg (fun L : E₁ →L[ℝ] E ↦ L w) h]
   exact inner_normalPart_fderiv (chartModelBasis E₁).span_eq
@@ -197,7 +197,7 @@ theorem inner_meanCurvature_fderiv_chartRep (f : SmoothImmersion I M E)
   rw [hzx] at happ
   change ⟪_, fderiv ℝ (fun y ↦ f ((extChartAt I α).symm y)) z v⟫_ℝ = 0
   rw [happ]
-  exact f.inner_meanCurvature_mfderiv x _
+  exact f.inner_meanCurvature_mvfderiv x _
 
 end SmoothImmersion
 

@@ -86,15 +86,15 @@ variable [NeZero (Module.finrank ℝ E₁)] [NeZero (Module.finrank ℝ E)]
 omit [NeZero (Module.finrank ℝ E₁)] [NeZero (Module.finrank ℝ E)] in
 /-- **The mean curvature vector is the library's.** For a smooth immersion `f` into a Euclidean
 space, `SmoothImmersion.meanCurvature` is the metric trace of the library's second fundamental
-form of `f`, as a Riemannian isometric immersion of its induced metric. The tangent space of
-`E` is `E` itself; `tangentSpaceModelContinuousLinearEquiv` is the identity. -/
+form of `f`, as a Riemannian isometric immersion of its induced metric, read in `E` through
+`NormedSpace.fromTangentSpace`. -/
 theorem meanCurvatureVectorAt_eq (f : SmoothImmersion I M E)
     (hf : IsImmersion I 𝓘(ℝ, E) ∞ f) (p : M) :
-    tangentSpaceModelContinuousLinearEquiv (I := 𝓘(ℝ, E)) (f p)
-        (meanCurvatureVectorAt (f.isRiemannianIsometricImmersion hf) p) =
+    NormedSpace.fromTangentSpace (𝕜 := ℝ) (f p)
+        ↑(meanCurvatureVectorAt (f.isRiemannianIsometricImmersion hf) p) =
       f.meanCurvature p := by
   set h := f.isRiemannianIsometricImmersion hf
-  set eE := tangentSpaceModelContinuousLinearEquiv (I := 𝓘(ℝ, E)) (f p)
+  set eE := NormedSpace.fromTangentSpace (𝕜 := ℝ) (f p)
   set eN := tangentSpaceModelContinuousLinearEquiv (I := I) p
   set y := extChartAt I p p with hy_def
   set b := chartModelBasis E₁ with hb_def
