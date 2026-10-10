@@ -18,7 +18,7 @@ rev = "v4.35.0-rc3"
 [[require]]
 name = "DifferentialGeometry"
 git = "https://github.com/qinz1yang/differential-geometry.git"
-rev = "v0.1.4"
+rev = "v0.1.5"
 
 [[require]]
 name = "checkdecls"
