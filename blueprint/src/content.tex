@@ -330,16 +330,18 @@ is applied to the chart representation of a time slice.
 
 \begin{theorem}[evolution of the volume element]
   \label{thm:volume-evolution}
-  \lean{HuiskenMonotonicity.hasDerivAt_frameGram_of_isNormalAlong, HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_of_isMeanCurvatureFlowAt}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_eq_two_mul_tangentialDivergence, HuiskenMonotonicity.SmoothImmersion.tangentialDivergence_eq_neg_norm_sq_meanCurvature, HuiskenMonotonicity.SmoothImmersionFamily.traceTimeDerivMetric_of_isMeanCurvatureFlowAt}
   \leanok
-  \uses{def:mcf, lem:normal-every-chart, thm:weingarten}
-  Under the flow $\partial_t g_{ij} = -2\langle \vec H, \partial_i\partial_j F\rangle$, so
+  \uses{def:mcf, lem:normal-every-chart, thm:normal-divergence}
+  For any family, $\operatorname{tr}(g^{-1}\partial_t g) = 2\operatorname{div}_M V$ for the
+  velocity $V$ (the first variation of area, $\partial_t\,d\mu = \operatorname{div}_M V\,d\mu$).
+  Under mean curvature flow $\operatorname{div}_M \vec H = -\|\vec H\|^2$, so
   $\operatorname{tr}(g^{-1}\partial_t g) = -2\|\vec H\|^2$.
 \end{theorem}
 
 \begin{proof}
   \leanok
-  $\partial_t g_{ij} = \langle \partial_i V, \partial_j F\rangle + \langle \partial_i F, \partial_j V\rangle$, and Theorem~\ref{thm:weingarten} for the normal velocity $V = \vec H$. This is Huisken's $\frac{d}{dt}\,d\mu_t = -H^2\,d\mu_t$.
+  $\partial_t g_{ij} = \langle \partial_i V, \partial_j F\rangle + \langle \partial_i F, \partial_j V\rangle$ by the product rule; its trace is $2\operatorname{div}_M V$. For $V = \vec H$, which is normal, Theorem~\ref{thm:normal-divergence} gives $\operatorname{div}_M \vec H = -\langle \vec H, \vec H\rangle$. This is Huisken's $\frac{d}{dt}\,d\mu_t = -H^2\,d\mu_t$.
 \end{proof}
 
 \begin{theorem}[transport formula]

@@ -7,31 +7,23 @@ Authors: Kashif Rasul
 import HuiskenMonotonicity.TangentialCalculus
 
 /-!
-# Evolution of the induced metric under a normal velocity
+# Evolution of the induced metric
 
-For a family of immersions with velocity `V`, differentiating
-`g_ij = ⟪∂_i F, ∂_j F⟫` in time and exchanging the spatial and time derivatives gives
+For a family of immersions with velocity `V`, differentiating `g_ij = ⟪∂_i F, ∂_j F⟫` in
+time and exchanging the spatial and time derivatives gives
 
-  `∂_t g_ij = ⟪∂_i V, ∂_j F⟫ + ⟪∂_i F, ∂_j V⟫`.
+  `∂_t g_ij = ⟪∂_i V, ∂_j F⟫ + ⟪∂_i F, ∂_j V⟫`
 
-When `V` is normal along `F`, each term is handled by the Weingarten equation, and the two
-collapse into one:
+(`hasDerivAt_frameGram`). Contracting against the inverse metric gives twice the tangential
+divergence of the velocity,
 
-  `∂_t g_ij = -2 ⟪V, D²F(∂_i, ∂_j)⟫`.
+  `g^{ij} ∂_t g_ij = 2 div_M V`
 
-This is the orientation-free form of the classical evolution equation
-`∂_t g_ij = -2 F h_ij` for the normal velocity `∂_t X = -F ν` (Schnürer, *Lectures on mean
-curvature flow without singularities*, Lemma 4.1): taking `V = -F ν` and using
-`h_ij = -⟪D²X(∂_i, ∂_j), ν⟫` recovers it, with no choice of normal needed here.
-
-Contracting against the inverse metric gives the trace that drives the evolution of the
-volume element,
-
-  `g^{ij} ∂_t g_ij = -2 ⟪V, Hvec⟫`,
-
-and under mean curvature flow, where `V = Hvec`, this is `-2‖Hvec‖²`. Half of it,
-`-‖Hvec‖²`, is the weight appearing in the transport formula for a moving Riemannian
-measure, which is the form in which the classical statement `∂_t dμ = -H² dμ` is used.
+(`trace_frameGram_deriv_eq_two_mul_tangentialDivergence`), which is the evolution of the volume
+element, `∂_t dμ = div_M V dμ`. Huisken's two volume formulas are its specialisations:
+`∂_t dμ = -H² dμ` under mean curvature flow, and `∂_s dμ = (n - H²) dμ` under the rescaled
+flow (Schnürer, *Lectures on mean curvature flow without singularities*, Lemma 4.1, gives the
+first in the oriented form `∂_t g_ij = -2 H h_ij`).
 
 ## The commutation hypothesis
 
@@ -65,64 +57,12 @@ theorem hasDerivAt_frameGram
         ⟪frameTangent (V t) b x i, frameTangent (F t) b x j⟫_ℝ) t :=
   HasDerivAt.inner ℝ (hcomm i) (hcomm j)
 
-omit [DecidableEq Idx] [Fintype Idx] in
-/-- **The evolution equation of the induced metric under a normal velocity.**
+/-! ## The trace: the first variation of area
 
-`∂_t g_ij = -2 ⟪V, D²F(∂_i, ∂_j)⟫`.
-
-Orientation-free form of `∂_t g_ij = -2 F h_ij`. -/
-theorem hasDerivAt_frameGram_of_isNormalAlong
-    {F V : ℝ → E₁ → E} (b : Idx → E₁) {t : ℝ} {x : E₁} (i j : Idx)
-    (hF : ContDiffAt ℝ 2 (F t) x) (hV : DifferentiableAt ℝ (V t) x)
-    (hnormal : IsNormalAlongNear (F t) (V t) x)
-    (hcomm : ∀ k : Idx,
-      HasDerivAt (fun s ↦ frameTangent (F s) b x k) (frameTangent (V t) b x k) t) :
-    HasDerivAt (fun s ↦ frameGram (F s) b x i j)
-      (-2 * ⟪V t x, secondDerivative (F t) x (b i) (b j)⟫_ℝ) t := by
-  have hbase := hasDerivAt_frameGram (V := V) b i j hcomm
-  have hji : ⟪frameTangent (F t) b x i, frameTangent (V t) b x j⟫_ℝ =
-      -⟪V t x, secondDerivative (F t) x (b i) (b j)⟫_ℝ := by
-    rw [real_inner_comm, frameTangent_apply, frameTangent_apply,
-      inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal (b j) (b i),
-      secondDerivative_symm_of_contDiffAt hF (b j) (b i)]
-  have hij : ⟪frameTangent (V t) b x i, frameTangent (F t) b x j⟫_ℝ =
-      -⟪V t x, secondDerivative (F t) x (b i) (b j)⟫_ℝ := by
-    rw [frameTangent_apply, frameTangent_apply,
-      inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal (b i) (b j)]
-  rw [hji, hij] at hbase
-  convert hbase using 1
-  ring
-
-/-! ## The trace -/
-
-omit [DecidableEq Idx] in
-/-- The inverse-metric trace of the metric evolution:
-
-`g^{ij} ∂_t g_ij = -2 ⟪V, Hvec⟫`.
-
-This is the quantity the transport formula for a moving Riemannian measure consumes, there
-weighted by `1/2`. Pure contraction: once the pointwise evolution equation is known, this
-step needs no hypotheses at all. -/
-theorem trace_metricEvolution
-    {F V : E₁ → E} (b : Idx → E₁) (gInv : Idx → Idx → ℝ) {x : E₁} :
-    ∑ i, ∑ j, gInv i j *
-        (-2 * ⟪V x, secondDerivative F x (b i) (b j)⟫_ℝ) =
-      -2 * ⟪V x, meanCurvatureVectorFrame F b gInv x⟫_ℝ := by
-  have hR : ⟪V x, meanCurvatureVectorFrame F b gInv x⟫_ℝ =
-      ∑ i, ∑ j, gInv i j *
-        ⟪V x, secondDerivative F x (b i) (b j)⟫_ℝ := by
-    simp only [meanCurvatureVectorFrame, inner_sum, real_inner_smul_right]
-  rw [hR, Finset.mul_sum]
-  refine Finset.sum_congr rfl fun i _ ↦ ?_
-  rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl fun j _ ↦ ?_
-  ring
-
-/-! ## The trace for a general velocity
-
-For a velocity that is not normal, as for the rescaled flow `∂_s F = Hvec + F`, the trace of
-the metric evolution is twice the tangential divergence of the velocity. -/
-
+The trace of the metric evolution is twice the tangential divergence of the velocity, the
+pointwise form of the first variation of area `∂_t dμ = div_M V dμ`. For mean curvature flow
+`V = Hvec` is normal and `div_M Hvec = -‖Hvec‖²`, giving `∂_t dμ = -H² dμ`; for the rescaled
+flow `V = Hvec + F` and `div_M F = n` give `∂_s dμ = (n - H²) dμ`. -/
 omit [DecidableEq Idx] in
 /-- The trace of the metric evolution, for an arbitrary velocity, is twice the tangential
 divergence of the velocity.
