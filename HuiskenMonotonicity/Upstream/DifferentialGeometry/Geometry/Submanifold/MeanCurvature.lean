@@ -128,7 +128,7 @@ omit [NeZero (Module.finrank ℝ EN)] [IN.Boundaryless] in
 frame. -/
 theorem metricInverseInBasis_chartInvGramMatrix (gN : SmoothRiemannianMetric IN N) (x : N) :
     Tensor0SBundle.MetricInverseInBasis (I := IN) gN x (chartFrameBasisAt x)
-      (fun i j => Operator.chartInvGramMatrix (I := IN) gN x x i j) := by
+      (fun i j ↦ Operator.chartInvGramMatrix (I := IN) gN x x i j) := by
   have hx : x ∈ (trivializationAt EN (TangentSpace IN) x).baseSet :=
     FiberBundle.mem_baseSet_trivializationAt' x
   have h₁ := Operator.chartInvGramMatrix_mul_chartGramMatrix (I := IN) gN x hx
@@ -150,7 +150,7 @@ def meanCurvatureVectorAt
     (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) :
     h.normalSpaceAt x :=
   meanCurvatureVectorInBasis h (chartFrameBasisAt x)
-    (fun i j => Operator.chartInvGramMatrix (I := IN) gN x x i j)
+    (fun i j ↦ Operator.chartInvGramMatrix (I := IN) gN x x i j)
 
 /-- The mean curvature vector regarded as an ambient tangent vector at `iota x`. -/
 def meanCurvatureVectorAmbientAt
@@ -165,7 +165,7 @@ theorem meanCurvatureVectorAt_eq_inBasis
     (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) :
     meanCurvatureVectorAt h x =
       meanCurvatureVectorInBasis h (chartFrameBasisAt x)
-        (fun i j => Operator.chartInvGramMatrix (I := IN) gN x x i j) :=
+        (fun i j ↦ Operator.chartInvGramMatrix (I := IN) gN x x i j) :=
   rfl
 
 omit [NeZero (Module.finrank ℝ EN)] [NeZero (Module.finrank ℝ E)]

@@ -52,6 +52,8 @@ vector against a field normal along `F`, and a normal field annihilates `∂_k F
 anywhere, which is why this layer needs no connection.
 -/
 
+open scoped InnerProductSpace
+
 namespace HuiskenMonotonicity
 
 variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
@@ -72,7 +74,7 @@ lemma frameTangent_apply (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i : Idx
 
 /-- The induced Gram matrix `g_ij = ⟪∂_i F, ∂_j F⟫` in the frame `b`. -/
 noncomputable def frameGram (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i j : Idx) : ℝ :=
-  @inner ℝ E _ (frameTangent F b x i) (frameTangent F b x j)
+  ⟪frameTangent F b x i, frameTangent F b x j⟫_ℝ
 
 omit [Fintype Idx] [DecidableEq Idx] in
 lemma frameGram_symm (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i j : Idx) :
@@ -93,7 +95,7 @@ def IsFrameInverse (F : E₁ → E) (b : Idx → E₁) (x : E₁) (gInv : Idx �
   `div_M ξ = ∑ i, ∑ j, g^{ij} ⟪dξ(b i), ∂_j F⟫`. -/
 noncomputable def tangentialDivergence
     (F ξ : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) : ℝ :=
-  ∑ i, ∑ j, gInv i j * @inner ℝ E _ (fderiv ℝ ξ x (b i)) (frameTangent F b x j)
+  ∑ i, ∑ j, gInv i j * ⟪fderiv ℝ ξ x (b i), frameTangent F b x j⟫_ℝ
 
 /-- The **mean curvature vector**: the inverse-metric trace of the second derivative,
 
@@ -111,7 +113,7 @@ without constructing the projection. -/
 noncomputable def tangentialNormSq
     (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) : ℝ :=
   ∑ i, ∑ j, gInv i j *
-    (@inner ℝ E _ v (frameTangent F b x i) * @inner ℝ E _ v (frameTangent F b x j))
+    (⟪v, frameTangent F b x i⟫_ℝ * ⟪v, frameTangent F b x j⟫_ℝ)
 
 /-! ## The normal divergence identity -/
 
@@ -128,13 +130,12 @@ theorem tangentialDivergence_of_isNormalAlong
     {F ξ : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (hξ : DifferentiableAt ℝ ξ x)
     (hnormal : IsNormalAlongNear F ξ x) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) :
     tangentialDivergence F ξ b gInv x =
-      -@inner ℝ E _ (ξ x) (meanCurvatureVectorFrame F b gInv x) := by
-  have hR : -@inner ℝ E _ (ξ x) (meanCurvatureVectorFrame F b gInv x) =
-      ∑ i, ∑ j, -(@inner ℝ E _ (ξ x)
-        (gInv i j • secondDerivative F x (b i) (b j))) := by
+      -⟪ξ x, meanCurvatureVectorFrame F b gInv x⟫_ℝ := by
+  have hR : -⟪ξ x, meanCurvatureVectorFrame F b gInv x⟫_ℝ =
+      ∑ i, ∑ j, -(⟪ξ x, gInv i j • secondDerivative F x (b i) (b j)⟫_ℝ) := by
     simp only [meanCurvatureVectorFrame, inner_sum, Finset.sum_neg_distrib]
   rw [tangentialDivergence, hR]
-  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
   rw [frameTangent_apply,
     inner_fderiv_eq_neg_inner_secondDerivative hF hξ hnormal (b i) (b j),
     real_inner_smul_right]
@@ -155,12 +156,12 @@ theorem tangentialDivergence_self
     tangentialDivergence F F b gInv x = (Fintype.card Idx : ℝ) := by
   have hstep : tangentialDivergence F F b gInv x
       = ∑ i : Idx, ∑ k : Idx, gInv i k * frameGram F b x k i := by
-    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
     rw [frameGram_symm, frameGram, frameTangent_apply]
     rfl
   calc tangentialDivergence F F b gInv x
       = ∑ i : Idx, ∑ k : Idx, gInv i k * frameGram F b x k i := hstep
-    _ = ∑ _i : Idx, (1 : ℝ) := Finset.sum_congr rfl fun i _ => by simpa using hinv i i
+    _ = ∑ _i : Idx, (1 : ℝ) := Finset.sum_congr rfl fun i _ ↦ by simpa using hinv i i
     _ = (Fintype.card Idx : ℝ) := by simp
 
 /-! ## Tangential and normal parts
@@ -178,7 +179,7 @@ Huisken's first-variation identity pairs it with. -/
 /-- The **tangential part** of an ambient vector. -/
 noncomputable def tangentialPart
     (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) : E :=
-  ∑ k, ∑ l, (gInv k l * @inner ℝ E _ v (frameTangent F b x l)) • frameTangent F b x k
+  ∑ k, ∑ l, (gInv k l * ⟪v, frameTangent F b x l⟫_ℝ) • frameTangent F b x k
 
 /-- The **normal part** of an ambient vector. -/
 noncomputable def normalPart
@@ -223,7 +224,7 @@ theorem tangentialPart_smul_vec (F : E₁ → E) (b : Idx → E₁) (gInv : Idx 
     (a : ℝ) (v : E) :
     tangentialPart F b gInv x (a • v) = a • tangentialPart F b gInv x v := by
   simp only [tangentialPart, Finset.smul_sum, smul_smul, real_inner_smul_left]
-  refine Finset.sum_congr rfl fun k _ => Finset.sum_congr rfl fun l _ => ?_
+  refine Finset.sum_congr rfl fun k _ ↦ Finset.sum_congr rfl fun l _ ↦ ?_
   ring_nf
 
 omit [DecidableEq Idx] in
@@ -235,24 +236,24 @@ theorem normalPart_smul_vec (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → 
 omit [DecidableEq Idx] in
 theorem tangentialPart_dilate (F : E₁ → E) {c : ℝ} (hc : c ≠ 0) (b : Idx → E₁)
     (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) :
-    tangentialPart (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x v =
+    tangentialPart (c • F) b (fun i j ↦ (c ^ 2)⁻¹ * gInv i j) x v =
       tangentialPart F b gInv x v := by
   simp only [tangentialPart, frameTangent, fderiv_const_smul_field, Pi.smul_apply,
     smul_apply, real_inner_smul_right, smul_smul]
-  refine Finset.sum_congr rfl fun k _ => Finset.sum_congr rfl fun l _ => ?_
+  refine Finset.sum_congr rfl fun k _ ↦ Finset.sum_congr rfl fun l _ ↦ ?_
   congr 1
   field_simp
 
 omit [DecidableEq Idx] in
 theorem meanCurvatureNormal_dilate (F : E₁ → E) {c : ℝ} (hc : c ≠ 0) (b : Idx → E₁)
     (gInv : Idx → Idx → ℝ) (x : E₁) :
-    meanCurvatureNormal (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x =
+    meanCurvatureNormal (c • F) b (fun i j ↦ (c ^ 2)⁻¹ * gInv i j) x =
       c⁻¹ • meanCurvatureNormal F b gInv x := by
-  have hH : meanCurvatureVectorFrame (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x =
+  have hH : meanCurvatureVectorFrame (c • F) b (fun i j ↦ (c ^ 2)⁻¹ * gInv i j) x =
       c⁻¹ • meanCurvatureVectorFrame F b gInv x := by
     simp only [meanCurvatureVectorFrame, secondDerivative, fderiv_const_smul_field,
       Pi.smul_apply, smul_apply, Finset.smul_sum, smul_smul]
-    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
     congr 1
     field_simp
   rw [meanCurvatureNormal, hH, normalPart, tangentialPart_dilate F hc, tangentialPart_smul_vec,
@@ -263,14 +264,14 @@ theorem inner_tangentialPart_frameTangent
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
     (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
     (v : E) (j : Idx) :
-    @inner ℝ E _ (tangentialPart F b gInv x v) (frameTangent F b x j) =
-      @inner ℝ E _ v (frameTangent F b x j) := by
-  have hstep : @inner ℝ E _ (tangentialPart F b gInv x v) (frameTangent F b x j) =
-      ∑ l, @inner ℝ E _ v (frameTangent F b x l) *
+    ⟪tangentialPart F b gInv x v, frameTangent F b x j⟫_ℝ =
+      ⟪v, frameTangent F b x j⟫_ℝ := by
+  have hstep : ⟪tangentialPart F b gInv x v, frameTangent F b x j⟫_ℝ =
+      ∑ l, ⟪v, frameTangent F b x l⟫_ℝ *
         ∑ k, gInv l k * frameGram F b x k j := by
     simp only [tangentialPart, sum_inner, real_inner_smul_left, Finset.mul_sum]
     rw [Finset.sum_comm]
-    refine Finset.sum_congr rfl fun l _ => Finset.sum_congr rfl fun k _ => ?_
+    refine Finset.sum_congr rfl fun l _ ↦ Finset.sum_congr rfl fun k _ ↦ ?_
     rw [hsymm k l, frameGram]
     ring
   rw [hstep]
@@ -281,7 +282,7 @@ theorem inner_normalPart_frameTangent
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
     (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
     (v : E) (j : Idx) :
-    @inner ℝ E _ (normalPart F b gInv x v) (frameTangent F b x j) = 0 := by
+    ⟪normalPart F b gInv x v, frameTangent F b x j⟫_ℝ = 0 := by
   rw [normalPart, inner_sub_left, inner_tangentialPart_frameTangent hinv hsymm, sub_self]
 
 /-- For a spanning frame, the normal part is orthogonal to every tangent vector `dF_x(w)`:
@@ -291,7 +292,7 @@ theorem inner_normalPart_fderiv
     (hb : Submodule.span ℝ (Set.range b) = ⊤)
     (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
     (v : E) (w : E₁) :
-    @inner ℝ E _ (normalPart F b gInv x v) (fderiv ℝ F x w) = 0 := by
+    ⟪normalPart F b gInv x v, fderiv ℝ F x w⟫_ℝ = 0 := by
   set L : E₁ →L[ℝ] ℝ := (innerSL ℝ (normalPart F b gInv x v)).comp (fderiv ℝ F x) with hL
   have hker : Submodule.span ℝ (Set.range b) ≤ LinearMap.ker (L : E₁ →ₗ[ℝ] ℝ) := by
     rw [Submodule.span_le]
@@ -318,7 +319,7 @@ theorem normalPartₗ_apply (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → 
 omit [DecidableEq Idx] in
 /-- A vector orthogonal to every frame vector is its own normal part. -/
 theorem normalPart_eq_self {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁} {v : E}
-    (hv : ∀ k, @inner ℝ E _ v (frameTangent F b x k) = 0) :
+    (hv : ∀ k, ⟪v, frameTangent F b x k⟫_ℝ = 0) :
     normalPart F b gInv x v = v := by
   simp only [normalPart, tangentialPart, hv, mul_zero, zero_smul, Finset.sum_const_zero,
     sub_zero]
@@ -331,9 +332,9 @@ theorem normalPart_fderiv_eq_zero {F : E₁ → E} {b : Idx → E₁} {gInv : Id
   set u := normalPart F b gInv x (fderiv ℝ F x w)
   -- `u` is itself a tangent vector `dF_x(z)`
   have hu : u = fderiv ℝ F x (w - ∑ k, ∑ l,
-      (gInv k l * @inner ℝ E _ (fderiv ℝ F x w) (frameTangent F b x l)) • b k) := by
+      (gInv k l * ⟪fderiv ℝ F x w, frameTangent F b x l⟫_ℝ) • b k) := by
     simp only [u, normalPart, tangentialPart, map_sub, map_sum, map_smul, frameTangent]
-  have h0 : @inner ℝ E _ u u = 0 := by
+  have h0 : ⟪u, u⟫_ℝ = 0 := by
     conv_lhs => arg 3; rw [hu]
     exact inner_normalPart_fderiv hb hinv hsymm _ _
   exact inner_self_eq_zero.mp h0
@@ -343,7 +344,7 @@ theorem inner_normalPart_tangentialPart
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
     (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i)
     (v w : E) :
-    @inner ℝ E _ (normalPart F b gInv x v) (tangentialPart F b gInv x w) = 0 := by
+    ⟪normalPart F b gInv x v, tangentialPart F b gInv x w⟫_ℝ = 0 := by
   simp only [tangentialPart, inner_sum, real_inner_smul_right,
     inner_normalPart_frameTangent hinv hsymm, mul_zero, Finset.sum_const_zero]
 
@@ -352,10 +353,10 @@ omit [DecidableEq Idx] in
 theorem inner_tangentialPart_self
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
     (hsymm : ∀ i j, gInv i j = gInv j i) (v : E) :
-    @inner ℝ E _ (tangentialPart F b gInv x v) v = tangentialNormSq F b gInv x v := by
+    ⟪tangentialPart F b gInv x v, v⟫_ℝ = tangentialNormSq F b gInv x v := by
   simp only [tangentialPart, tangentialNormSq, sum_inner, real_inner_smul_left]
   rw [Finset.sum_comm]
-  refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+  refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
   rw [hsymm j i, real_inner_comm (frameTangent F b x j) v]
   ring
 
@@ -364,15 +365,15 @@ on a normal vector it agrees with pairing against the plain trace. -/
 theorem inner_meanCurvatureNormal_eq
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
     (hinv : IsFrameInverse F b x gInv) (hsymm : ∀ i j, gInv i j = gInv j i) (v : E) :
-    @inner ℝ E _ v (meanCurvatureNormal F b gInv x) =
-      @inner ℝ E _ (normalPart F b gInv x v) (meanCurvatureVectorFrame F b gInv x) := by
+    ⟪v, meanCurvatureNormal F b gInv x⟫_ℝ =
+      ⟪normalPart F b gInv x v, meanCurvatureVectorFrame F b gInv x⟫_ℝ := by
   have hv : v = normalPart F b gInv x v + tangentialPart F b gInv x v := by
     simp [normalPart]
   have hH : meanCurvatureVectorFrame F b gInv x =
       meanCurvatureNormal F b gInv x +
         tangentialPart F b gInv x (meanCurvatureVectorFrame F b gInv x) := by
     simp [meanCurvatureNormal, normalPart]
-  have h0 : @inner ℝ E _ (tangentialPart F b gInv x v) (meanCurvatureNormal F b gInv x) = 0 := by
+  have h0 : ⟪tangentialPart F b gInv x v, meanCurvatureNormal F b gInv x⟫_ℝ = 0 := by
     rw [real_inner_comm, meanCurvatureNormal, inner_normalPart_tangentialPart hinv hsymm]
   conv_lhs => rw [hv]
   conv_rhs => rw [hH]
@@ -395,7 +396,7 @@ omit [DecidableEq Idx] in
 theorem tangentialDivergence_sub (F : E₁ → E) {ξ₁ ξ₂ : E₁ → E} (b : Idx → E₁)
     (gInv : Idx → Idx → ℝ) {x : E₁} (h₁ : DifferentiableAt ℝ ξ₁ x)
     (h₂ : DifferentiableAt ℝ ξ₂ x) :
-    tangentialDivergence F (fun y => ξ₁ y - ξ₂ y) b gInv x =
+    tangentialDivergence F (fun y ↦ ξ₁ y - ξ₂ y) b gInv x =
       tangentialDivergence F ξ₁ b gInv x - tangentialDivergence F ξ₂ b gInv x := by
   simp only [tangentialDivergence, fderiv_fun_sub h₁ h₂, sub_apply,
     inner_sub_left, mul_sub, Finset.sum_sub_distrib]
@@ -405,13 +406,13 @@ omit [DecidableEq Idx] in
 is. -/
 theorem differentiableAt_tangentialPart {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x)
     (b : Idx → E₁) {gInv : E₁ → Idx → Idx → ℝ}
-    (hg : ∀ k l, DifferentiableAt ℝ (fun y => gInv y k l) x) {v : E₁ → E}
+    (hg : ∀ k l, DifferentiableAt ℝ (fun y ↦ gInv y k l) x) {v : E₁ → E}
     (hv : DifferentiableAt ℝ v x) :
-    DifferentiableAt ℝ (fun y => tangentialPart F b (gInv y) y (v y)) x := by
-  have hT : ∀ k, DifferentiableAt ℝ (fun y => frameTangent F b y k) x := fun k =>
+    DifferentiableAt ℝ (fun y ↦ tangentialPart F b (gInv y) y (v y)) x := by
+  have hT : ∀ k, DifferentiableAt ℝ (fun y ↦ frameTangent F b y k) x := fun k ↦
     (hasFDerivAt_fderiv_apply hF (b k)).differentiableAt
   unfold tangentialPart
-  refine DifferentiableAt.fun_sum fun k _ => DifferentiableAt.fun_sum fun l _ => ?_
+  refine DifferentiableAt.fun_sum fun k _ ↦ DifferentiableAt.fun_sum fun l _ ↦ ?_
   exact ((hg k l).mul (hv.inner ℝ (hT l))).smul (hT k)
 
 /-- **Beltrami's formula for `|F|²/2`.** The tangential divergence of the tangential part of
@@ -421,19 +422,19 @@ theorem tangentialDivergence_tangentialPart_position {F : E₁ → E} {x : E₁}
     (gInv : E₁ → Idx → Idx → ℝ)
     (hinv : ∀ᶠ y in nhds x, IsFrameInverse F b y (gInv y))
     (hsymm : ∀ y i j, gInv y i j = gInv y j i)
-    (hg : ∀ k l, DifferentiableAt ℝ (fun y => gInv y k l) x) :
-    tangentialDivergence F (fun y => tangentialPart F b (gInv y) y (F y)) b (gInv x) x =
+    (hg : ∀ k l, DifferentiableAt ℝ (fun y ↦ gInv y k l) x) :
+    tangentialDivergence F (fun y ↦ tangentialPart F b (gInv y) y (F y)) b (gInv x) x =
       (Fintype.card Idx : ℝ) +
-        @inner ℝ E _ (F x) (meanCurvatureNormal F b (gInv x) x) := by
+        ⟪F x, meanCurvatureNormal F b (gInv x) x⟫_ℝ := by
   have hFd : DifferentiableAt ℝ F x := hF.differentiableAt (by norm_num)
-  have hN : DifferentiableAt ℝ (fun y => normalPart F b (gInv y) y (F y)) x :=
+  have hN : DifferentiableAt ℝ (fun y ↦ normalPart F b (gInv y) y (F y)) x :=
     hFd.sub (differentiableAt_tangentialPart hF b hg hFd)
   -- the tangential part is the position vector minus its normal part
-  have hT : (fun y => tangentialPart F b (gInv y) y (F y)) =
-      fun y => F y - normalPart F b (gInv y) y (F y) := by
+  have hT : (fun y ↦ tangentialPart F b (gInv y) y (F y)) =
+      fun y ↦ F y - normalPart F b (gInv y) y (F y) := by
     funext y
     simp [normalPart]
-  have hnormal : IsNormalAlongNear F (fun y => normalPart F b (gInv y) y (F y)) x := by
+  have hnormal : IsNormalAlongNear F (fun y ↦ normalPart F b (gInv y) y (F y)) x := by
     filter_upwards [hinv] with y hy v
     exact inner_normalPart_fderiv hb hy (hsymm y) (F y) v
   rw [hT, tangentialDivergence_sub F b (gInv x) hFd hN,

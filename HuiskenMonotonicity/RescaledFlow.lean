@@ -29,7 +29,7 @@ analogous to the proof of Theorem 3.1." It is followed here.
   identity and Huisken's pointwise identity of Theorem 3.1 apply at `τ = 1/2`.
 -/
 
-open scoped Manifold ContDiff
+open scoped Manifold ContDiff RealInnerProductSpace InnerProductSpace
 
 noncomputable section
 
@@ -60,14 +60,14 @@ variable [T2Space M] [I.Boundaryless] [CompactSpace M]
 theorem integral_firstVariation_rescaled (f : SmoothImmersion I M E) :
     ∫ p, rescaledHeatKernel (f p) *
         ((Module.finrank ℝ E₁ : ℝ) - f.tangentialSqNorm p +
-          @inner ℝ E _ (f p) (f.meanCurvature p)) ∂f.surfaceMeasure = 0 := by
+          ⟪f p, f.meanCurvature p⟫_ℝ) ∂f.surfaceMeasure = 0 := by
   set n := Module.finrank ℝ E₁
   have h := f.integral_firstVariation n (1 / 2) (t := 0) (by norm_num)
   have hpt : ∀ p, rescaledHeatKernel (f p) *
-      ((n : ℝ) - f.tangentialSqNorm p + @inner ℝ E _ (f p) (f.meanCurvature p)) =
+      ((n : ℝ) - f.tangentialSqNorm p + ⟪f p, f.meanCurvature p⟫_ℝ) =
       (2 * Real.pi) ^ ((n : ℝ) / 2) * (backwardHeatKernel n (1 / 2) 0 (f p) *
         ((n : ℝ) - f.tangentialSqNorm p / (2 * (1 / 2 - 0)) +
-          @inner ℝ E _ (f p) (f.meanCurvature p))) := by
+          ⟪f p, f.meanCurvature p⟫_ℝ)) := by
     intro p
     rw [rescaledHeatKernel_eq n, show (2 : ℝ) * (1 / 2 - 0) = 1 by norm_num, div_one]
     ring
@@ -76,12 +76,12 @@ theorem integral_firstVariation_rescaled (f : SmoothImmersion I M E) :
 
 /-- The rescaled first-variation integrand is integrable on a closed manifold. -/
 theorem integrable_firstVariation_rescaled (f : SmoothImmersion I M E) :
-    Integrable (fun p => rescaledHeatKernel (f p) *
+    Integrable (fun p ↦ rescaledHeatKernel (f p) *
         ((Module.finrank ℝ E₁ : ℝ) - f.tangentialSqNorm p +
-          @inner ℝ E _ (f p) (f.meanCurvature p))) f.surfaceMeasure := by
+          ⟪f p, f.meanCurvature p⟫_ℝ)) f.surfaceMeasure := by
   set n := Module.finrank ℝ E₁
   refine ((f.integrable_firstVariation n (1 / 2) (t := 0) (by norm_num)).const_mul
-    ((2 * Real.pi) ^ ((n : ℝ) / 2))).congr (Filter.Eventually.of_forall fun p => ?_)
+    ((2 * Real.pi) ^ ((n : ℝ) / 2))).congr (Filter.Eventually.of_forall fun p ↦ ?_)
   simp only
   rw [rescaledHeatKernel_eq n, show (2 : ℝ) * (1 / 2 - 0) = 1 by norm_num, div_one]
   ring
@@ -95,7 +95,7 @@ variable [T2Space M] [I.Boundaryless]
 /-- `F` satisfies the **rescaled mean curvature flow** equation `∂_s F = Hvec + F` at time
 `s` (Huisken 1990, equation (4)). -/
 def IsRescaledMeanCurvatureFlowAt (F : SmoothImmersionFamily I M E) (s : ℝ) : Prop :=
-  ∀ p, HasDerivAt (fun r => F p r) ((F.slice s).meanCurvature p + F p s) s
+  ∀ p, HasDerivAt (fun r ↦ F p r) ((F.slice s).meanCurvature p + F p s) s
 
 /-- Under the rescaled flow, the time velocity read in a chart is `Hvec + F`. -/
 theorem timeVelocity_spaceTimeChartRep_rescaled (F : SmoothImmersionFamily I M E) {s : ℝ}
@@ -107,7 +107,7 @@ theorem timeVelocity_spaceTimeChartRep_rescaled (F : SmoothImmersionFamily I M E
   have hd : DifferentiableAt ℝ (F.spaceTimeChartRep α) (s, z) :=
     ((F.contDiffOn_spaceTimeChartRep α).contDiffAt
       (hs.mem_nhds ⟨Set.mem_univ _, hz⟩)).differentiableAt (by simp)
-  have hc : HasDerivAt (F.spaceTimeChartRep α ∘ fun r => (r, z))
+  have hc : HasDerivAt (F.spaceTimeChartRep α ∘ fun r ↦ (r, z))
       (fderiv ℝ (F.spaceTimeChartRep α) (s, z) ((1 : ℝ), (0 : E₁))) s :=
     hd.hasFDerivAt.comp_hasDerivAt s ((hasDerivAt_id' s).prodMk (hasDerivAt_const s z))
   exact hc.unique (hmcf ((extChartAt I α).symm z))
@@ -118,7 +118,7 @@ theorem continuous_meanCurvature_rescaled (F : SmoothImmersionFamily I M E) {s :
     (hmcf : F.IsRescaledMeanCurvatureFlowAt s) : Continuous (F.slice s).meanCurvature := by
   rw [continuous_iff_continuousAt]
   intro p
-  have hc : ContinuousAt (fun z => timeVelocity (F.spaceTimeChartRep p) s z - F.chartRep s p z)
+  have hc : ContinuousAt (fun z ↦ timeVelocity (F.spaceTimeChartRep p) s z - F.chartRep s p z)
       (extChartAt I p p) :=
     (F.differentiableAt_timeVelocity_spaceTimeChartRep p s
       (mem_extChartAt_target p)).continuousAt.sub
@@ -143,7 +143,7 @@ theorem traceTimeDerivMetric_of_isRescaledMeanCurvatureFlowAt
   set Φ := F.spaceTimeChartRep x
   set Fc := F.chartRep s x
   set gInv : Fin (Module.finrank ℝ E₁) → Fin (Module.finrank ℝ E₁) → ℝ :=
-    fun i j => chartInvGramOnE f.inducedMetric x i j y with hgInv
+    fun i j ↦ chartInvGramOnE f.inducedMetric x i j y with hgInv
   have hy : y ∈ (extChartAt I x).target := mem_extChartAt_target x
   have hsymm : (extChartAt I x).symm y = x := extChartAt_to_inv x
   have hopen := isOpen_extChartAt_target (I := I) x
@@ -153,30 +153,30 @@ theorem traceTimeDerivMetric_of_isRescaledMeanCurvatureFlowAt
       (hs.mem_nhds ⟨Set.mem_univ _, hy⟩)).of_le (by simp)
   have hF2 : ContDiffAt ℝ 2 Fc y := f.contDiffAt_chartRep x hy
   have hV := F.differentiableAt_timeVelocity_spaceTimeChartRep x s hy
-  have hcomm : ∀ k, HasDerivAt (fun r => frameTangent (F.chartRep r x) b y k)
-      (frameTangent (timeVelocity Φ s) b y k) s := fun k =>
+  have hcomm : ∀ k, HasDerivAt (fun r ↦ frameTangent (F.chartRep r x) b y k)
+      (frameTangent (timeVelocity Φ s) b y k) s := fun k ↦
     hasDerivAt_fderiv_spatialSlice_of_contDiffAt hΦ (b k)
   have hinvF : IsFrameInverse Fc b y gInv := f.isFrameInverse_chartInvGramOnE x hy
-  have hsymmG : ∀ i j, gInv i j = gInv j i := fun i j =>
+  have hsymmG : ∀ i j, gInv i j = gInv j i := fun i j ↦
     chartInvGramOnE_symm (I := I) _ x i j _
   have hinv : (chartGramMatrix (I := I) (F.inducedMetricFamily s) x x)⁻¹ = Matrix.of gInv := by
     ext i j
     change chartInvGramMatrix (I := I) f.inducedMetric x x i j =
       chartInvGramOnE f.inducedMetric x i j y
     rw [chartInvGramOnE_def, hsymm]
-  have hderiv : ∀ i j, deriv (fun r => chartGramMatrix (I := I)
+  have hderiv : ∀ i j, deriv (fun r ↦ chartGramMatrix (I := I)
       (F.inducedMetricFamily r) x x i j) s =
-      @inner ℝ E _ (frameTangent Fc b y i) (frameTangent (timeVelocity Φ s) b y j) +
-        @inner ℝ E _ (frameTangent (timeVelocity Φ s) b y i) (frameTangent Fc b y j) := by
+      ⟪frameTangent Fc b y i, frameTangent (timeVelocity Φ s) b y j⟫_ℝ +
+        ⟪frameTangent (timeVelocity Φ s) b y i, frameTangent Fc b y j⟫_ℝ := by
     intro i j
-    have hfun : (fun r => chartGramMatrix (I := I) (F.inducedMetricFamily r) x x i j) =
-        fun r => frameGram (F.chartRep r x) b y i j := by
+    have hfun : (fun r ↦ chartGramMatrix (I := I) (F.inducedMetricFamily r) x x i j) =
+        fun r ↦ frameGram (F.chartRep r x) b y i j := by
       funext r
       rw [inducedMetricFamily_apply]
       exact chartGramMatrix_inducedMetric_eq_frameGram_modelBasis F r x
         (mem_extChartAt_source x) i j
     rw [hfun]
-    exact (hasDerivAt_frameGram (F := fun r => F.chartRep r x) (V := timeVelocity Φ)
+    exact (hasDerivAt_frameGram (F := fun r ↦ F.chartRep r x) (V := timeVelocity Φ)
       b i j hcomm).deriv
   -- the trace is twice the tangential divergence of the velocity
   have htrace : traceTimeDerivMetric (I := I) F.inducedMetricFamily s x =
@@ -184,13 +184,13 @@ theorem traceTimeDerivMetric_of_isRescaledMeanCurvatureFlowAt
     rw [traceTimeDerivMetric_eq, hinv, Matrix.trace,
       ← trace_frameGram_deriv_eq_two_mul_tangentialDivergence b gInv hsymmG]
     simp only [Matrix.diag_apply, Matrix.mul_apply, Matrix.of_apply]
-    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
     rw [hderiv j i, real_inner_comm (frameTangent Fc b y i)
       (frameTangent (timeVelocity Φ s) b y j)]
     simp only [frameTangent_apply]
     rw [real_inner_comm (fderiv ℝ (timeVelocity Φ s) y (b i)) (fderiv ℝ Fc y (b j))]
   -- the velocity splits as the normal field `Hvec` plus the position
-  set Hc : E₁ → E := fun z => timeVelocity Φ s z - Fc z with hHc
+  set Hc : E₁ → E := fun z ↦ timeVelocity Φ s z - Fc z with hHc
   have hFd : DifferentiableAt ℝ Fc y := hF2.differentiableAt (by norm_num)
   have hHcd : DifferentiableAt ℝ Hc y := hV.sub hFd
   have hHcy : Hc y = f.meanCurvature x := by
@@ -211,7 +211,7 @@ theorem traceTimeDerivMetric_of_isRescaledMeanCurvatureFlowAt
     ring
   have hdivH : tangentialDivergence Fc Hc b gInv y = -‖f.meanCurvature x‖ ^ 2 := by
     rw [tangentialDivergence_of_isNormalAlong hF2 hHcd hnormal b gInv, hHcy]
-    have hzero : ∀ l, @inner ℝ E _ (f.meanCurvature x) (frameTangent Fc b y l) = 0 := fun l =>
+    have hzero : ∀ l, ⟪f.meanCurvature x, frameTangent Fc b y l⟫_ℝ = 0 := fun l ↦
       inner_normalPart_frameTangent hinvF hsymmG _ l
     have hT0 : tangentialPart Fc b gInv y (f.meanCurvature x) = 0 := by
       simp only [tangentialPart, hzero, mul_zero, zero_smul, Finset.sum_const_zero]
@@ -220,7 +220,7 @@ theorem traceTimeDerivMetric_of_isRescaledMeanCurvatureFlowAt
     have hHH := inner_meanCurvatureNormal_eq hinvF hsymmG (f.meanCurvature x)
     rw [hN] at hHH
     rw [← hHH]
-    exact congrArg (fun r => -r) (real_inner_self_eq_norm_sq _)
+    exact congrArg (fun r ↦ -r) (real_inner_self_eq_norm_sq _)
   have hdivF : tangentialDivergence Fc Fc b gInv y = (Module.finrank ℝ E₁ : ℝ) := by
     rw [tangentialDivergence_self Fc b hinvF, Fintype.card_fin]
   rw [htrace, hdivV, hdivH, hdivF]
@@ -233,23 +233,23 @@ immersions of a closed manifold satisfies the rescaled equation `∂_s F = Hvec 
   `d/ds ∫_M ρ̃(F) dμ_s = -∫_M ρ̃(F) ‖Hvec + F^⊥‖² dμ_s`. -/
 theorem huisken_monotonicity_rescaled [CompactSpace M] (F : SmoothImmersionFamily I M E)
     {s : ℝ} (hmcf : F.IsRescaledMeanCurvatureFlowAt s) :
-    HasDerivAt (fun r => ∫ p, rescaledHeatKernel (F p r) ∂(F.surfaceMeasure r))
+    HasDerivAt (fun r ↦ ∫ p, rescaledHeatKernel (F p r) ∂(F.surfaceMeasure r))
       (-∫ p, rescaledHeatKernel (F p s) *
           ‖(F.slice s).meanCurvature p + (F.slice s).normalPosition p‖ ^ 2
         ∂(F.surfaceMeasure s)) s := by
   set n := Module.finrank ℝ E₁
   set f := F.slice s
-  have hρ : Continuous fun p => rescaledHeatKernel (F p s) :=
+  have hρ : Continuous fun p ↦ rescaledHeatKernel (F p s) :=
     contDiff_rescaledHeatKernel.continuous.comp (F.contMDiff_timeSlice s).continuous
-  have hFc : Continuous fun p => F p s := (F.contMDiff_timeSlice s).continuous
+  have hFc : Continuous fun p ↦ F p s := (F.contMDiff_timeSlice s).continuous
   have hHc : Continuous f.meanCurvature := F.continuous_meanCurvature_rescaled hmcf
   have hT := hasDerivAt_integral_comp F (contDiff_rescaledHeatKernel (E := E)) s
   -- the chain-rule integrand, with `dμ_s/ds = (n - H²) μ_s`
-  have hC : ∀ p, deriv (fun r => rescaledHeatKernel (F p r)) s +
+  have hC : ∀ p, deriv (fun r ↦ rescaledHeatKernel (F p r)) s +
         (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) F.inducedMetricFamily s p *
           rescaledHeatKernel (F p s) =
       rescaledHeatKernel (F p s) *
-        ((n : ℝ) - ‖F p s‖ ^ 2 - @inner ℝ E _ (F p s) (f.meanCurvature p) -
+        ((n : ℝ) - ‖F p s‖ ^ 2 - ⟪F p s, f.meanCurvature p⟫_ℝ -
           ‖f.meanCurvature p‖ ^ 2) := by
     intro p
     rw [(hasDerivAt_rescaledHeatKernel_curve (hmcf p)).deriv,
@@ -258,11 +258,11 @@ theorem huisken_monotonicity_rescaled [CompactSpace M] (F : SmoothImmersionFamil
     ring
   -- Huisken's pointwise identity at `τ = 1/2`
   have hsplit : ∀ p, rescaledHeatKernel (F p s) *
-        ((n : ℝ) - ‖F p s‖ ^ 2 - @inner ℝ E _ (F p s) (f.meanCurvature p) -
+        ((n : ℝ) - ‖F p s‖ ^ 2 - ⟪F p s, f.meanCurvature p⟫_ℝ -
           ‖f.meanCurvature p‖ ^ 2) =
       -(rescaledHeatKernel (F p s) * ‖f.meanCurvature p + f.normalPosition p‖ ^ 2) +
         rescaledHeatKernel (F p s) *
-          ((n : ℝ) - f.tangentialSqNorm p + @inner ℝ E _ (F p s) (f.meanCurvature p)) := by
+          ((n : ℝ) - f.tangentialSqNorm p + ⟪F p s, f.meanCurvature p⟫_ℝ) := by
     intro p
     have h := huisken_pointwise_identity n (1 / 2) (by norm_num) (F p s) (f.normalPosition p)
       (f.meanCurvature p) (rescaledHeatKernel (F p s))
@@ -272,29 +272,29 @@ theorem huisken_monotonicity_rescaled [CompactSpace M] (F : SmoothImmersionFamil
     rw [show (2 : ℝ) * (1 / 2) = 1 by norm_num, show (4 : ℝ) * (1 / 2) ^ 2 = 1 by norm_num,
       div_one, div_one, div_one, div_one, div_one, one_smul, one_mul] at h
     linarith
-  have hFV : Integrable (fun p => rescaledHeatKernel (F p s) *
-      ((n : ℝ) - f.tangentialSqNorm p + @inner ℝ E _ (F p s) (f.meanCurvature p)))
+  have hFV : Integrable (fun p ↦ rescaledHeatKernel (F p s) *
+      ((n : ℝ) - f.tangentialSqNorm p + ⟪F p s, f.meanCurvature p⟫_ℝ))
       (F.surfaceMeasure s) :=
     f.integrable_firstVariation_rescaled
   have hFV0 : ∫ p, rescaledHeatKernel (F p s) *
-      ((n : ℝ) - f.tangentialSqNorm p + @inner ℝ E _ (F p s) (f.meanCurvature p))
+      ((n : ℝ) - f.tangentialSqNorm p + ⟪F p s, f.meanCurvature p⟫_ℝ)
       ∂(F.surfaceMeasure s) = 0 :=
     f.integral_firstVariation_rescaled
-  have hCint : Integrable (fun p => rescaledHeatKernel (F p s) *
-      ((n : ℝ) - ‖F p s‖ ^ 2 - @inner ℝ E _ (F p s) (f.meanCurvature p) -
+  have hCint : Integrable (fun p ↦ rescaledHeatKernel (F p s) *
+      ((n : ℝ) - ‖F p s‖ ^ 2 - ⟪F p s, f.meanCurvature p⟫_ℝ -
         ‖f.meanCurvature p‖ ^ 2)) (F.surfaceMeasure s) :=
     f.integrable_of_continuous (by fun_prop)
-  have hS : Integrable (fun p => rescaledHeatKernel (F p s) *
+  have hS : Integrable (fun p ↦ rescaledHeatKernel (F p s) *
       ‖f.meanCurvature p + f.normalPosition p‖ ^ 2) (F.surfaceMeasure s) := by
-    refine (hFV.sub hCint).congr (Filter.Eventually.of_forall fun p => ?_)
+    refine (hFV.sub hCint).congr (Filter.Eventually.of_forall fun p ↦ ?_)
     simp only [Pi.sub_apply, hsplit p]
     ring
-  have hval : ∫ p, (deriv (fun r => rescaledHeatKernel (F p r)) s +
+  have hval : ∫ p, (deriv (fun r ↦ rescaledHeatKernel (F p r)) s +
         (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) F.inducedMetricFamily s p *
           rescaledHeatKernel (F p s)) ∂(F.surfaceMeasure s) =
       -∫ p, rescaledHeatKernel (F p s) * ‖f.meanCurvature p + f.normalPosition p‖ ^ 2
         ∂(F.surfaceMeasure s) := by
-    have hS' : Integrable (fun p => -(rescaledHeatKernel (F p s) *
+    have hS' : Integrable (fun p ↦ -(rescaledHeatKernel (F p s) *
         ‖f.meanCurvature p + f.normalPosition p‖ ^ 2)) (F.surfaceMeasure s) := hS.neg
     simp only [hC, hsplit]
     rw [integral_add hS' hFV, integral_neg, hFV0, add_zero]

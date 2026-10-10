@@ -27,6 +27,8 @@ The proof needs no connection: differentiate `g_{jk} = ⟪∂_j F, ∂_k F⟫` b
 form the Koszul combination, and cancel using symmetry of the second derivative.
 -/
 
+open scoped InnerProductSpace
+
 namespace HuiskenMonotonicity
 
 variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
@@ -39,13 +41,13 @@ omit [Fintype Idx] [DecidableEq Idx] in
   `∂_v g_{jk} = ⟪D²F(v, ∂_j), ∂_k F⟫ + ⟪∂_j F, D²F(v, ∂_k)⟫`. -/
 theorem fderiv_frameGram {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁)
     (v : E₁) (j k : Idx) :
-    fderiv ℝ (fun y => frameGram F b y j k) x v =
-      @inner ℝ E _ (secondDerivative F x v (b j)) (frameTangent F b x k) +
-        @inner ℝ E _ (frameTangent F b x j) (secondDerivative F x v (b k)) := by
+    fderiv ℝ (fun y ↦ frameGram F b y j k) x v =
+      ⟪secondDerivative F x v (b j), frameTangent F b x k⟫_ℝ +
+        ⟪frameTangent F b x j, secondDerivative F x v (b k)⟫_ℝ := by
   have hprod := (hasFDerivAt_fderiv_apply hF (b j)).inner (𝕜 := ℝ)
     (hasFDerivAt_fderiv_apply hF (b k))
-  have hfun : (fun y => frameGram F b y j k) =
-      fun y => @inner ℝ E _ (fderiv ℝ F y (b j)) (fderiv ℝ F y (b k)) := rfl
+  have hfun : (fun y ↦ frameGram F b y j k) =
+      fun y ↦ ⟪fderiv ℝ F y (b j), fderiv ℝ F y (b k)⟫_ℝ := rfl
   rw [hfun, hprod.fderiv]
   simp only [ContinuousLinearMap.coe_comp, Function.comp_apply,
     ContinuousLinearMap.prod_apply, fderivInnerCLM_apply, ContinuousLinearMap.flip_apply,
@@ -61,10 +63,10 @@ The right-hand side is the Christoffel symbol of the first kind of the induced m
 this is the Gauss formula in coordinates. -/
 theorem inner_secondDerivative_frameTangent_eq_koszul {F : E₁ → E} {x : E₁}
     (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁) (i j k : Idx) :
-    @inner ℝ E _ (secondDerivative F x (b i) (b j)) (frameTangent F b x k) =
-      (fderiv ℝ (fun y => frameGram F b y j k) x (b i) +
-        fderiv ℝ (fun y => frameGram F b y i k) x (b j) -
-        fderiv ℝ (fun y => frameGram F b y i j) x (b k)) / 2 := by
+    ⟪secondDerivative F x (b i) (b j), frameTangent F b x k⟫_ℝ =
+      (fderiv ℝ (fun y ↦ frameGram F b y j k) x (b i) +
+        fderiv ℝ (fun y ↦ frameGram F b y i k) x (b j) -
+        fderiv ℝ (fun y ↦ frameGram F b y i j) x (b k)) / 2 := by
   rw [fderiv_frameGram hF, fderiv_frameGram hF, fderiv_frameGram hF]
   -- name the three distinct second-derivative pairings
   have s1 := secondDerivative_symm_of_contDiffAt hF (b j) (b i)
@@ -76,10 +78,10 @@ theorem inner_secondDerivative_frameTangent_eq_koszul {F : E₁ → E} {x : E₁
 omit [DecidableEq Idx] [Fintype Idx] in
 /-- The Gram matrix is symmetric as a function, so its directional derivatives are too. -/
 lemma fderiv_frameGram_comm (F : E₁ → E) (b : Idx → E₁) (x v : E₁) (j k : Idx) :
-    fderiv ℝ (fun y => frameGram F b y j k) x v =
-      fderiv ℝ (fun y => frameGram F b y k j) x v := by
-  have h : (fun y => frameGram F b y j k) = fun y => frameGram F b y k j :=
-    funext fun y => frameGram_symm F b y j k
+    fderiv ℝ (fun y ↦ frameGram F b y j k) x v =
+      fderiv ℝ (fun y ↦ frameGram F b y k j) x v := by
+  have h : (fun y ↦ frameGram F b y j k) = fun y ↦ frameGram F b y k j :=
+    funext fun y ↦ frameGram_symm F b y j k
   rw [h]
 
 omit [DecidableEq Idx] in
@@ -95,21 +97,21 @@ theorem sum_inner_secondDerivative_frameTangent_eq_half_trace {F : E₁ → E}
     {x : E₁} (hF : ContDiffAt ℝ 2 F x) (b : Idx → E₁) (gInv : Idx → Idx → ℝ)
     (hsymm : ∀ i j, gInv i j = gInv j i) (k : Idx) :
     ∑ i, ∑ j, gInv i j *
-        @inner ℝ E _ (secondDerivative F x (b i) (b k)) (frameTangent F b x j) =
-      (∑ i, ∑ j, gInv i j * fderiv ℝ (fun y => frameGram F b y i j) x (b k)) / 2 := by
+        ⟪secondDerivative F x (b i) (b k), frameTangent F b x j⟫_ℝ =
+      (∑ i, ∑ j, gInv i j * fderiv ℝ (fun y ↦ frameGram F b y i j) x (b k)) / 2 := by
   -- the two Koszul terms differentiating in a summed direction coincide
   have hcancel :
-      ∑ i, ∑ j, gInv i j * fderiv ℝ (fun y => frameGram F b y k j) x (b i) =
-        ∑ i, ∑ j, gInv i j * fderiv ℝ (fun y => frameGram F b y i k) x (b j) := by
+      ∑ i, ∑ j, gInv i j * fderiv ℝ (fun y ↦ frameGram F b y k j) x (b i) =
+        ∑ i, ∑ j, gInv i j * fderiv ℝ (fun y ↦ frameGram F b y i k) x (b j) := by
     rw [Finset.sum_comm
-      (f := fun i j => gInv i j * fderiv ℝ (fun y => frameGram F b y i k) x (b j))]
-    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+      (f := fun i j ↦ gInv i j * fderiv ℝ (fun y ↦ frameGram F b y i k) x (b j))]
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
     rw [hsymm j i, fderiv_frameGram_comm F b x (b i) j k]
   have hterm : ∀ i j, gInv i j *
-        @inner ℝ E _ (secondDerivative F x (b i) (b k)) (frameTangent F b x j) =
-      (gInv i j * fderiv ℝ (fun y => frameGram F b y k j) x (b i) +
-        gInv i j * fderiv ℝ (fun y => frameGram F b y i j) x (b k) -
-        gInv i j * fderiv ℝ (fun y => frameGram F b y i k) x (b j)) / 2 := by
+        ⟪secondDerivative F x (b i) (b k), frameTangent F b x j⟫_ℝ =
+      (gInv i j * fderiv ℝ (fun y ↦ frameGram F b y k j) x (b i) +
+        gInv i j * fderiv ℝ (fun y ↦ frameGram F b y i j) x (b k) -
+        gInv i j * fderiv ℝ (fun y ↦ frameGram F b y i k) x (b j)) / 2 := by
     intro i j
     rw [inner_secondDerivative_frameTangent_eq_koszul hF b i k j]
     ring
@@ -133,17 +135,17 @@ theorem fderiv_tangentField {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F
       ∑ k, (fderiv ℝ (Z k) x v • frameTangent F b x k +
         Z k x • secondDerivative F x v (b k)) := by
   have hk : ∀ k ∈ (Finset.univ : Finset Idx),
-      HasFDerivAt (fun y => Z k y • fderiv ℝ F y (b k))
+      HasFDerivAt (fun y ↦ Z k y • fderiv ℝ F y (b k))
         (Z k x • (fderiv ℝ (fderiv ℝ F) x).flip (b k) +
           (fderiv ℝ (Z k) x).smulRight (fderiv ℝ F x (b k))) x :=
-    fun k _ => (hZ k).hasFDerivAt.smul (hasFDerivAt_fderiv_apply hF (b k))
+    fun k _ ↦ (hZ k).hasFDerivAt.smul (hasFDerivAt_fderiv_apply hF (b k))
   have hsum := HasFDerivAt.fun_sum hk
-  have hfun : tangentField F b Z = fun y => ∑ k, Z k y • fderiv ℝ F y (b k) := rfl
+  have hfun : tangentField F b Z = fun y ↦ ∑ k, Z k y • fderiv ℝ F y (b k) := rfl
   rw [hfun, hsum.fderiv]
   simp only [sum_apply, add_apply,
     smul_apply, ContinuousLinearMap.flip_apply,
     ContinuousLinearMap.smulRight_apply, frameTangent_apply, secondDerivative_eq_fderiv_fderiv]
-  refine Finset.sum_congr rfl fun k _ => ?_
+  refine Finset.sum_congr rfl fun k _ ↦ ?_
   rw [add_comm]
 
 /-- **The divergence of a tangential field, in coordinates.**
@@ -161,22 +163,22 @@ theorem tangentialDivergence_tangentField {F : E₁ → E} {x : E₁} (hF : Cont
     tangentialDivergence F (tangentField F b Z) b gInv x =
       ∑ i, fderiv ℝ (Z i) x (b i) +
         ∑ k, Z k x *
-          ((∑ i, ∑ j, gInv i j * fderiv ℝ (fun y => frameGram F b y i j) x (b k)) / 2) := by
+          ((∑ i, ∑ j, gInv i j * fderiv ℝ (fun y ↦ frameGram F b y i j) x (b k)) / 2) := by
   -- the inverse metric contracts the Gram matrix to the identity
   have hdelta : ∀ i k, ∑ j, gInv i j * frameGram F b x k j = if i = k then 1 else 0 := by
     intro i k
     rw [← hinv i k]
-    refine Finset.sum_congr rfl fun j _ => ?_
+    refine Finset.sum_congr rfl fun j _ ↦ ?_
     rw [frameGram_symm]
   -- expand each summand of the divergence
   have hexp : ∀ i j, gInv i j *
-        @inner ℝ E _ (fderiv ℝ (tangentField F b Z) x (b i)) (frameTangent F b x j) =
+        ⟪fderiv ℝ (tangentField F b Z) x (b i), frameTangent F b x j⟫_ℝ =
       ∑ k, (fderiv ℝ (Z k) x (b i) * (gInv i j * frameGram F b x k j) +
         Z k x * (gInv i j *
-          @inner ℝ E _ (secondDerivative F x (b i) (b k)) (frameTangent F b x j))) := by
+          ⟪secondDerivative F x (b i) (b k), frameTangent F b x j⟫_ℝ)) := by
     intro i j
     rw [fderiv_tangentField hF b hZ, sum_inner, Finset.mul_sum]
-    refine Finset.sum_congr rfl fun k _ => ?_
+    refine Finset.sum_congr rfl fun k _ ↦ ?_
     rw [inner_add_left, real_inner_smul_left, real_inner_smul_left, frameGram]
     ring
   rw [tangentialDivergence]
@@ -185,24 +187,24 @@ theorem tangentialDivergence_tangentField {F : E₁ → E} {x : E₁} (hF : Cont
   · -- the coefficient-derivative part collapses to the trace
     calc ∑ i, ∑ j, ∑ k, fderiv ℝ (Z k) x (b i) * (gInv i j * frameGram F b x k j)
         = ∑ i, ∑ k, fderiv ℝ (Z k) x (b i) * ∑ j, gInv i j * frameGram F b x k j := by
-          refine Finset.sum_congr rfl fun i _ => ?_
+          refine Finset.sum_congr rfl fun i _ ↦ ?_
           rw [Finset.sum_comm]
-          refine Finset.sum_congr rfl fun k _ => ?_
+          refine Finset.sum_congr rfl fun k _ ↦ ?_
           rw [Finset.mul_sum]
       _ = ∑ i, fderiv ℝ (Z i) x (b i) := by
-          refine Finset.sum_congr rfl fun i _ => ?_
+          refine Finset.sum_congr rfl fun i _ ↦ ?_
           simp only [hdelta, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ,
             ite_true]
   · -- the coefficient part is the contracted Christoffel symbol
     calc ∑ i, ∑ j, ∑ k, Z k x * (gInv i j *
-            @inner ℝ E _ (secondDerivative F x (b i) (b k)) (frameTangent F b x j))
+            ⟪secondDerivative F x (b i) (b k), frameTangent F b x j⟫_ℝ)
         = ∑ k, Z k x * ∑ i, ∑ j, gInv i j *
-            @inner ℝ E _ (secondDerivative F x (b i) (b k)) (frameTangent F b x j) := by
+            ⟪secondDerivative F x (b i) (b k), frameTangent F b x j⟫_ℝ := by
           simp only [Finset.mul_sum]
           conv_lhs => arg 2; ext i; rw [Finset.sum_comm]
           rw [Finset.sum_comm]
       _ = _ := by
-          refine Finset.sum_congr rfl fun k _ => ?_
+          refine Finset.sum_congr rfl fun k _ ↦ ?_
           rw [sum_inner_secondDerivative_frameTangent_eq_half_trace hF b gInv hsymm k]
 
 end HuiskenMonotonicity

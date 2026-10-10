@@ -41,8 +41,8 @@ local instance instBorelSpaceTranslation : BorelSpace M := ⟨rfl⟩
 omit [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E] in
 /-- Translating a map into `E` does not change its differential. -/
 theorem mfderiv_sub_const {f : M → E} {p : M} (hf : MDifferentiableAt I 𝓘(ℝ, E) f p) (c : E) :
-    mfderiv I 𝓘(ℝ, E) (fun q => f q - c) p = mfderiv I 𝓘(ℝ, E) f p := by
-  change mfderiv I 𝓘(ℝ, E) (f - fun _ => c) p = _
+    mfderiv I 𝓘(ℝ, E) (fun q ↦ f q - c) p = mfderiv I 𝓘(ℝ, E) f p := by
+  change mfderiv I 𝓘(ℝ, E) (f - fun _ ↦ c) p = _
   rw [mfderiv_sub hf mdifferentiableAt_const, mfderiv_const]
   exact sub_zero (mfderiv I 𝓘(ℝ, E) f p : E₁ →L[ℝ] E)
 
@@ -50,7 +50,7 @@ namespace SmoothImmersion
 
 /-- The translate `f - c` of a smooth immersion. -/
 def translate (f : SmoothImmersion I M E) (c : E) : SmoothImmersion I M E :=
-  ⟨fun p => f p - c, f.contMDiff.sub contMDiff_const, fun p => by
+  ⟨fun p ↦ f p - c, f.contMDiff.sub contMDiff_const, fun p ↦ by
     rw [mfderiv_sub_const (f.contMDiff.mdifferentiableAt (by simp)) c]
     exact f.mfderiv_injective p⟩
 
@@ -108,8 +108,8 @@ namespace SmoothImmersionFamily
 
 /-- The translate `F - c` of a smooth immersion family. -/
 def translate (F : SmoothImmersionFamily I M E) (c : E) : SmoothImmersionFamily I M E :=
-  ⟨fun p t => F p t - c, F.contMDiff_spaceTime.sub contMDiff_const,
-    fun t => ((F.slice t).translate c).mfderiv_injective⟩
+  ⟨fun p t ↦ F p t - c, F.contMDiff_spaceTime.sub contMDiff_const,
+    fun t ↦ ((F.slice t).translate c).mfderiv_injective⟩
 
 @[simp]
 theorem translate_apply (F : SmoothImmersionFamily I M E) (c : E) (p : M) (t : ℝ) :
@@ -144,7 +144,7 @@ heat kernel centred at `(x₀, t₀)` with `t < t₀`,
 theorem huisken_monotonicity [CompactSpace M] (F : SmoothImmersionFamily I M E)
     (x₀ : E) (t₀ : ℝ) {t : ℝ} (hτ : t < t₀) (hmcf : F.IsMeanCurvatureFlowAt t) :
     HasDerivAt
-      (fun s => ∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (F p s - x₀)
+      (fun s ↦ ∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (F p s - x₀)
         ∂(F.surfaceMeasure s))
       (-∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ t (F p t - x₀) *
           ‖(F.slice t).meanCurvature p +

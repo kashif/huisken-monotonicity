@@ -52,7 +52,7 @@ metric into the Euclidean space. -/
 theorem isRiemannianIsometricImmersion (f : SmoothImmersion I M E)
     (hf : IsImmersion I 𝓘(ℝ, E) ∞ f) :
     IsRiemannianIsometricImmersion f.inducedMetric (euclideanMetric (E := E)) f :=
-  ⟨hf, fun x u v => by rw [euclideanMetric_inner, inducedMetric_inner]; rfl⟩
+  ⟨hf, fun x u v ↦ by rw [euclideanMetric_inner, inducedMetric_inner]; rfl⟩
 
 omit [T2Space M] [I.Boundaryless] in
 /-- The written-in-charts form of `f` at `p` is its chart representation. -/
@@ -100,10 +100,10 @@ theorem meanCurvatureVectorAt_eq (f : SmoothImmersion I M E)
   set b := chartModelBasis E₁ with hb_def
   set Fc := f.chartRep p
   set gInv : Fin (Module.finrank ℝ E₁) → Fin (Module.finrank ℝ E₁) → ℝ :=
-    fun i j => chartInvGramOnE f.inducedMetric p i j y with hgInv
+    fun i j ↦ chartInvGramOnE f.inducedMetric p i j y with hgInv
   have hy : y ∈ (extChartAt I p).target := mem_extChartAt_target p
   have hinv : IsFrameInverse Fc b y gInv := f.isFrameInverse_chartInvGramOnE p hy
-  have hsymm : ∀ i j, gInv i j = gInv j i := fun i j =>
+  have hsymm : ∀ i j, gInv i j = gInv j i := fun i j ↦
     chartInvGramOnE_symm (I := I) _ p i j _
   -- the library's inverse metric at the centre is ours
   have hg : ∀ i j, chartInvGramMatrix (I := I) f.inducedMetric p p i j = gInv i j := by
@@ -111,7 +111,7 @@ theorem meanCurvatureVectorAt_eq (f : SmoothImmersion I M E)
     rw [hgInv]
     simp only [chartInvGramOnE_def, y, extChartAt_to_inv]
   -- the chart frame is the model basis
-  have hB : ∀ i, eN (chartFrameBasisAt (IN := I) p i) = b i := fun i => by
+  have hB : ∀ i, eN (chartFrameBasisAt (IN := I) p i) = b i := fun i ↦ by
     rw [chartFrameBasisAt, Module.Basis.map_apply]
     exact eN.apply_symm_apply _
   -- the second fundamental form, read in `E`, is the normal part of the second derivative

@@ -89,7 +89,7 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDim
 /-- The chart Gram entries of the Euclidean metric are constant. -/
 theorem euclideanMetric_chartGramOnE' (x : V) (i j : Fin (Module.finrank ℝ V)) :
     chartGramOnE (I := 𝓘(ℝ, V)) (euclideanMetric (E := V)) x i j =
-      fun _ => inner ℝ (chartModelBasis V i) (chartModelBasis V j) := by
+      fun _ ↦ inner ℝ (chartModelBasis V i) (chartModelBasis V j) := by
   funext y
   simp only [chartGramOnE, chartGramMatrix, Matrix.of_apply, chartBasisVecFiber]
   simp only [TangentBundle.symmL_model_space]
@@ -110,7 +110,7 @@ theorem euclideanMetric_chartChristoffel' (x : V) (i j k : Fin (Module.finrank �
 theorem euclideanMetric_chartChristoffelContraction (x : V) (v w y : V) :
     chartChristoffelContraction (I := 𝓘(ℝ, V)) (euclideanMetric (E := V)) x v w y = 0 := by
   have h0 : ∀ i j k, chartChristoffel (I := 𝓘(ℝ, V)) (euclideanMetric (E := V)) x i j k y = 0 :=
-    fun i j k => congrFun (euclideanMetric_chartChristoffel' x i j k) y
+    fun i j k ↦ congrFun (euclideanMetric_chartChristoffel' x i j k) y
   simp only [chartChristoffelContraction, h0, zero_mul, Finset.sum_const_zero, zero_smul]
 
 end Euclidean

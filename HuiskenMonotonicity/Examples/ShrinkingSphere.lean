@@ -62,28 +62,28 @@ theorem SmoothImmersion.meanCurvature_eq_of_norm_eq (f : SmoothImmersion I M E) 
   have horth : ∀ z ∈ (extChartAt I p).target, ∀ v, ⟪Fc z, fderiv ℝ Fc z v⟫ = 0 := by
     intro z hz v
     have hd := ((f.contDiffAt_chartRep p hz).differentiableAt (by norm_num)).hasFDerivAt
-    have hconst : (fun z => ‖Fc z‖ ^ 2) = fun _ => R ^ 2 := by
+    have hconst : (fun z ↦ ‖Fc z‖ ^ 2) = fun _ ↦ R ^ 2 := by
       funext z
       change ‖f ((extChartAt I p).symm z)‖ ^ 2 = R ^ 2
       rw [hnorm]
     have h := hd.norm_sq
     rw [hconst] at h
-    have h0 := congrArg (fun L : E₁ →L[ℝ] ℝ => L v) ((hasFDerivAt_const (R ^ 2) z).unique h)
+    have h0 := congrArg (fun L : E₁ →L[ℝ] ℝ ↦ L v) ((hasFDerivAt_const (R ^ 2) z).unique h)
     simp at h0
     change ⟪f.chartRep p z, fderiv ℝ (f.chartRep p) z v⟫ = 0
     linarith
   -- so the tangential part of the position vector vanishes near `y`
-  have hT : (fun z => tangentialPart Fc (chartModelBasis E₁)
-        (fun k l => chartInvGramOnE f.inducedMetric p k l z) z (Fc z)) =ᶠ[nhds y]
-      fun _ => (0 : E) := by
+  have hT : (fun z ↦ tangentialPart Fc (chartModelBasis E₁)
+        (fun k l ↦ chartInvGramOnE f.inducedMetric p k l z) z (Fc z)) =ᶠ[nhds y]
+      fun _ ↦ (0 : E) := by
     filter_upwards [hopen.mem_nhds hy] with z hz
     simp only [tangentialPart, frameTangent, horth z hz, mul_zero, zero_smul,
       Finset.sum_const_zero]
   -- and Beltrami's formula gives `⟪F, Hvec⟫ = -n`
   have hbel := f.tangentialDivergence_tangentialPart_chartRep p hy
-  have hzero : tangentialDivergence Fc (fun z => tangentialPart Fc (chartModelBasis E₁)
-      (fun k l => chartInvGramOnE f.inducedMetric p k l z) z (Fc z)) (chartModelBasis E₁)
-      (fun k l => chartInvGramOnE f.inducedMetric p k l y) y = 0 := by
+  have hzero : tangentialDivergence Fc (fun z ↦ tangentialPart Fc (chartModelBasis E₁)
+      (fun k l ↦ chartInvGramOnE f.inducedMetric p k l z) z (Fc z)) (chartModelBasis E₁)
+      (fun k l ↦ chartInvGramOnE f.inducedMetric p k l y) y = 0 := by
     simp only [tangentialDivergence, hT.fderiv_eq, fderiv_fun_const, Pi.zero_apply,
       zero_apply, inner_zero_left, mul_zero, Finset.sum_const_zero]
   have hFH : ⟪f p, f.meanCurvature p⟫ = -(finrank ℝ E₁ : ℝ) := by
@@ -93,7 +93,7 @@ theorem SmoothImmersion.meanCurvature_eq_of_norm_eq (f : SmoothImmersion I M E) 
     linarith
   -- `Hvec` is normal, hence a multiple of the position vector
   obtain ⟨c, hc⟩ := Submodule.mem_span_singleton.mp
-    (hnormal p _ fun w => f.inner_meanCurvature_mfderiv p w)
+    (hnormal p _ fun w ↦ f.inner_meanCurvature_mfderiv p w)
   rw [← hc] at hFH ⊢
   rw [real_inner_smul_right, real_inner_self_eq_norm_sq, hnorm] at hFH
   have hR2 : R ^ 2 ≠ 0 := pow_ne_zero 2 hR
@@ -162,7 +162,7 @@ theorem contDiffAt_shrinkingSphereRadius {t : ℝ} (ht : t ∈ shrinkingSphereTi
 /-- The differential of the scaled inclusion of the sphere. -/
 theorem mfderiv_smul_coe_sphere (R : ℝ) (p : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1) :
     mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))
-        (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 => R • (q : EuclideanSpace ℝ
+        (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 ↦ R • (q : EuclideanSpace ℝ
           (Fin (n + 1)))) p =
       R • mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))
         ((↑) : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 → EuclideanSpace ℝ (Fin (n + 1)))
@@ -180,11 +180,11 @@ def shrinkingSphere :
   contMDiffOn := by
     rintro ⟨p, t⟩ ⟨-, ht⟩
     have hR : ContMDiffAt ((𝓡 n).prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, ℝ) ∞
-        (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 × ℝ =>
+        (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 × ℝ ↦
           shrinkingSphereRadius n q.2) (p, t) :=
       (contDiffAt_shrinkingSphereRadius n ht).contMDiffAt.comp (p, t) contMDiffAt_snd
     have hp : ContMDiffAt ((𝓡 n).prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1))) ∞
-        (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 × ℝ =>
+        (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 × ℝ ↦
           (q.1 : EuclideanSpace ℝ (Fin (n + 1)))) (p, t) :=
       (contMDiff_coe_sphere (p, t).1).comp (p, t) contMDiffAt_fst
     exact (hR.smul hp).contMDiffWithinAt
@@ -220,7 +220,7 @@ theorem shrinkingSphere_meanCurvature {t : ℝ} (ht : t ∈ shrinkingSphereTimes
     obtain ⟨w, rfl⟩ := hu
     have h := hv w
     change ⟪v, mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))
-      (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 =>
+      (fun q : sphere (0 : EuclideanSpace ℝ (Fin (n + 1))) 1 ↦
         shrinkingSphereRadius n t • (q : EuclideanSpace ℝ (Fin (n + 1)))) q w⟫ = 0 at h
     rw [mfderiv_smul_coe_sphere] at h
     change ⟪v, shrinkingSphereRadius n t • _⟫ = 0 at h
@@ -248,7 +248,7 @@ formula are satisfied by a genuine mean curvature flow, and its Gaussian density
 `t ↦ ∫_{Sⁿ} ρ_{x₀,t₀}(F, t) dμ_t` is non-increasing before `t₀`. -/
 theorem shrinkingSphere_antitoneOn_integral (x₀ : EuclideanSpace ℝ (Fin (n + 1))) (t₀ : ℝ) :
     AntitoneOn
-      (fun s => ∫ p, backwardHeatKernel n t₀ s ((shrinkingSphere n) p s - x₀)
+      (fun s ↦ ∫ p, backwardHeatKernel n t₀ s ((shrinkingSphere n) p s - x₀)
         ∂((shrinkingSphere n).surfaceMeasure s))
       (shrinkingSphereTimes n ∩ Iio t₀) := by
   have h := (shrinkingSphere n).antitoneOn_integral (convex_shrinkingSphereTimes n)

@@ -60,14 +60,14 @@ structure SmoothImmersionFamily [IsManifold I ∞ M] [FiniteDimensional ℝ E₁
     ContMDiff (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, E) ∞ (Function.uncurry toFun)
   /-- Every time slice is an immersion: its differential is injective. -/
   mfderiv_injective : ∀ (t : ℝ) (p : M),
-    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => toFun q t) p)
+    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q ↦ toFun q t) p)
 
 variable {I M E}
 variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 
 namespace SmoothImmersion
 
-instance : CoeFun (SmoothImmersion I M E) (fun _ => M → E) :=
+instance : CoeFun (SmoothImmersion I M E) (fun _ ↦ M → E) :=
   ⟨SmoothImmersion.toFun⟩
 
 /-- A smooth immersion in the sense of mathlib's `IsImmersion`. -/
@@ -78,17 +78,17 @@ end SmoothImmersion
 
 namespace SmoothImmersionFamily
 
-instance : CoeFun (SmoothImmersionFamily I M E) (fun _ => M → ℝ → E) :=
+instance : CoeFun (SmoothImmersionFamily I M E) (fun _ ↦ M → ℝ → E) :=
   ⟨SmoothImmersionFamily.toFun⟩
 
 /-- Each time slice is smooth. -/
 theorem contMDiff_timeSlice (F : SmoothImmersionFamily I M E) (t : ℝ) :
-    ContMDiff I 𝓘(ℝ, E) ∞ (fun p => F p t) :=
+    ContMDiff I 𝓘(ℝ, E) ∞ (fun p ↦ F p t) :=
   F.contMDiff_spaceTime.curry_left
 
 /-- The time slice `F_t`, as a smooth immersion. -/
 def slice (F : SmoothImmersionFamily I M E) (t : ℝ) : SmoothImmersion I M E :=
-  ⟨fun p => F p t, F.contMDiff_timeSlice t, F.mfderiv_injective t⟩
+  ⟨fun p ↦ F p t, F.contMDiff_timeSlice t, F.mfderiv_injective t⟩
 
 @[simp]
 theorem slice_apply (F : SmoothImmersionFamily I M E) (t : ℝ) (p : M) :

@@ -47,7 +47,7 @@ theorem exists_contDiff_reparam {J : Set ℝ} (hJ : IsOpen J) {t : ℝ} (ht : t 
     ∃ φ : ℝ → ℝ, ContDiff ℝ ∞ φ ∧ (∀ s, φ s ∈ J) ∧ ∀ᶠ s in 𝓝 t, φ s = s := by
   obtain ⟨r, hr0, hball⟩ := Metric.isOpen_iff.mp hJ t ht
   let β : ContDiffBump (0 : ℝ) := ⟨r / 2, r, by positivity, by linarith⟩
-  refine ⟨fun s => t + β (s - t) * (s - t), ?_, fun s => hball ?_, ?_⟩
+  refine ⟨fun s ↦ t + β (s - t) * (s - t), ?_, fun s ↦ hball ?_, ?_⟩
   · exact contDiff_const.add
       ((β.contDiff.comp (contDiff_id.sub contDiff_const)).mul (contDiff_id.sub contDiff_const))
   · -- `β (s - t) * (s - t)` is zero unless `|s - t| < r`, and then it is smaller than `r`
@@ -107,24 +107,24 @@ structure ImmersionFlowOn (J : Set ℝ) where
   contMDiffOn : ContMDiffOn (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, E) ∞ (Function.uncurry toFun) (univ ×ˢ J)
   /-- Every time slice in `J` is an immersion: its differential is injective. -/
   mfderiv_injective : ∀ t ∈ J, ∀ p : M,
-    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q => toFun q t) p)
+    Function.Injective (mfderiv I 𝓘(ℝ, E) (fun q ↦ toFun q t) p)
 
 namespace ImmersionFlowOn
 
 variable {J : Set ℝ}
 
-instance : CoeFun (ImmersionFlowOn I M E J) (fun _ => M → ℝ → E) :=
+instance : CoeFun (ImmersionFlowOn I M E J) (fun _ ↦ M → ℝ → E) :=
   ⟨ImmersionFlowOn.toFun⟩
 
 /-- The time slice at `t ∈ J`. -/
 def slice (G : ImmersionFlowOn I M E J) (t : ℝ) (ht : t ∈ J) : SmoothImmersion I M E :=
-  ⟨fun p => G p t,
-    G.contMDiffOn.comp_contMDiff (contMDiff_id.prodMk contMDiff_const) fun _ => ⟨mem_univ _, ht⟩,
+  ⟨fun p ↦ G p t,
+    G.contMDiffOn.comp_contMDiff (contMDiff_id.prodMk contMDiff_const) fun _ ↦ ⟨mem_univ _, ht⟩,
     G.mfderiv_injective t ht⟩
 
 /-- `G` moves by mean curvature: `∂_t G = Hvec` at every point and every time of `J`. -/
 def IsMeanCurvatureFlow [T2Space M] (G : ImmersionFlowOn I M E J) : Prop :=
-  ∀ t (ht : t ∈ J) p, HasDerivAt (fun s => G p s) ((G.slice t ht).meanCurvature p) t
+  ∀ t (ht : t ∈ J) p, HasDerivAt (fun s ↦ G p s) ((G.slice t ht).meanCurvature p) t
 
 open Classical in
 /-- The surface measure at time `t`, and `0` outside `J`. -/
@@ -138,17 +138,17 @@ def extendAt (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) :
     SmoothImmersionFamily I M E :=
   let φ := Classical.choose (exists_contDiff_reparam G.isOpen ht)
   have hφ := Classical.choose_spec (exists_contDiff_reparam G.isOpen ht)
-  ⟨fun p s => G p (φ s),
+  ⟨fun p s ↦ G p (φ s),
     G.contMDiffOn.comp_contMDiff (contMDiff_fst.prodMk (hφ.1.contMDiff.comp contMDiff_snd))
-      fun q => ⟨mem_univ _, hφ.2.1 q.2⟩,
-    fun s => G.mfderiv_injective (φ s) (hφ.2.1 s)⟩
+      fun q ↦ ⟨mem_univ _, hφ.2.1 q.2⟩,
+    fun s ↦ G.mfderiv_injective (φ s) (hφ.2.1 s)⟩
 
 /-- The extension agrees with `G` at all times near `t`. -/
 theorem eventually_extendAt (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) :
     ∀ᶠ s in 𝓝 t, s ∈ J ∧ ∀ p, G.extendAt ht p s = G p s := by
   have hφ := (Classical.choose_spec (exists_contDiff_reparam G.isOpen ht)).2.2
   filter_upwards [hφ, G.isOpen.mem_nhds ht] with s hs hab
-  exact ⟨hab, fun p => congrArg (G p) hs⟩
+  exact ⟨hab, fun p ↦ congrArg (G p) hs⟩
 
 /-- Near `t`, the slices of the extension are the slices of `G`. -/
 theorem eventually_slice_extendAt (G : ImmersionFlowOn I M E J) {t : ℝ}
@@ -194,7 +194,7 @@ heat kernel centred at `(x₀, t₀)` with `t < t₀`,
 theorem huisken_monotonicity (G : ImmersionFlowOn I M E J) (hmcf : G.IsMeanCurvatureFlow)
     (x₀ : E) (t₀ : ℝ) {t : ℝ} (ht : t ∈ J) (hτ : t < t₀) :
     HasDerivAt
-      (fun s => ∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (G p s - x₀)
+      (fun s ↦ ∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (G p s - x₀)
         ∂(G.surfaceMeasure s))
       (-∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ t (G p t - x₀) *
           ‖(G.slice t ht).meanCurvature p +
@@ -203,7 +203,7 @@ theorem huisken_monotonicity (G : ImmersionFlowOn I M E J) (hmcf : G.IsMeanCurva
   set F := G.extendAt ht with hF
   have h := F.huisken_monotonicity x₀ t₀ hτ (hmcf.extendAt ht)
   rw [G.slice_extendAt ht] at h
-  have hFt : ∀ p, F p t = G p t := fun p => ((G.eventually_extendAt ht).self_of_nhds).2 p
+  have hFt : ∀ p, F p t = G p t := fun p ↦ ((G.eventually_extendAt ht).self_of_nhds).2 p
   have hμt : F.surfaceMeasure t = G.surfaceMeasure t :=
     (G.eventually_surfaceMeasure_extendAt ht).self_of_nhds
   simp only [hFt, hμt] at h
@@ -220,9 +220,9 @@ private theorem antitoneOn_of_hasDerivAt_nonpos {D : Set ℝ} (hD : Convex ℝ D
     AntitoneOn g D := by
   choose c hc hgc using hg
   refine antitoneOn_of_deriv_nonpos hD
-    (fun s hs => (hgc s hs).continuousAt.continuousWithinAt) ?_ ?_
+    (fun s hs ↦ (hgc s hs).continuousAt.continuousWithinAt) ?_ ?_
   · rw [hDo.interior_eq]
-    exact fun s hs => (hgc s hs).differentiableAt.differentiableWithinAt
+    exact fun s hs ↦ (hgc s hs).differentiableAt.differentiableWithinAt
   · rw [hDo.interior_eq]
     intro s hs
     rw [(hgc s hs).deriv]
@@ -234,11 +234,11 @@ on the times of `J` before `t₀`. -/
 theorem antitoneOn_integral (G : ImmersionFlowOn I M E J) (hJ : Convex ℝ J)
     (hmcf : G.IsMeanCurvatureFlow) (x₀ : E) (t₀ : ℝ) :
     AntitoneOn
-      (fun s => ∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (G p s - x₀)
+      (fun s ↦ ∫ p, backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (G p s - x₀)
         ∂(G.surfaceMeasure s))
       (J ∩ Iio t₀) :=
   antitoneOn_of_hasDerivAt_nonpos (hJ.inter (convex_Iio t₀)) (G.isOpen.inter isOpen_Iio)
-    fun _ hs => ⟨_, neg_nonpos.mpr (integral_nonneg fun _ =>
+    fun _ hs ↦ ⟨_, neg_nonpos.mpr (integral_nonneg fun _ ↦
       mul_nonneg (backwardHeatKernel_pos hs.2 _).le (sq_nonneg _)),
       G.huisken_monotonicity hmcf x₀ t₀ hs.1 hs.2⟩
 
@@ -247,7 +247,7 @@ theorem antitoneOn_integral (G : ImmersionFlowOn I M E J) (hJ : Convex ℝ J)
 /-- `G` satisfies the rescaled mean curvature flow equation `∂_s G = Hvec + G` at every time
 of `J` (Huisken 1990, equation (4)). -/
 def IsRescaledMeanCurvatureFlow (G : ImmersionFlowOn I M E J) : Prop :=
-  ∀ s (hs : s ∈ J) p, HasDerivAt (fun r => G p r) ((G.slice s hs).meanCurvature p + G p s) s
+  ∀ s (hs : s ∈ J) p, HasDerivAt (fun r ↦ G p r) ((G.slice s hs).meanCurvature p + G p s) s
 
 omit [SigmaCompactSpace M] [I.Boundaryless] [CompactSpace M] in
 /-- A rescaled flow on `J` extends to a family satisfying the rescaled equation at `s`. -/
@@ -266,14 +266,14 @@ of a closed manifold on an open set of times `J`: at every `s ∈ J`,
   `d/ds ∫_M ρ̃(F) dμ_s = -∫_M ρ̃(F) ‖Hvec + F^⊥‖² dμ_s`,   `ρ̃(x) = exp(-|x|²/2)`. -/
 theorem huisken_monotonicity_rescaled (G : ImmersionFlowOn I M E J)
     (hmcf : G.IsRescaledMeanCurvatureFlow) {s : ℝ} (hs : s ∈ J) :
-    HasDerivAt (fun r => ∫ p, rescaledHeatKernel (G p r) ∂(G.surfaceMeasure r))
+    HasDerivAt (fun r ↦ ∫ p, rescaledHeatKernel (G p r) ∂(G.surfaceMeasure r))
       (-∫ p, rescaledHeatKernel (G p s) *
           ‖(G.slice s hs).meanCurvature p + (G.slice s hs).normalPosition p‖ ^ 2
         ∂(G.surfaceMeasure s)) s := by
   set F := G.extendAt hs with hF
   have h := F.huisken_monotonicity_rescaled (hmcf.extendAt hs)
   rw [G.slice_extendAt hs] at h
-  have hFs : ∀ p, F p s = G p s := fun p => ((G.eventually_extendAt hs).self_of_nhds).2 p
+  have hFs : ∀ p, F p s = G p s := fun p ↦ ((G.eventually_extendAt hs).self_of_nhds).2 p
   have hμs : F.surfaceMeasure s = G.surfaceMeasure s :=
     (G.eventually_surfaceMeasure_extendAt hs).self_of_nhds
   simp only [hFs, hμs] at h
@@ -288,9 +288,9 @@ theorem huisken_monotonicity_rescaled (G : ImmersionFlowOn I M E J)
 rescaled surfaces as `s → ∞`. -/
 theorem antitoneOn_integral_rescaled (G : ImmersionFlowOn I M E J) (hJ : Convex ℝ J)
     (hmcf : G.IsRescaledMeanCurvatureFlow) :
-    AntitoneOn (fun r => ∫ p, rescaledHeatKernel (G p r) ∂(G.surfaceMeasure r)) J :=
+    AntitoneOn (fun r ↦ ∫ p, rescaledHeatKernel (G p r) ∂(G.surfaceMeasure r)) J :=
   antitoneOn_of_hasDerivAt_nonpos hJ G.isOpen
-    fun _ hs => ⟨_, neg_nonpos.mpr (integral_nonneg fun _ =>
+    fun _ hs ↦ ⟨_, neg_nonpos.mpr (integral_nonneg fun _ ↦
       mul_nonneg (rescaledHeatKernel_pos _).le (sq_nonneg _)),
       G.huisken_monotonicity_rescaled hmcf hs⟩
 

@@ -55,13 +55,13 @@ namespace SmoothImmersion
 
 /-- The differential of a dilated map. -/
 theorem mfderiv_const_smul (f : SmoothImmersion I M E) (c : ℝ) (p : M) :
-    mfderiv I 𝓘(ℝ, E) (fun q => c • f q) p = c • mfderiv I 𝓘(ℝ, E) f p :=
+    mfderiv I 𝓘(ℝ, E) (fun q ↦ c • f q) p = c • mfderiv I 𝓘(ℝ, E) f p :=
   ((f.contMDiff.mdifferentiableAt (by simp)).hasMFDerivAt.const_smul c).mfderiv
 
 /-- The dilate `c f` of a smooth immersion, `c ≠ 0`. -/
 def dilate (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠ 0) : SmoothImmersion I M E :=
-  ⟨fun p => c • f p,
-    (contMDiff_const : ContMDiff I 𝓘(ℝ, ℝ) ∞ fun _ : M => c).smul f.contMDiff, fun p => by
+  ⟨fun p ↦ c • f p,
+    (contMDiff_const : ContMDiff I 𝓘(ℝ, ℝ) ∞ fun _ : M ↦ c).smul f.contMDiff, fun p ↦ by
     rw [f.mfderiv_const_smul c p]
     intro v w hvw
     exact f.mfderiv_injective p (smul_right_injective _ hc hvw)⟩
@@ -79,8 +79,8 @@ theorem chartGramMatrix_dilate (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠
     chartGramMatrix (I := I) (f.dilate hc).inducedMetric α x =
       (c ^ 2) • chartGramMatrix (I := I) f.inducedMetric α x := by
   have hu : ∀ u : TangentSpace I x, (mfderiv I 𝓘(ℝ, E) (f.dilate hc) x u : E) =
-      c • (mfderiv I 𝓘(ℝ, E) f x u : E) := fun u => by
-    rw [show ⇑(f.dilate hc) = fun q => c • f q from rfl, f.mfderiv_const_smul c x]
+      c • (mfderiv I 𝓘(ℝ, E) f x u : E) := fun u ↦ by
+    rw [show ⇑(f.dilate hc) = fun q ↦ c • f q from rfl, f.mfderiv_const_smul c x]
     rfl
   ext i j
   rw [Matrix.smul_apply, chartGramMatrix_inducedMetric, chartGramMatrix_inducedMetric,
@@ -112,12 +112,12 @@ theorem chartInvGramOnE_dilate (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠
 theorem meanCurvature_dilate (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠ 0) (p : M) :
     (f.dilate hc).meanCurvature p = c⁻¹ • f.meanCurvature p := by
   have hy : extChartAt I p p ∈ (extChartAt I p).target := mem_extChartAt_target p
-  have hg : (fun k l => chartInvGramOnE (f.dilate hc).inducedMetric p k l (extChartAt I p p)) =
-      fun k l => (c ^ 2)⁻¹ * chartInvGramOnE f.inducedMetric p k l (extChartAt I p p) := by
+  have hg : (fun k l ↦ chartInvGramOnE (f.dilate hc).inducedMetric p k l (extChartAt I p p)) =
+      fun k l ↦ (c ^ 2)⁻¹ * chartInvGramOnE f.inducedMetric p k l (extChartAt I p p) := by
     funext k l
     exact f.chartInvGramOnE_dilate hc p hy k l
   change meanCurvatureNormal (c • f.chartRep p) (chartModelBasis E₁)
-      (fun k l => chartInvGramOnE (f.dilate hc).inducedMetric p k l (extChartAt I p p))
+      (fun k l ↦ chartInvGramOnE (f.dilate hc).inducedMetric p k l (extChartAt I p p))
       (extChartAt I p p) = _
   rw [hg]
   exact meanCurvatureNormal_dilate _ hc _ _ _
@@ -178,11 +178,11 @@ def rescale (G : ImmersionFlowOn I M E (Ioo a T)) (haT : a < T) :
   toFun p s := rescalingFactor s • G p (rescaledTime T s)
   contMDiffOn := by
     have hmap : ContMDiffOn ((I.prod 𝓘(ℝ, ℝ))) (I.prod 𝓘(ℝ, ℝ)) ∞
-        (fun q : M × ℝ => (q.1, rescaledTime T q.2)) (univ ×ˢ rescaledTimes a T) :=
+        (fun q : M × ℝ ↦ (q.1, rescaledTime T q.2)) (univ ×ˢ rescaledTimes a T) :=
       (contMDiff_fst.prodMk ((contDiff_const.sub
         ((contDiff_const.mul contDiff_id).exp)).contMDiff.comp contMDiff_snd)).contMDiffOn
-    have hG := G.contMDiffOn.comp hmap fun q hq => ⟨mem_univ _, rescaledTime_mem haT hq.2⟩
-    have hfac : ContMDiffOn (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, ℝ) ∞ (fun q : M × ℝ => rescalingFactor q.2)
+    have hG := G.contMDiffOn.comp hmap fun q hq ↦ ⟨mem_univ _, rescaledTime_mem haT hq.2⟩
+    have hfac : ContMDiffOn (I.prod 𝓘(ℝ, ℝ)) 𝓘(ℝ, ℝ) ∞ (fun q : M × ℝ ↦ rescalingFactor q.2)
         (univ ×ˢ rescaledTimes a T) :=
       ((Real.contDiff_exp.div_const _).contMDiff.comp contMDiff_snd).contMDiffOn
     exact hfac.smul hG
@@ -195,7 +195,7 @@ theorem slice_rescale (G : ImmersionFlowOn I M E (Ioo a T)) (haT : a < T) {s : �
     (hs : s ∈ rescaledTimes a T) :
     (G.rescale haT).slice s hs =
       (G.slice _ (rescaledTime_mem haT hs)).dilate (rescalingFactor_pos s).ne' :=
-  SmoothImmersion.ext fun _ => rfl
+  SmoothImmersion.ext fun _ ↦ rfl
 
 variable [T2Space M] [I.Boundaryless]
 
@@ -209,7 +209,7 @@ theorem IsMeanCurvatureFlow.rescale {G : ImmersionFlowOn I M E (Ioo a T)}
   have hc := (rescalingFactor_pos s).ne'
   rw [slice_rescale, SmoothImmersion.meanCurvature_dilate]
   -- the chain rule in time, then the product rule with the rescaling factor
-  have hG : HasDerivAt (fun r => G p (rescaledTime T r))
+  have hG : HasDerivAt (fun r ↦ G p (rescaledTime T r))
       ((2 * Real.exp (-2 * s)) • (G.slice _ ht).meanCurvature p) s :=
     (hmcf _ ht p).scomp s (hasDerivAt_rescaledTime T s)
   have h := (hasDerivAt_rescalingFactor s).smul hG
@@ -235,7 +235,7 @@ on `(a, T)`, the rescaled surfaces satisfy Corollary 3.2, so `s ↦ ∫_M ρ̃(F
 non-increasing on `-½ log(T - a) < s < ∞`. -/
 theorem antitoneOn_integral_rescale (G : ImmersionFlowOn I M E (Ioo a T))
     (hmcf : G.IsMeanCurvatureFlow) (haT : a < T) :
-    AntitoneOn (fun s => ∫ p, rescaledHeatKernel ((G.rescale haT) p s)
+    AntitoneOn (fun s ↦ ∫ p, rescaledHeatKernel ((G.rescale haT) p s)
       ∂((G.rescale haT).surfaceMeasure s)) (rescaledTimes a T) :=
   (G.rescale haT).antitoneOn_integral_rescaled (convex_Ioi _) (hmcf.rescale haT)
 

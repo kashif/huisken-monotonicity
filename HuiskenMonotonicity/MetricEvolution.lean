@@ -41,6 +41,8 @@ vector of the velocity. `hasDerivAt_fderiv_spatialSlice_of_contDiffAt` below dis
 joint differentiability of the space-time map, by symmetry of the second derivative.
 -/
 
+open scoped InnerProductSpace
+
 namespace HuiskenMonotonicity
 
 variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
@@ -57,10 +59,10 @@ omit [Fintype Idx] [DecidableEq Idx] in
 theorem hasDerivAt_frameGram
     {F V : ℝ → E₁ → E} (b : Idx → E₁) {t : ℝ} {x : E₁} (i j : Idx)
     (hcomm : ∀ k : Idx,
-      HasDerivAt (fun s => frameTangent (F s) b x k) (frameTangent (V t) b x k) t) :
-    HasDerivAt (fun s => frameGram (F s) b x i j)
-      (@inner ℝ E _ (frameTangent (F t) b x i) (frameTangent (V t) b x j) +
-        @inner ℝ E _ (frameTangent (V t) b x i) (frameTangent (F t) b x j)) t :=
+      HasDerivAt (fun s ↦ frameTangent (F s) b x k) (frameTangent (V t) b x k) t) :
+    HasDerivAt (fun s ↦ frameGram (F s) b x i j)
+      (⟪frameTangent (F t) b x i, frameTangent (V t) b x j⟫_ℝ +
+        ⟪frameTangent (V t) b x i, frameTangent (F t) b x j⟫_ℝ) t :=
   HasDerivAt.inner ℝ (hcomm i) (hcomm j)
 
 omit [DecidableEq Idx] [Fintype Idx] in
@@ -74,17 +76,17 @@ theorem hasDerivAt_frameGram_of_isNormalAlong
     (hF : ContDiffAt ℝ 2 (F t) x) (hV : DifferentiableAt ℝ (V t) x)
     (hnormal : IsNormalAlongNear (F t) (V t) x)
     (hcomm : ∀ k : Idx,
-      HasDerivAt (fun s => frameTangent (F s) b x k) (frameTangent (V t) b x k) t) :
-    HasDerivAt (fun s => frameGram (F s) b x i j)
-      (-2 * @inner ℝ E _ (V t x) (secondDerivative (F t) x (b i) (b j))) t := by
+      HasDerivAt (fun s ↦ frameTangent (F s) b x k) (frameTangent (V t) b x k) t) :
+    HasDerivAt (fun s ↦ frameGram (F s) b x i j)
+      (-2 * ⟪V t x, secondDerivative (F t) x (b i) (b j)⟫_ℝ) t := by
   have hbase := hasDerivAt_frameGram (V := V) b i j hcomm
-  have hji : @inner ℝ E _ (frameTangent (F t) b x i) (frameTangent (V t) b x j) =
-      -@inner ℝ E _ (V t x) (secondDerivative (F t) x (b i) (b j)) := by
+  have hji : ⟪frameTangent (F t) b x i, frameTangent (V t) b x j⟫_ℝ =
+      -⟪V t x, secondDerivative (F t) x (b i) (b j)⟫_ℝ := by
     rw [real_inner_comm, frameTangent_apply, frameTangent_apply,
       inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal (b j) (b i),
       secondDerivative_symm_of_contDiffAt hF (b j) (b i)]
-  have hij : @inner ℝ E _ (frameTangent (V t) b x i) (frameTangent (F t) b x j) =
-      -@inner ℝ E _ (V t x) (secondDerivative (F t) x (b i) (b j)) := by
+  have hij : ⟪frameTangent (V t) b x i, frameTangent (F t) b x j⟫_ℝ =
+      -⟪V t x, secondDerivative (F t) x (b i) (b j)⟫_ℝ := by
     rw [frameTangent_apply, frameTangent_apply,
       inner_fderiv_eq_neg_inner_secondDerivative hF hV hnormal (b i) (b j)]
   rw [hji, hij] at hbase
@@ -104,16 +106,16 @@ step needs no hypotheses at all. -/
 theorem trace_metricEvolution
     {F V : E₁ → E} (b : Idx → E₁) (gInv : Idx → Idx → ℝ) {x : E₁} :
     ∑ i, ∑ j, gInv i j *
-        (-2 * @inner ℝ E _ (V x) (secondDerivative F x (b i) (b j))) =
-      -2 * @inner ℝ E _ (V x) (meanCurvatureVectorFrame F b gInv x) := by
-  have hR : @inner ℝ E _ (V x) (meanCurvatureVectorFrame F b gInv x) =
+        (-2 * ⟪V x, secondDerivative F x (b i) (b j)⟫_ℝ) =
+      -2 * ⟪V x, meanCurvatureVectorFrame F b gInv x⟫_ℝ := by
+  have hR : ⟪V x, meanCurvatureVectorFrame F b gInv x⟫_ℝ =
       ∑ i, ∑ j, gInv i j *
-        @inner ℝ E _ (V x) (secondDerivative F x (b i) (b j)) := by
+        ⟪V x, secondDerivative F x (b i) (b j)⟫_ℝ := by
     simp only [meanCurvatureVectorFrame, inner_sum, real_inner_smul_right]
   rw [hR, Finset.mul_sum]
-  refine Finset.sum_congr rfl fun i _ => ?_
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl fun j _ => ?_
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
   ring
 
 /-! ## The trace for a general velocity
@@ -130,28 +132,28 @@ theorem trace_frameGram_deriv_eq_two_mul_tangentialDivergence
     {F V : E₁ → E} (b : Idx → E₁) (gInv : Idx → Idx → ℝ) {x : E₁}
     (hsymm : ∀ i j : Idx, gInv i j = gInv j i) :
     ∑ i, ∑ j, gInv i j *
-        (@inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) +
-          @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j))) =
+        (⟪fderiv ℝ V x (b i), frameTangent F b x j⟫_ℝ +
+          ⟪frameTangent F b x i, fderiv ℝ V x (b j)⟫_ℝ) =
       2 * tangentialDivergence F V b gInv x := by
   have hsplit : ∑ i, ∑ j, gInv i j *
-        (@inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) +
-          @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j)))
+        (⟪fderiv ℝ V x (b i), frameTangent F b x j⟫_ℝ +
+          ⟪frameTangent F b x i, fderiv ℝ V x (b j)⟫_ℝ)
       = (∑ i, ∑ j, gInv i j *
-            @inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j))
+            ⟪fderiv ℝ V x (b i), frameTangent F b x j⟫_ℝ)
         + ∑ i, ∑ j, gInv i j *
-            @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j)) := by
+            ⟪frameTangent F b x i, fderiv ℝ V x (b j)⟫_ℝ := by
     rw [← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl fun i _ => ?_
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
     rw [← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl fun j _ => ?_
+    refine Finset.sum_congr rfl fun j _ ↦ ?_
     ring
   -- the second sum is the first, after swapping the summation indices
   have hswap : ∑ i, ∑ j, gInv i j *
-        @inner ℝ E _ (frameTangent F b x i) (fderiv ℝ V x (b j))
+        ⟪frameTangent F b x i, fderiv ℝ V x (b j)⟫_ℝ
       = ∑ i, ∑ j, gInv i j *
-            @inner ℝ E _ (fderiv ℝ V x (b i)) (frameTangent F b x j) := by
+            ⟪fderiv ℝ V x (b i), frameTangent F b x j⟫_ℝ := by
     rw [Finset.sum_comm]
-    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
     rw [hsymm j i, real_inner_comm (frameTangent F b x j) (fderiv ℝ V x (b i))]
   rw [hsplit, hswap, tangentialDivergence]
   ring
@@ -166,23 +168,23 @@ symmetry of the second derivative. -/
 section Commutation
 
 /-- The time-`t` spatial slice of a space-time map. -/
-def spatialSlice (Φ : ℝ × E₁ → E) (t : ℝ) : E₁ → E := fun y => Φ (t, y)
+def spatialSlice (Φ : ℝ × E₁ → E) (t : ℝ) : E₁ → E := fun y ↦ Φ (t, y)
 
 /-- The velocity of a space-time map: the partial derivative in the time direction. -/
 noncomputable def timeVelocity (Φ : ℝ × E₁ → E) (t : ℝ) : E₁ → E :=
-  fun y => fderiv ℝ Φ (t, y) (1, 0)
+  fun y ↦ fderiv ℝ Φ (t, y) (1, 0)
 
 /-- **Commutation of the spatial and time derivatives, local form.**
 
 Only `ContDiffAt` at the point is required. This matters for manifold data: a chart
-representation `fun y => f ((extChartAt I x).symm y)` is smooth on the chart target and
+representation `fun y ↦ f ((extChartAt I x).symm y)` is smooth on the chart target and
 nowhere else, so a global hypothesis would be unusable.
 
 Both sides are the mixed second derivative of `Φ` in the two orders, so the proof is
 `second_derivative_symmetric_of_eventually`. -/
 theorem hasDerivAt_fderiv_spatialSlice_of_contDiffAt
     {Φ : ℝ × E₁ → E} {t : ℝ} {x : E₁} (hΦ : ContDiffAt ℝ 2 Φ (t, x)) (v : E₁) :
-    HasDerivAt (fun s => fderiv ℝ (spatialSlice Φ s) x v)
+    HasDerivAt (fun s ↦ fderiv ℝ (spatialSlice Φ s) x v)
       (fderiv ℝ (timeVelocity Φ t) x v) t := by
   -- `Φ` is differentiable on a neighbourhood of `(t, x)`.
   have hev : ∀ᶠ q in nhds ((t, x) : ℝ × E₁), HasFDerivAt Φ (fderiv ℝ Φ q) q := by
@@ -193,18 +195,18 @@ theorem hasDerivAt_fderiv_spatialSlice_of_contDiffAt
     (hΦ2.differentiableAt (by norm_num)).hasFDerivAt
   set D := fderiv ℝ (fderiv ℝ Φ) (t, x) with hD
   -- Left side: differentiate `s ↦ dΦ_{(s,x)}(0, v)` in `s`.
-  have hLinner : HasFDerivAt (fun p : ℝ × E₁ => fderiv ℝ Φ p (0, v))
+  have hLinner : HasFDerivAt (fun p : ℝ × E₁ ↦ fderiv ℝ Φ p (0, v))
       (D.flip (0, v)) (t, x) := by
     simpa using hd2.clm_apply (hasFDerivAt_const ((0 : ℝ), v) (t, x))
   have hLcomp : HasFDerivAt
-      ((fun p : ℝ × E₁ => fderiv ℝ Φ p (0, v)) ∘ fun s : ℝ => (s, x))
+      ((fun p : ℝ × E₁ ↦ fderiv ℝ Φ p (0, v)) ∘ fun s : ℝ ↦ (s, x))
       ((D.flip (0, v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t :=
     hLinner.comp t (hasFDerivAt_prodMk_left (𝕜 := ℝ) t x)
-  have hL : HasFDerivAt (fun s : ℝ => fderiv ℝ Φ (s, x) (0, v))
+  have hL : HasFDerivAt (fun s : ℝ ↦ fderiv ℝ Φ (s, x) (0, v))
       ((D.flip (0, v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t := hLcomp
   have hLd := hL.hasDerivAt
   -- Near `t` the slice derivative agrees with that partial derivative.
-  have hmap : Filter.Tendsto (fun s : ℝ => ((s, x) : ℝ × E₁)) (nhds t)
+  have hmap : Filter.Tendsto (fun s : ℝ ↦ ((s, x) : ℝ × E₁)) (nhds t)
       (nhds ((t, x) : ℝ × E₁)) :=
     (continuous_id.prodMk continuous_const).continuousAt
   have hfun : ∀ᶠ s in nhds t,
@@ -216,11 +218,11 @@ theorem hasDerivAt_fderiv_spatialSlice_of_contDiffAt
     rw [h.fderiv]
     rfl
   -- Right side: differentiate `y ↦ dΦ_{(t,y)}(1, 0)` in `y`.
-  have hRinner : HasFDerivAt (fun p : ℝ × E₁ => fderiv ℝ Φ p (1, 0))
+  have hRinner : HasFDerivAt (fun p : ℝ × E₁ ↦ fderiv ℝ Φ p (1, 0))
       (D.flip ((1 : ℝ), (0 : E₁))) (t, x) := by
     simpa using hd2.clm_apply (hasFDerivAt_const ((1 : ℝ), (0 : E₁)) (t, x))
   have hRcomp : HasFDerivAt
-      ((fun p : ℝ × E₁ => fderiv ℝ Φ p (1, 0)) ∘ fun y : E₁ => (t, y))
+      ((fun p : ℝ × E₁ ↦ fderiv ℝ Φ p (1, 0)) ∘ fun y : E₁ ↦ (t, y))
       ((D.flip ((1 : ℝ), (0 : E₁))).comp (ContinuousLinearMap.inr ℝ ℝ E₁)) x :=
     hRinner.comp x (hasFDerivAt_prodMk_right (𝕜 := ℝ) t x)
   have hR : HasFDerivAt (timeVelocity Φ t)
@@ -242,20 +244,20 @@ left-hand computation. Stated separately because the regularity hypothesis of th
 formula needs it on its own, without the symmetry step. -/
 theorem hasDerivAt_fderiv_partial_time
     {Φ : ℝ × E₁ → E} {t : ℝ} {x : E₁} (hΦ : ContDiffAt ℝ 2 Φ (t, x)) (v : E₁) :
-    HasDerivAt (fun s : ℝ => fderiv ℝ Φ (s, x) ((0 : ℝ), v))
+    HasDerivAt (fun s : ℝ ↦ fderiv ℝ Φ (s, x) ((0 : ℝ), v))
       (fderiv ℝ (fderiv ℝ Φ) (t, x) ((1 : ℝ), (0 : E₁)) ((0 : ℝ), v)) t := by
   have hΦ2 : ContDiffAt ℝ 1 (fderiv ℝ Φ) (t, x) := hΦ.fderiv_right (by norm_num)
   have hd2 : HasFDerivAt (fderiv ℝ Φ) (fderiv ℝ (fderiv ℝ Φ) (t, x)) (t, x) :=
     (hΦ2.differentiableAt (by norm_num)).hasFDerivAt
   set D := fderiv ℝ (fderiv ℝ Φ) (t, x) with hD
-  have hinner : HasFDerivAt (fun p : ℝ × E₁ => fderiv ℝ Φ p ((0 : ℝ), v))
+  have hinner : HasFDerivAt (fun p : ℝ × E₁ ↦ fderiv ℝ Φ p ((0 : ℝ), v))
       (D.flip ((0 : ℝ), v)) (t, x) := by
     simpa using hd2.clm_apply (hasFDerivAt_const ((0 : ℝ), v) (t, x))
   have hcomp : HasFDerivAt
-      ((fun p : ℝ × E₁ => fderiv ℝ Φ p ((0 : ℝ), v)) ∘ fun s : ℝ => (s, x))
+      ((fun p : ℝ × E₁ ↦ fderiv ℝ Φ p ((0 : ℝ), v)) ∘ fun s : ℝ ↦ (s, x))
       ((D.flip ((0 : ℝ), v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t :=
     hinner.comp t (hasFDerivAt_prodMk_left (𝕜 := ℝ) t x)
-  have hL : HasFDerivAt (fun s : ℝ => fderiv ℝ Φ (s, x) ((0 : ℝ), v))
+  have hL : HasFDerivAt (fun s : ℝ ↦ fderiv ℝ Φ (s, x) ((0 : ℝ), v))
       ((D.flip ((0 : ℝ), v)).comp (ContinuousLinearMap.inl ℝ ℝ E₁)) t := hcomp
   convert hL.hasDerivAt using 1
   rfl

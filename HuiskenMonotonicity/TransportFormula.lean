@@ -89,13 +89,13 @@ lemma timeCutoff_eq_zero_of_gt {t₀ t : ℝ} (h : t < t₀) {s : ℝ}
 integrand near `t`, and is globally smooth. -/
 def cutoffIntegrand (F : SmoothImmersionFamily I M E) (n : ℕ) {t₀ t : ℝ} (h : t < t₀) :
     ℝ → M → ℝ :=
-  fun s x => (timeCutoff h) s * backwardHeatKernel n t₀ s (F x s)
+  fun s x ↦ (timeCutoff h) s * backwardHeatKernel n t₀ s (F x s)
 
 /-- The space-time map of the family, read as a function of `(time, point)`. -/
 lemma contMDiffAt_flow_swap (F : SmoothImmersionFamily I M E) (p : ℝ × M) :
-    ContMDiffAt (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, E) ∞ (fun q : ℝ × M => F q.2 q.1) p := by
+    ContMDiffAt (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, E) ∞ (fun q : ℝ × M ↦ F q.2 q.1) p := by
   have hswap : ContMDiff (𝓘(ℝ, ℝ).prod I) (I.prod 𝓘(ℝ, ℝ)) ∞
-      (fun q : ℝ × M => (q.2, q.1)) := contMDiff_snd.prodMk contMDiff_fst
+      (fun q : ℝ × M ↦ (q.2, q.1)) := contMDiff_snd.prodMk contMDiff_fst
   exact ((F.contMDiff_spaceTime.comp hswap).of_le (by simp)).contMDiffAt
 
 /-- **The cut-off integrand is globally smooth.**
@@ -107,27 +107,27 @@ strictly before `t₀`. -/
 theorem contMDiff_cutoffIntegrand (F : SmoothImmersionFamily I M E) (n : ℕ)
     {t₀ t : ℝ} (h : t < t₀) :
     ContMDiff (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ) ∞
-      (fun p : ℝ × M => cutoffIntegrand F n h p.1 p.2) := by
+      (fun p : ℝ × M ↦ cutoffIntegrand F n h p.1 p.2) := by
   intro p
   rcases lt_or_ge p.1 t₀ with hlt | hge
   · -- before `t₀`: a product of smooth factors
     have hcut : ContMDiffAt (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ) ∞
-        (fun q : ℝ × M => (timeCutoff h) q.1) p :=
+        (fun q : ℝ × M ↦ (timeCutoff h) q.1) p :=
       (((timeCutoff h).contDiff).contDiffAt).comp_contMDiffAt
         contMDiff_fst.contMDiffAt
     have hpair : ContMDiffAt (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ × E) ∞
-        (fun q : ℝ × M => (q.1, F q.2 q.1)) p :=
+        (fun q : ℝ × M ↦ (q.1, F q.2 q.1)) p :=
       (contMDiff_fst.contMDiffAt).prodMk_space (contMDiffAt_flow_swap F p)
     have hker : ContDiffAt ℝ ∞
-        (fun y : ℝ × E => backwardHeatKernel n t₀ y.1 y.2) (p.1, F p.2 p.1) :=
+        (fun y : ℝ × E ↦ backwardHeatKernel n t₀ y.1 y.2) (p.1, F p.2 p.1) :=
       ((contDiffOn_backwardHeatKernel_prod n t₀).contDiffAt
         ((isOpen_lt_fst_backwardHeatKernel (V := E) t₀).mem_nhds hlt)).of_le (by simp)
     have hcomp : ContMDiffAt (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ) ∞
-        ((fun y : ℝ × E => backwardHeatKernel n t₀ y.1 y.2) ∘
-          fun q : ℝ × M => (q.1, F q.2 q.1)) p :=
+        ((fun y : ℝ × E ↦ backwardHeatKernel n t₀ y.1 y.2) ∘
+          fun q : ℝ × M ↦ (q.1, F q.2 q.1)) p :=
       ContDiffAt.comp_contMDiffAt (I := 𝓘(ℝ, ℝ).prod I)
-        (g := fun y : ℝ × E => backwardHeatKernel n t₀ y.1 y.2)
-        (f := fun q : ℝ × M => (q.1, F q.2 q.1)) (x := p) hker hpair
+        (g := fun y : ℝ × E ↦ backwardHeatKernel n t₀ y.1 y.2)
+        (f := fun q : ℝ × M ↦ (q.1, F q.2 q.1)) (x := p) hker hpair
     exact hcut.mul hcomp
   · -- past the support of the cutoff: identically zero nearby
     have hopen : IsOpen {q : ℝ × M | (t + t₀) / 2 < q.1} :=
@@ -136,7 +136,7 @@ theorem contMDiff_cutoffIntegrand (F : SmoothImmersionFamily I M E) (n : ℕ)
       have : (t + t₀) / 2 < t₀ := by linarith
       exact lt_of_lt_of_le this hge
     have hzero : ∀ᶠ q in nhds p,
-        (fun q : ℝ × M => cutoffIntegrand F n h q.1 q.2) q = (fun _ : ℝ × M => (0 : ℝ)) q := by
+        (fun q : ℝ × M ↦ cutoffIntegrand F n h q.1 q.2) q = (fun _ : ℝ × M ↦ (0 : ℝ)) q := by
       filter_upwards [hopen.mem_nhds hmem] with q hq
       simp only [cutoffIntegrand, timeCutoff_eq_zero_of_gt h hq, zero_mul]
     exact (contMDiffAt_const (c := (0 : ℝ))).congr_of_eventuallyEq hzero
@@ -153,7 +153,7 @@ theorem functionRegularAt_cutoffIntegrand (F : SmoothImmersionFamily I M E) (n :
 theorem cutoffIntegrand_eventuallyEq (F : SmoothImmersionFamily I M E) (n : ℕ)
     {t₀ t : ℝ} (h : t < t₀) :
     ∀ᶠ s in nhds t,
-      (fun x : M => backwardHeatKernel n t₀ s (F x s)) = cutoffIntegrand F n h s := by
+      (fun x : M ↦ backwardHeatKernel n t₀ s (F x s)) = cutoffIntegrand F n h s := by
   filter_upwards [timeCutoff_eventuallyEq_one h] with s hs
   funext x
   rw [cutoffIntegrand, hs, one_mul]
@@ -171,8 +171,8 @@ theorem hasDerivAt_integral_backwardHeatKernel
     (F : SmoothImmersionFamily I M E)
     (n : ℕ) {t₀ t : ℝ} (h : t < t₀) :
     HasDerivAt
-      (fun s : ℝ => ∫ x, backwardHeatKernel n t₀ s (F x s) ∂(F.surfaceMeasure s))
-      (∫ x, (deriv (fun s : ℝ => backwardHeatKernel n t₀ s (F x s)) t
+      (fun s : ℝ ↦ ∫ x, backwardHeatKernel n t₀ s (F x s) ∂(F.surfaceMeasure s))
+      (∫ x, (deriv (fun s : ℝ ↦ backwardHeatKernel n t₀ s (F x s)) t
               + (1 / 2 : ℝ) *
                 traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x *
                 backwardHeatKernel n t₀ t (F x t))
@@ -194,17 +194,17 @@ theorem hasDerivAt_integral_comp
     [I.Boundaryless] [T2Space M] [SigmaCompactSpace M] [CompactSpace M]
     (F : SmoothImmersionFamily I M E) {K : E → ℝ} (hK : ContDiff ℝ ∞ K) (t : ℝ) :
     HasDerivAt
-      (fun s : ℝ => ∫ x, K (F x s) ∂(F.surfaceMeasure s))
-      (∫ x, (deriv (fun s : ℝ => K (F x s)) t
+      (fun s : ℝ ↦ ∫ x, K (F x s) ∂(F.surfaceMeasure s))
+      (∫ x, (deriv (fun s : ℝ ↦ K (F x s)) t
               + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) (F.inducedMetricFamily) t x *
                 K (F x t))
           ∂(F.surfaceMeasure t)) t := by
-  have hsmooth : ContMDiff (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ) ∞ (fun p : ℝ × M => K (F p.2 p.1)) :=
-    fun p => hK.contDiffAt.comp_contMDiffAt (contMDiffAt_flow_swap F p)
+  have hsmooth : ContMDiff (𝓘(ℝ, ℝ).prod I) 𝓘(ℝ, ℝ) ∞ (fun p : ℝ × M ↦ K (F p.2 p.1)) :=
+    fun p ↦ hK.contDiffAt.comp_contMDiffAt (contMDiffAt_flow_swap F p)
   rw [F.surfaceMeasure_eq_riemannianMeasureFamily]
   exact volume_variation_formula_of_eventuallyEq (I := I)
     (F.metricFamilyRegularAt_inducedMetricFamily t)
-    (FunctionRegularAt.of_contMDiff (I := I) (fun s x => K (F x s)) hsmooth t)
-    (Filter.Eventually.of_forall fun _ => rfl)
+    (FunctionRegularAt.of_contMDiff (I := I) (fun s x ↦ K (F x s)) hsmooth t)
+    (Filter.Eventually.of_forall fun _ ↦ rfl)
 
 end HuiskenMonotonicity

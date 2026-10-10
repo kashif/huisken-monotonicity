@@ -85,29 +85,29 @@ theorem MetricFamilyRegularAt.of_chartGramOnE
     (hderiv : ∀ (x₀ : M) (i j : Fin (Module.finrank ℝ E)) (t : ℝ) {x : M},
       x ∈ (trivializationAt E (TangentSpace I) x₀).baseSet →
       HasDerivAt
-        (fun s : ℝ =>
+        (fun s : ℝ ↦
           DifferentialGeometry.Tensor.Coordinates.chartGramMatrix (I := I) (g_fam s) x₀ x i j)
         (D x₀ i j t (extChartAt I x₀ x)) t)
     (hcontG : ∀ (x₀ : M) (i j : Fin (Module.finrank ℝ E)),
-      ContinuousOn (fun p : ℝ × E =>
+      ContinuousOn (fun p : ℝ × E ↦
         DifferentialGeometry.Geometry.Operator.chartGramOnE (I := I) (g_fam p.1) x₀ i j p.2)
         (univ ×ˢ (extChartAt I x₀).target))
     (hcontD : ∀ (x₀ : M) (i j : Fin (Module.finrank ℝ E)),
-      ContinuousOn (fun p : ℝ × E => D x₀ i j p.1 p.2)
+      ContinuousOn (fun p : ℝ × E ↦ D x₀ i j p.1 p.2)
         (univ ×ˢ (extChartAt I x₀).target)) :
     MetricFamilyRegularAt (I := I) g_fam t₀ := by
   refine MetricFamilyRegularAt.of_chartGram_timeDeriv (I := I) ?_
   intro x₀ i j
-  refine ⟨fun t x => D x₀ i j t (extChartAt I x₀ x), ?_, ?_, ?_⟩
+  refine ⟨fun t x ↦ D x₀ i j t (extChartAt I x₀ x), ?_, ?_, ?_⟩
   · intro t x hx
     exact hderiv x₀ i j t hx
   · -- continuity of the Gram entries, transported from the chart target
-    have hmap : ContinuousOn (fun p : ℝ × M => (p.1, extChartAt I x₀ p.2))
+    have hmap : ContinuousOn (fun p : ℝ × M ↦ (p.1, extChartAt I x₀ p.2))
         (univ ×ˢ (trivializationAt E (TangentSpace I) x₀).baseSet) := by
       refine ContinuousOn.prodMk (continuous_fst.continuousOn) ?_
       exact (continuousOn_extChartAt (I := I) x₀).comp continuousOn_snd
-        (fun p hp => baseSet_subset_extChartAt_source (I := I) x₀ hp.2)
-    have hmaps : MapsTo (fun p : ℝ × M => (p.1, extChartAt I x₀ p.2))
+        (fun p hp ↦ baseSet_subset_extChartAt_source (I := I) x₀ hp.2)
+    have hmaps : MapsTo (fun p : ℝ × M ↦ (p.1, extChartAt I x₀ p.2))
         (univ ×ˢ (trivializationAt E (TangentSpace I) x₀).baseSet)
         (univ ×ˢ (extChartAt I x₀).target) := by
       intro p hp
@@ -119,12 +119,12 @@ theorem MetricFamilyRegularAt.of_chartGramOnE
     exact (chartGramOnE_extChartAt (I := I) g_fam x₀ i j p.1
       (baseSet_subset_extChartAt_source (I := I) x₀ hp.2)).symm
   · -- continuity of the derivative, transported the same way
-    have hmap : ContinuousOn (fun p : ℝ × M => (p.1, extChartAt I x₀ p.2))
+    have hmap : ContinuousOn (fun p : ℝ × M ↦ (p.1, extChartAt I x₀ p.2))
         (univ ×ˢ (trivializationAt E (TangentSpace I) x₀).baseSet) := by
       refine ContinuousOn.prodMk (continuous_fst.continuousOn) ?_
       exact (continuousOn_extChartAt (I := I) x₀).comp continuousOn_snd
-        (fun p hp => baseSet_subset_extChartAt_source (I := I) x₀ hp.2)
-    have hmaps : MapsTo (fun p : ℝ × M => (p.1, extChartAt I x₀ p.2))
+        (fun p hp ↦ baseSet_subset_extChartAt_source (I := I) x₀ hp.2)
+    have hmaps : MapsTo (fun p : ℝ × M ↦ (p.1, extChartAt I x₀ p.2))
         (univ ×ˢ (trivializationAt E (TangentSpace I) x₀).baseSet)
         (univ ×ˢ (extChartAt I x₀).target) := by
       intro p hp
@@ -148,8 +148,8 @@ theorem volume_variation_formula_of_eventuallyEq
     (hf' : FunctionRegularAt (M := M) f' t₀)
     (hff : ∀ᶠ s in nhds t₀, f s = f' s) :
     HasDerivAt
-      (fun s : ℝ => ∫ x, f s x ∂(riemannianMeasureFamily (I := I) (M := M) g_fam s))
-      (∫ x, (deriv (fun s : ℝ => f s x) t₀
+      (fun s : ℝ ↦ ∫ x, f s x ∂(riemannianMeasureFamily (I := I) (M := M) g_fam s))
+      (∫ x, (deriv (fun s : ℝ ↦ f s x) t₀
               + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) g_fam t₀ x * f t₀ x)
           ∂(riemannianMeasureFamily (I := I) (M := M) g_fam t₀))
       t₀ := by
@@ -158,14 +158,14 @@ theorem volume_variation_formula_of_eventuallyEq
   -- at `t₀` the two integrands agree, and so do their time derivatives
   have ht₀ : f t₀ = f' t₀ := hff.self_of_nhds
   have hderiv : ∀ x : M,
-      deriv (fun s : ℝ => f s x) t₀ = deriv (fun s : ℝ => f' s x) t₀ := by
+      deriv (fun s : ℝ ↦ f s x) t₀ = deriv (fun s : ℝ ↦ f' s x) t₀ := by
     intro x
     refine Filter.EventuallyEq.deriv_eq ?_
     filter_upwards [hff] with s hs
     exact congrFun hs x
-  have hintegrand : (fun x : M => deriv (fun s : ℝ => f s x) t₀
+  have hintegrand : (fun x : M ↦ deriv (fun s : ℝ ↦ f s x) t₀
         + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) g_fam t₀ x * f t₀ x)
-      = fun x : M => deriv (fun s : ℝ => f' s x) t₀
+      = fun x : M ↦ deriv (fun s : ℝ ↦ f' s x) t₀
         + (1 / 2 : ℝ) * traceTimeDerivMetric (I := I) g_fam t₀ x * f' t₀ x := by
     funext x
     rw [hderiv x, ht₀]

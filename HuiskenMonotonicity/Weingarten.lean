@@ -34,6 +34,8 @@ so its derivative in the direction `v` vanishes, and the product rule for the in
 splits that derivative into the two terms of the claim.
 -/
 
+open scoped InnerProductSpace
+
 namespace HuiskenMonotonicity
 
 variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
@@ -57,7 +59,7 @@ lemma secondDerivative_symm_of_contDiffAt {F : E₁ → E} {x : E₁} (hF : Cont
 
 /-- A tangent vector `y ↦ dF_y(w)` has derivative `v ↦ D²F(v, w)`. -/
 theorem hasFDerivAt_fderiv_apply {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (w : E₁) :
-    HasFDerivAt (fun y => fderiv ℝ F y w) ((fderiv ℝ (fderiv ℝ F) x).flip w) x := by
+    HasFDerivAt (fun y ↦ fderiv ℝ F y w) ((fderiv ℝ (fderiv ℝ F) x).flip w) x := by
   have hFd : ContDiffAt ℝ 1 (fderiv ℝ F) x := hF.fderiv_right (by norm_num)
   have hFd' : HasFDerivAt (fderiv ℝ F) (fderiv ℝ (fderiv ℝ F) x) x :=
     (hFd.differentiableAt (by norm_num)).hasFDerivAt
@@ -71,7 +73,7 @@ codimension one it says exactly that, but it needs no choice of sign and makes s
 codimension. It is local because the maps it is applied to, chart representations, are only
 defined, and normal, on a chart. -/
 def IsNormalAlongNear (F ξ : E₁ → E) (x : E₁) : Prop :=
-  ∀ᶠ y in nhds x, ∀ v : E₁, @inner ℝ E _ (ξ y) (fderiv ℝ F y v) = 0
+  ∀ᶠ y in nhds x, ∀ v : E₁, ⟪ξ y, fderiv ℝ F y v⟫_ℝ = 0
 
 /-- **The Weingarten equation, orientation-free form.**
 
@@ -88,17 +90,17 @@ derivative at `x` vanishes, and the product rule splits that derivative into the
 theorem inner_fderiv_eq_neg_inner_secondDerivative
     {F ξ : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x) (hξ : DifferentiableAt ℝ ξ x)
     (hnormal : IsNormalAlongNear F ξ x) (v w : E₁) :
-    @inner ℝ E _ (fderiv ℝ ξ x v) (fderiv ℝ F x w) =
-      -@inner ℝ E _ (ξ x) (secondDerivative F x v w) := by
+    ⟪fderiv ℝ ξ x v, fderiv ℝ F x w⟫_ℝ =
+      -⟪ξ x, secondDerivative F x v w⟫_ℝ := by
   have hprod := hξ.hasFDerivAt.inner (𝕜 := ℝ) (hasFDerivAt_fderiv_apply hF w)
-  have hzero : (fun y => @inner ℝ E _ (ξ y) (fderiv ℝ F y w)) =ᶠ[nhds x]
-      fun _ => (0 : ℝ) := by
+  have hzero : (fun y ↦ ⟪ξ y, fderiv ℝ F y w⟫_ℝ) =ᶠ[nhds x]
+      fun _ ↦ (0 : ℝ) := by
     filter_upwards [hnormal] with y hy
     exact hy w
-  have hconstd : HasFDerivAt (fun y => @inner ℝ E _ (ξ y) (fderiv ℝ F y w))
+  have hconstd : HasFDerivAt (fun y ↦ ⟪ξ y, fderiv ℝ F y w⟫_ℝ)
       (0 : E₁ →L[ℝ] ℝ) x :=
     (hasFDerivAt_const (0 : ℝ) x).congr_of_eventuallyEq hzero
-  have happ := congrArg (fun L : E₁ →L[ℝ] ℝ => L v) (hprod.unique hconstd)
+  have happ := congrArg (fun L : E₁ →L[ℝ] ℝ ↦ L v) (hprod.unique hconstd)
   simp only [ContinuousLinearMap.coe_comp, Function.comp_apply,
     ContinuousLinearMap.prod_apply, fderivInnerCLM_apply,
     zero_apply, ContinuousLinearMap.flip_apply] at happ
