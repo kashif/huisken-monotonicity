@@ -1,8 +1,8 @@
 \section{Introduction}
 
 This blueprint documents a Lean 4 formalization of Huisken's monotonicity formula for
-mean curvature flow~\cite{huisken1990}, built on mathlib and on the
-\texttt{DifferentialGeometry} library.
+mean curvature flow~\cite{huisken1990}, built on mathlib~\cite{mathlib2020} and on the
+\texttt{DifferentialGeometry} library~\cite{differentialgeometry}.
 
 Let $F \colon M \times \mathbb{R} \to E$ be a smooth family of immersions of a closed
 manifold $M$ of dimension $n$ into a finite-dimensional inner product space $E$, moving
@@ -541,7 +541,14 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   By Lemma~\ref{lem:sphere-mean-curvature}, $\vec H = -\frac{n}{R}\,p$ on the sphere of radius $R(t) = \sqrt{1 - 2nt}$, and $\partial_t(R\,p) = -\frac{n}{R}\,p$. Corollary~\ref{cor:antitone} applies.
 \end{proof}
 
-\begin{thebibliography}{1}
+\begin{thebibliography}{3}
 \bibitem{huisken1990} G.~Huisken, \emph{Asymptotic behavior for singularities of the mean
   curvature flow}, J. Differential Geom. \textbf{31} (1990), no.~1, 285--299.
+\bibitem{mathlib2020} The mathlib Community, \emph{The Lean Mathematical Library}, in
+  Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and
+  Proofs (CPP 2020), ACM, New Orleans, LA, USA, January 2020, 367--381,
+  \href{https://doi.org/10.1145/3372885.3373824}{doi:10.1145/3372885.3373824}.
+\bibitem{differentialgeometry} The DifferentialGeometry contributors,
+  \emph{Differential Geometry in Lean 4}, software, version v0.1.5, 2026,
+  \url{https://github.com/qinz1yang/differential-geometry}.
 \end{thebibliography}
