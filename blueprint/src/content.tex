@@ -1,4 +1,4 @@
-\chapter{Introduction}
+\section{Introduction}
 
 This blueprint documents a Lean 4 formalization of Huisken's monotonicity formula for
 mean curvature flow~\cite{huisken1990}, built on mathlib and on the
@@ -25,7 +25,7 @@ together with the monotonicity it implies, Huisken's Corollary 3.2 for the resca
 and the shrinking sphere as an instance. \texttt{lake build} reports no \texttt{sorry}, and the
 theorem depends only on Lean's standard axioms.
 
-\chapter{The backward heat kernel}
+\section{The backward heat kernel}
 
 \begin{definition}[backward heat kernel]
   \label{def:backward-heat-kernel}
@@ -130,7 +130,7 @@ theorem depends only on Lean's standard axioms.
 \end{theorem}
 \begin{proof}\leanok Verified in Lean. \end{proof}
 
-\chapter{Immersions and the induced metric}
+\section{Immersions and the induced metric}
 
 \begin{definition}[smooth immersion, smooth immersion family]
   \label{def:smooth-immersion-family}
@@ -152,9 +152,9 @@ theorem depends only on Lean's standard axioms.
   $\mu_t$.
 \end{definition}
 
-\chapter{Extrinsic calculus}
+\section{Extrinsic calculus}
 
-Everything in this chapter is stated for a map $F \colon E_1 \to E$ between model spaces,
+Everything in this section is stated for a map $F \colon E_1 \to E$ between model spaces,
 a frame $b$ of $E_1$ and a matrix $g^{ij}$ of inverse-metric components. On a manifold it
 is applied to the chart representation of a time slice.
 
@@ -242,7 +242,8 @@ is applied to the chart representation of a time slice.
   \uses{def:mean-curvature-M}
   For an immersion $f$ into a Euclidean space, $\vec H$ is the metric trace of the
   \texttt{DifferentialGeometry} second fundamental form of $f$, as a Riemannian isometric
-  immersion. In charts that form is $\partial^2 F + \Gamma_E - dF(\Gamma_M)$; the Euclidean
+  immersion, read in $E$ through mathlib's identification of $T_{f(p)}E$ with $E$. In charts
+  that form is $\partial^2 F + \Gamma_E - dF(\Gamma_M)$; the Euclidean
   $\Gamma_E$ vanishes and $dF(\Gamma_M)$ is tangent.
 \end{theorem}
 
@@ -251,7 +252,7 @@ is applied to the chart representation of a time slice.
   In charts the library's second fundamental form differs from $\partial^2 F$ by $\Gamma_E = 0$ and by the tangent vector $dF(\Gamma_M)$; it is normal, so it is the normal part of $\partial^2 F$. Both traces use the same inverse metric.
 \end{proof}
 
-\chapter{The first variation}
+\section{The first variation}
 
 \begin{definition}[mean curvature and normal position on $M$]
   \label{def:mean-curvature-M}
@@ -303,7 +304,7 @@ is applied to the chart representation of a time slice.
   Huisken applies the first variation formula to $Y = \rho F/\tau$. Here the integrand is $X(\rho) + \rho \operatorname{div} X$ for $X = \nabla u$, and the library's integration by parts gives $\int X(\rho) = -\int \rho \operatorname{div} X$.
 \end{proof}
 
-\chapter{Mean curvature flow}
+\section{Mean curvature flow}
 
 \begin{definition}[mean curvature flow]
   \label{def:mcf}
@@ -373,7 +374,7 @@ is applied to the chart representation of a time slice.
   The chain rule for the jointly smooth kernel.
 \end{proof}
 
-\chapter{Huisken's monotonicity formula}
+\section{Huisken's monotonicity formula}
 
 \begin{lemma}[pointwise identity]
   \label{lem:pointwise-identity}
@@ -413,7 +414,7 @@ is applied to the chart representation of a time slice.
   As in Huisken: Theorem~\ref{thm:transport} with Theorem~\ref{thm:volume-evolution} and Lemma~\ref{lem:kernel-curve}, then Lemma~\ref{lem:pointwise-identity}; the first-variation term integrates to zero by Theorem~\ref{thm:first-variation}. The centre is reduced to the origin by a translation.
 \end{proof}
 
-\chapter{Flows on a time interval, and monotonicity}
+\section{Flows on a time interval, and monotonicity}
 
 A mean curvature flow of a closed manifold exists only on a bounded time interval.
 
@@ -428,7 +429,7 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
 
 \begin{theorem}[Theorem 3.1 on an interval]
   \label{thm:huisken-interval}
-  \lean{HuiskenMonotonicity.ImmersionFlowOn.huisken_monotonicity}
+  \lean{HuiskenMonotonicity.ImmersionFlowOn.huisken_monotonicity, HuiskenMonotonicity.ImmersionFlowOn.extendAt, HuiskenMonotonicity.ImmersionFlowOn.hasDerivAt_integral_of_extendAt}
   \leanok
   \uses{def:flow-on, thm:huisken-monotonicity}
   The formula holds at every $t \in J$ with $t < t_0$: a smooth reparametrisation of time
@@ -437,7 +438,7 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
 
 \begin{proof}
   \leanok
-  Reparametrise time by a smooth $\varphi \colon \mathbb{R} \to J$ equal to the identity near $t$, and apply Theorem~\ref{thm:huisken-monotonicity}.
+  Reparametrise time by a smooth $\varphi \colon \mathbb{R} \to J$ equal to the identity near $t$, and apply Theorem~\ref{thm:huisken-monotonicity} to the extended family. It moves by mean curvature at $t$, and it agrees with the flow, its measure and the weighted integral near $t$, so the derivatives at $t$ coincide. The same transfer gives the rescaled version of Corollary~\ref{cor:rescaled}.
 \end{proof}
 
 \begin{corollary}[monotonicity]
@@ -454,7 +455,7 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   The derivative is $-\int \rho \|\cdot\|^2 \le 0$ on the convex open set $J \cap (-\infty, t_0)$.
 \end{proof}
 
-\chapter{The rescaled flow}
+\section{The rescaled flow}
 
 \begin{definition}[rescaled flow, rescaled kernel]
   \label{def:rescaled}
@@ -510,7 +511,7 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   The chain rule in time and the product rule with the factor $e^s/\sqrt2$, together with $\vec H(cF) = c^{-1}\vec H(F)$: the metric scales by $c^2$, its inverse by $c^{-2}$, the second derivative by $c$, and the normal projection is unchanged.
 \end{proof}
 
-\chapter{The shrinking sphere}
+\section{The shrinking sphere}
 
 \begin{lemma}[mean curvature of a sphere]
   \label{lem:sphere-mean-curvature}
