@@ -27,3 +27,6 @@
  {\clist_map_inline:nn{#1}{\vphantom{\ref{##1}}}%
   \ignorespaces}
 \ExplSyntaxOff
+% Statement references inside the proof-route figure; the web image is compiled on its own.
+\newcommand{\routeref}[2]{\\(#1~\ref{#2})}
+\newcommand{\routerefinline}[2]{ (#1~\ref{#2})}
