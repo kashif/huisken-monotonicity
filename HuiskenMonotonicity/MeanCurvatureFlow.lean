@@ -12,17 +12,19 @@ import HuiskenMonotonicity.MetricEvolution
 # Huisken's monotonicity formula for a mean curvature flow
 
 For a smooth family of immersions `F : M × ℝ → E` of a closed manifold moving by mean
-curvature, `∂_t F = Hvec`, and the backward heat kernel `ρ` centred at `(0, t₀)`,
+curvature at time `t`, `∂_t F = Hvec` (`IsMeanCurvatureFlowAt`), and the backward heat kernel
+`ρ` centred at `(0, t₀)`,
 
   `d/dt ∫_M ρ(F, t) dμ_t = -∫_M ρ(F, t) ‖Hvec + F^⊥ / (2(t₀ - t))‖² dμ_t`
 
-for `t < t₀` (Huisken 1990, Theorem 3.1).
+for `t < t₀` (Huisken 1990, Theorem 3.1; `huisken_monotonicity_origin`). The arbitrary centre
+is in `Translation.lean`, flows on a time interval in `IntervalFlow.lean`.
 
 The proof follows Huisken's:
 
 * the transport formula (`hasDerivAt_integral_backwardHeatKernel`) differentiates the
   integral, with weight `½ tr(g⁻¹ ∂_t g) = -‖Hvec‖²` under the flow
-  (`traceTimeDerivMetric_of_isMeanCurvatureFlow`);
+  (`traceTimeDerivMetric_of_isMeanCurvatureFlowAt`);
 * the chain rule along the flow gives `∂_t ρ + ⟨∇ρ, Hvec⟩`
   (`hasDerivAt_backwardHeatKernel_curve`);
 * the resulting integrand is `-ρ ‖Hvec + F^⊥/(2τ)‖²` plus a multiple of the first-variation

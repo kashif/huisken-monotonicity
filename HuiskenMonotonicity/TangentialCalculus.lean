@@ -214,12 +214,6 @@ theorem meanCurvatureNormal_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv 
   simp only [meanCurvatureNormal, meanCurvatureVectorFrame, secondDerivative, h,
     normalPart_congr h]
 
-omit [DecidableEq Idx] in
-theorem tangentialNormSq_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
-    (tangentialNormSq F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E → ℝ) = tangentialNormSq G := by
-  funext b gInv x v
-  simp only [tangentialNormSq, frameTangent, h]
-
 /-! Under a dilation `F ↦ c F` the metric scales by `c²`, so the inverse metric by `c⁻²`; the
 tangential and normal projections are unchanged, and the mean curvature vector scales by
 `c⁻¹`. -/
