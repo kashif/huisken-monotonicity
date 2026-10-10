@@ -457,21 +457,21 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   \label{cor:antitone}
   \lean{HuiskenMonotonicity.ImmersionFlowOn.antitoneOn_integral}
   \leanok
-  \uses{thm:huisken-interval}
+  \uses{thm:huisken-interval, lem:rho-pos}
   For an interval $J$, $t \mapsto \int_M \rho_{x_0,t_0}\,d\mu_t$ is non-increasing on
   $J \cap (-\infty, t_0)$.
 \end{corollary}
 
 \begin{proof}
   \leanok
-  The derivative is $-\int \rho \|\cdot\|^2 \le 0$ on the convex open set $J \cap (-\infty, t_0)$.
+  The derivative is $-\int \rho \|\cdot\|^2 \le 0$ on the convex open set $J \cap (-\infty, t_0)$, since $\rho > 0$ there (Lemma~\ref{lem:rho-pos}).
 \end{proof}
 
 \section{The rescaled flow}
 
 \begin{definition}[rescaled flow, rescaled kernel]
   \label{def:rescaled}
-  \lean{HuiskenMonotonicity.SmoothImmersionFamily.IsRescaledMeanCurvatureFlowAt, HuiskenMonotonicity.rescaledHeatKernel}
+  \lean{HuiskenMonotonicity.SmoothImmersionFamily.IsRescaledMeanCurvatureFlowAt, HuiskenMonotonicity.rescaledHeatKernel, HuiskenMonotonicity.rescaledHeatKernel_pos}
   \leanok
   $\partial_s \tilde F = \tilde H + \tilde F$ (Huisken's equation (4)), and
   $\tilde\rho(x) = e^{-|x|^2/2}$, the kernel at $\tau = 1/2$ up to a constant.
@@ -503,7 +503,7 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
 
 \begin{proof}
   \leanok
-  Huisken: ``The identity follows from $d\mu_s/ds = (n - H^2)\mu_s$ and a calculation analogous to the proof of Theorem 3.1.'' Since $\tilde\rho$ is the kernel at $\tau = 1/2$ up to a constant, Theorem~\ref{thm:first-variation} and Lemma~\ref{lem:pointwise-identity} apply at $\tau = 1/2$.
+  Huisken: ``The identity follows from $d\mu_s/ds = (n - H^2)\mu_s$ and a calculation analogous to the proof of Theorem 3.1.'' Since $\tilde\rho$ is the kernel at $\tau = 1/2$ up to a constant, Theorem~\ref{thm:first-variation} and Lemma~\ref{lem:pointwise-identity} apply at $\tau = 1/2$. Since $\tilde\rho > 0$, the derivative is non-positive.
 \end{proof}
 
 \begin{theorem}[Huisken's rescaling, \S 2]
