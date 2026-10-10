@@ -38,6 +38,7 @@ local instance instMeasurableSpaceTranslation : MeasurableSpace M := borel M
 
 local instance instBorelSpaceTranslation : BorelSpace M := ⟨rfl⟩
 
+omit [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E] in
 /-- Translating a map into `E` does not change its differential. -/
 theorem mfderiv_sub_const {f : M → E} {p : M} (hf : MDifferentiableAt I 𝓘(ℝ, E) f p) (c : E) :
     mfderiv I 𝓘(ℝ, E) (fun q => f q - c) p = mfderiv I 𝓘(ℝ, E) f p := by
@@ -77,6 +78,7 @@ theorem surfaceMeasure_translate [SigmaCompactSpace M] (f : SmoothImmersion I M 
     (f.translate c).surfaceMeasure = f.surfaceMeasure := by
   simp only [surfaceMeasure, inducedMetric_translate]
 
+omit [T2Space M] in
 /-- Translation does not change the derivative of a chart representation. -/
 theorem fderiv_chartRep_translate (f : SmoothImmersion I M E) (c : E) (α : M) :
     fderiv ℝ ((f.translate c).chartRep α) = fderiv ℝ (f.chartRep α) := by

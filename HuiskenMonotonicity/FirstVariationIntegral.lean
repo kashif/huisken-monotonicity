@@ -55,6 +55,7 @@ section Kernel
 
 variable {Idx : Type*} [Fintype Idx]
 
+omit [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E] [Fintype Idx] in
 /-- The kernel pulled back along `F`, differentiated in a coordinate direction. -/
 theorem fderiv_backwardHeatKernel_comp
     (m : ℕ) (t₀ : ℝ) {t : ℝ} (hτ : t < t₀)
@@ -115,6 +116,7 @@ section Orthogonality
 
 variable [I.Boundaryless]
 
+omit [I.Boundaryless] in
 /-- The position vector minus its normal part is its tangential part. -/
 theorem sub_normalPosition (f : SmoothImmersion I M E) (p : M) :
     f p - f.normalPosition p =
@@ -131,7 +133,8 @@ theorem inner_sub_normalPosition (f : SmoothImmersion I M E) (p : M) :
     (mem_extChartAt_target p)) (fun i j => chartInvGramOnE_symm (I := I) _ p i j _) _ _
 
 /-- The mean curvature vector is orthogonal to `Fᵀ`. -/
-theorem inner_meanCurvature_sub_normalPosition (f : SmoothImmersion I M E) (p : M) : @inner ℝ E _ (f.meanCurvature p) (f p - f.normalPosition p) = 0 := by
+theorem inner_meanCurvature_sub_normalPosition (f : SmoothImmersion I M E) (p : M) :
+    @inner ℝ E _ (f.meanCurvature p) (f p - f.normalPosition p) = 0 := by
   rw [sub_normalPosition, meanCurvature, meanCurvatureNormal]
   exact inner_normalPart_tangentialPart (f.isFrameInverse_chartInvGramOnE p
     (mem_extChartAt_target p)) (fun i j => chartInvGramOnE_symm (I := I) _ p i j _) _ _
@@ -157,8 +160,10 @@ def halfSqNorm (f : SmoothImmersion I M E) : C^∞⟮I, M; ℝ⟯ :=
   ⟨fun p => ‖f p‖ ^ 2 / 2,
     ((contDiff_norm_sq ℝ).div_const 2).comp_contMDiff (f.contMDiff)⟩
 
+omit [T2Space M] in
 /-- In a chart, the coordinate derivatives of `|F|²/2` are `⟪F, ∂_l F⟫`. -/
-theorem partialDeriv_scalarOnE_halfSqNorm [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {z : E₁} (hz : z ∈ (extChartAt I α).target)
+theorem partialDeriv_scalarOnE_halfSqNorm [I.Boundaryless] (f : SmoothImmersion I M E) (α : M)
+    {z : E₁} (hz : z ∈ (extChartAt I α).target)
     (l : Fin (Module.finrank ℝ E₁)) :
     partialDeriv l (scalarOnE (I := I) α (f.halfSqNorm)) z =
       @inner ℝ E _ (f.chartRep α z)
@@ -300,6 +305,7 @@ variable [I.Boundaryless] [CompactSpace M] (f : SmoothImmersion I M E) (m : ℕ)
   {t : ℝ} (hτ : t < t₀)
 
 include hτ in
+omit [T2Space M] [I.Boundaryless] [CompactSpace M] in
 /-- The kernel pulled back along a time slice is smooth. -/
 theorem contMDiff_backwardHeatKernel_comp :
     ContMDiff I 𝓘(ℝ) ∞ fun p => backwardHeatKernel m t₀ t (f p) :=

@@ -1,5 +1,13 @@
 /-
-**Evolution of the induced metric under a normal velocity.**
+Copyright (c) 2026 Kashif Rasul. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kashif Rasul
+-/
+
+import HuiskenMonotonicity.TangentialCalculus
+
+/-!
+# Evolution of the induced metric under a normal velocity
 
 For a family of immersions with velocity `V`, differentiating
 `g_ij = ⟪∂_i F, ∂_j F⟫` in time and exchanging the spatial and time derivatives gives
@@ -33,8 +41,6 @@ vector of the velocity. `hasDerivAt_fderiv_spatialSlice_of_contDiffAt` below dis
 joint differentiability of the space-time map, by symmetry of the second derivative.
 -/
 
-import HuiskenMonotonicity.TangentialCalculus
-
 namespace HuiskenMonotonicity
 
 variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
@@ -43,6 +49,7 @@ variable {Idx : Type*} [Fintype Idx] [DecidableEq Idx]
 
 /-! ## The evolution equation -/
 
+omit [Fintype Idx] [DecidableEq Idx] in
 /-- Time derivative of the induced Gram matrix for a family with velocity `V`.
 
 `hcomm` is the exchange of the spatial and time derivatives; see
@@ -56,6 +63,7 @@ theorem hasDerivAt_frameGram
         @inner ℝ E _ (frameTangent (V t) b x i) (frameTangent (F t) b x j)) t :=
   HasDerivAt.inner ℝ (hcomm i) (hcomm j)
 
+omit [DecidableEq Idx] [Fintype Idx] in
 /-- **The evolution equation of the induced metric under a normal velocity.**
 
 `∂_t g_ij = -2 ⟪V, D²F(∂_i, ∂_j)⟫`.
@@ -85,6 +93,7 @@ theorem hasDerivAt_frameGram_of_isNormalAlong
 
 /-! ## The trace -/
 
+omit [DecidableEq Idx] in
 /-- The inverse-metric trace of the metric evolution:
 
 `g^{ij} ∂_t g_ij = -2 ⟪V, Hvec⟫`.
@@ -112,6 +121,7 @@ theorem trace_metricEvolution
 For a velocity that is not normal, as for the rescaled flow `∂_s F = Hvec + F`, the trace of
 the metric evolution is twice the tangential divergence of the velocity. -/
 
+omit [DecidableEq Idx] in
 /-- The trace of the metric evolution, for an arbitrary velocity, is twice the tangential
 divergence of the velocity.
 

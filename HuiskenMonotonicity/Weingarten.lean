@@ -1,5 +1,14 @@
 /-
-**The Weingarten equation, orientation-free.**
+Copyright (c) 2026 Kashif Rasul. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kashif Rasul
+-/
+
+import Mathlib.Analysis.Calculus.FDeriv.Symmetric
+import Mathlib.Analysis.InnerProductSpace.Calculus
+
+/-!
+# The Weingarten equation, orientation-free
 
 In oriented coordinates the Weingarten equation reads
 
@@ -24,9 +33,6 @@ The proof is one differentiation: `⟪ξ, D_w F⟫` vanishes identically because
 so its derivative in the direction `v` vanishes, and the product rule for the inner product
 splits that derivative into the two terms of the claim.
 -/
-
-import Mathlib.Analysis.Calculus.FDeriv.Symmetric
-import Mathlib.Analysis.InnerProductSpace.Calculus
 
 namespace HuiskenMonotonicity
 
@@ -93,9 +99,9 @@ theorem inner_fderiv_eq_neg_inner_secondDerivative
       (0 : E₁ →L[ℝ] ℝ) x :=
     (hasFDerivAt_const (0 : ℝ) x).congr_of_eventuallyEq hzero
   have happ := congrArg (fun L : E₁ →L[ℝ] ℝ => L v) (hprod.unique hconstd)
-  simp only [ContinuousLinearMap.coe_comp', Function.comp_apply,
+  simp only [ContinuousLinearMap.coe_comp, Function.comp_apply,
     ContinuousLinearMap.prod_apply, fderivInnerCLM_apply,
-    ContinuousLinearMap.zero_apply, ContinuousLinearMap.flip_apply] at happ
+    zero_apply, ContinuousLinearMap.flip_apply] at happ
   rw [secondDerivative_eq_fderiv_fderiv]
   linarith [happ]
 

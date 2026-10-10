@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2026 Kashif Rasul. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kashif Rasul
+-/
+
 import DifferentialGeometry.Analysis.Integration.Measure.Family.Defs
 import DifferentialGeometry.Geometry.Metric.Coordinates.ChartGram
 import DifferentialGeometry.Analysis.Integration.Measure.Family.VolumeVariation
@@ -54,10 +60,12 @@ lemma chartGramOnE_extChartAt
     (g_fam : ℝ → SmoothRiemannianMetric I M) (x₀ : M)
     (i j : Fin (Module.finrank ℝ E)) (t : ℝ) {x : M}
     (hx : x ∈ (extChartAt I x₀).source) :
-    DifferentialGeometry.Geometry.Operator.chartGramOnE (I := I) (g_fam t) x₀ i j (extChartAt I x₀ x) =
+    DifferentialGeometry.Geometry.Operator.chartGramOnE (I := I) (g_fam t) x₀ i j
+      (extChartAt I x₀ x) =
       DifferentialGeometry.Tensor.Coordinates.chartGramMatrix (I := I) (g_fam t) x₀ x i j := by
   rw [DifferentialGeometry.Geometry.Operator.chartGramOnE, (extChartAt I x₀).left_inv hx]
 
+omit [Module.Finite ℝ E] in
 /-- The trivialization base set is contained in the source of the extended chart. -/
 lemma baseSet_subset_extChartAt_source (x₀ : M) :
     (trivializationAt E (TangentSpace I) x₀).baseSet ⊆ (extChartAt I x₀).source := by
@@ -81,7 +89,8 @@ theorem MetricFamilyRegularAt.of_chartGramOnE
           DifferentialGeometry.Tensor.Coordinates.chartGramMatrix (I := I) (g_fam s) x₀ x i j)
         (D x₀ i j t (extChartAt I x₀ x)) t)
     (hcontG : ∀ (x₀ : M) (i j : Fin (Module.finrank ℝ E)),
-      ContinuousOn (fun p : ℝ × E => DifferentialGeometry.Geometry.Operator.chartGramOnE (I := I) (g_fam p.1) x₀ i j p.2)
+      ContinuousOn (fun p : ℝ × E =>
+        DifferentialGeometry.Geometry.Operator.chartGramOnE (I := I) (g_fam p.1) x₀ i j p.2)
         (univ ×ˢ (extChartAt I x₀).target))
     (hcontD : ∀ (x₀ : M) (i j : Fin (Module.finrank ℝ E)),
       ContinuousOn (fun p : ℝ × E => D x₀ i j p.1 p.2)

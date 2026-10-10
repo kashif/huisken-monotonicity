@@ -181,7 +181,7 @@ theorem eventually_surfaceMeasure_extendAt (G : ImmersionFlowOn I M E J) {t : �
     (ht : t ∈ J) :
     ∀ᶠ s in 𝓝 t, (G.extendAt ht).surfaceMeasure s = G.surfaceMeasure s := by
   filter_upwards [G.eventually_slice_extendAt ht] with s ⟨hs, h⟩
-  rw [surfaceMeasure, dif_pos hs, SmoothImmersionFamily.surfaceMeasure, h]
+  rw [surfaceMeasure, dite_eq_left hs, SmoothImmersionFamily.surfaceMeasure, h]
 
 variable [I.Boundaryless] [CompactSpace M]
 
@@ -238,7 +238,7 @@ theorem antitoneOn_integral (G : ImmersionFlowOn I M E J) (hJ : Convex ℝ J)
         ∂(G.surfaceMeasure s))
       (J ∩ Iio t₀) :=
   antitoneOn_of_hasDerivAt_nonpos (hJ.inter (convex_Iio t₀)) (G.isOpen.inter isOpen_Iio)
-    fun s hs => ⟨_, neg_nonpos.mpr (integral_nonneg fun p =>
+    fun _ hs => ⟨_, neg_nonpos.mpr (integral_nonneg fun _ =>
       mul_nonneg (backwardHeatKernel_pos hs.2 _).le (sq_nonneg _)),
       G.huisken_monotonicity hmcf x₀ t₀ hs.1 hs.2⟩
 
@@ -290,7 +290,7 @@ theorem antitoneOn_integral_rescaled (G : ImmersionFlowOn I M E J) (hJ : Convex 
     (hmcf : G.IsRescaledMeanCurvatureFlow) :
     AntitoneOn (fun r => ∫ p, rescaledHeatKernel (G p r) ∂(G.surfaceMeasure r)) J :=
   antitoneOn_of_hasDerivAt_nonpos hJ G.isOpen
-    fun s hs => ⟨_, neg_nonpos.mpr (integral_nonneg fun p =>
+    fun _ hs => ⟨_, neg_nonpos.mpr (integral_nonneg fun _ =>
       mul_nonneg (rescaledHeatKernel_pos _).le (sq_nonneg _)),
       G.huisken_monotonicity_rescaled hmcf hs⟩
 

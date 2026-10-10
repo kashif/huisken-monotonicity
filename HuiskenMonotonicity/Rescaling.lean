@@ -199,6 +199,7 @@ theorem slice_rescale (G : ImmersionFlowOn I M E (Ioo a T)) (haT : a < T) {s : �
 
 variable [T2Space M] [I.Boundaryless]
 
+omit [I.Boundaryless] in
 /-- **The rescaled flow satisfies Huisken's equation (4)**, `∂_s F̃ = H̃ + F̃`. -/
 theorem IsMeanCurvatureFlow.rescale {G : ImmersionFlowOn I M E (Ioo a T)}
     (hmcf : G.IsMeanCurvatureFlow) (haT : a < T) :

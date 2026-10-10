@@ -85,7 +85,7 @@ theorem SmoothImmersion.meanCurvature_eq_of_norm_eq (f : SmoothImmersion I M E) 
       (fun k l => chartInvGramOnE f.inducedMetric p k l z) z (Fc z)) (chartModelBasis E₁)
       (fun k l => chartInvGramOnE f.inducedMetric p k l y) y = 0 := by
     simp only [tangentialDivergence, hT.fderiv_eq, fderiv_fun_const, Pi.zero_apply,
-      ContinuousLinearMap.zero_apply, inner_zero_left, mul_zero, Finset.sum_const_zero]
+      zero_apply, inner_zero_left, mul_zero, Finset.sum_const_zero]
   have hFH : ⟪f p, f.meanCurvature p⟫ = -(finrank ℝ E₁ : ℝ) := by
     have h := hzero.symm.trans hbel
     rw [show f.chartRep p y = f p from hpt] at h
@@ -126,7 +126,7 @@ theorem isOpen_shrinkingSphereTimes : IsOpen (shrinkingSphereTimes n) :=
 
 theorem convex_shrinkingSphereTimes : Convex ℝ (shrinkingSphereTimes n) := by
   intro a ha b hb μ ν hμ hν hμν
-  simp only [shrinkingSphereTimes, mem_setOf_eq, smul_eq_mul] at *
+  simp only [shrinkingSphereTimes, mem_ofPred_eq, smul_eq_mul] at *
   have hsplit : 2 * n * (μ * a + ν * b) = μ * (2 * n * a) + ν * (2 * n * b) := by ring
   rw [hsplit]
   rcases hμ.eq_or_lt with rfl | hμ'
@@ -140,13 +140,13 @@ def shrinkingSphereRadius (t : ℝ) : ℝ := Real.sqrt (1 - 2 * n * t)
 
 theorem shrinkingSphereRadius_pos {t : ℝ} (ht : t ∈ shrinkingSphereTimes n) :
     0 < shrinkingSphereRadius n t :=
-  Real.sqrt_pos.mpr (by simp only [shrinkingSphereTimes, mem_setOf_eq] at ht; linarith)
+  Real.sqrt_pos.mpr (by simp only [shrinkingSphereTimes, mem_ofPred_eq] at ht; linarith)
 
 /-- The derivative of the radius, `d/dt √(1 - 2nt) = -n / √(1 - 2nt)`. -/
 theorem hasDerivAt_shrinkingSphereRadius {t : ℝ} (ht : t ∈ shrinkingSphereTimes n) :
     HasDerivAt (shrinkingSphereRadius n) (-(n : ℝ) / shrinkingSphereRadius n t) t := by
   have h1 : (1 - 2 * n * t : ℝ) ≠ 0 := by
-    simp only [shrinkingSphereTimes, mem_setOf_eq] at ht; linarith
+    simp only [shrinkingSphereTimes, mem_ofPred_eq] at ht; linarith
   have h := (((hasDerivAt_id' t).const_mul (2 * (n : ℝ))).const_sub 1).sqrt h1
   refine h.congr_deriv ?_
   have hR := shrinkingSphereRadius_pos n ht
@@ -156,7 +156,7 @@ theorem hasDerivAt_shrinkingSphereRadius {t : ℝ} (ht : t ∈ shrinkingSphereTi
 theorem contDiffAt_shrinkingSphereRadius {t : ℝ} (ht : t ∈ shrinkingSphereTimes n) :
     ContDiffAt ℝ ∞ (shrinkingSphereRadius n) t := by
   have h1 : (1 - 2 * n * t : ℝ) ≠ 0 := by
-    simp only [shrinkingSphereTimes, mem_setOf_eq] at ht; linarith
+    simp only [shrinkingSphereTimes, mem_ofPred_eq] at ht; linarith
   exact (contDiffAt_const.sub (contDiffAt_const.mul contDiffAt_id)).sqrt h1
 
 /-- The differential of the scaled inclusion of the sphere. -/
@@ -191,7 +191,7 @@ def shrinkingSphere :
   mfderiv_injective t ht p := by
     rw [mfderiv_smul_coe_sphere]
     intro v w hvw
-    exact mfderiv_coe_sphere_injective p
+    exact injective_mvfderiv_subtypeVal_sphere p
       (smul_right_injective _ (shrinkingSphereRadius_pos n ht).ne' hvw)
 
 /-- The mean curvature vector of the sphere of radius `R(t)` is `-(n / R(t)²) F`. -/
@@ -216,7 +216,7 @@ theorem shrinkingSphere_meanCurvature {t : ℝ} (ht : t ∈ shrinkingSphereTimes
       ← Submodule.orthogonal_orthogonal (ℝ ∙ (q : EuclideanSpace ℝ (Fin (n + 1)))),
       Submodule.mem_orthogonal]
     intro u hu
-    rw [← range_mfderiv_coe_sphere (n := n) q] at hu
+    rw [← range_mvfderiv_subtypeVal (n := n) q] at hu
     obtain ⟨w, rfl⟩ := hu
     have h := hv w
     change ⟪v, mfderiv (𝓡 n) 𝓘(ℝ, EuclideanSpace ℝ (Fin (n + 1)))

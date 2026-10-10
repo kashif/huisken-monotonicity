@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2026 Kashif Rasul. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kashif Rasul
+-/
+
 import DifferentialGeometry.Geometry.Submanifold.SecondFundamentalForm.Pointwise
 import DifferentialGeometry.Geometry.Metric.Euclidean
 import DifferentialGeometry.Geometry.Connection.ChartBridge.Connection.Christoffel

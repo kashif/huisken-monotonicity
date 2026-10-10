@@ -114,11 +114,13 @@ into `frameGram` of the chart representation against the model basis. -/
 def chartRep (f : SmoothImmersion I M E) (x : M) : E₁ → E :=
   fun y => f ((extChartAt I x).symm y)
 
+omit [T2Space M] in
 /-- The chart representation is smooth on the chart target. -/
 theorem contDiffOn_chartRep (f : SmoothImmersion I M E) (x₀ : M) :
     ContDiffOn ℝ ∞ (f.chartRep x₀) (extChartAt I x₀).target :=
   (f.contMDiff.comp_contMDiffOn (contMDiffOn_extChartAt_symm x₀)).contDiffOn
 
+omit [T2Space M] in
 /-- The chart representation is `C²` at points of the chart target. -/
 theorem contDiffAt_chartRep [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {y : E₁}
     (hy : y ∈ (extChartAt I α).target) : ContDiffAt ℝ 2 (f.chartRep α) y :=
@@ -150,8 +152,7 @@ theorem chartGramMatrix_inducedMetric_eq_frameGram_modelBasis [I.Boundaryless]
         mfderiv I 𝓘(ℝ, E) f x (Tensor.Coordinates.chartBasisVecFiber (I := I) x₀ k x) := by
     intro k
     have happ := DFunLike.congr_fun h (Tensor.Coordinates.chartModelBasis E₁ k)
-    simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.one_apply,
-      PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
+    simp only [PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
     exact happ
   rw [chartGramMatrix_inducedMetric, frameGram, frameTangent_apply, frameTangent_apply,
     key i, key j]
@@ -214,11 +215,13 @@ composite, and `contMDiffOn_iff_contDiffOn` to land back in Fréchet calculus. -
 def spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M) : ℝ × E₁ → E :=
   fun p => F.chartRep p.1 x₀ p.2
 
+omit [T2Space M] in
 @[simp]
 theorem spaceTimeChartRep_apply (F : SmoothImmersionFamily I M E) (x₀ : M) (p : ℝ × E₁) :
     F.spaceTimeChartRep x₀ p = F ((extChartAt I x₀).symm p.2) p.1 :=
   rfl
 
+omit [T2Space M] in
 /-- The space-time chart representation is smooth on the chart target. -/
 theorem contDiffOn_spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M) :
     ContDiffOn ℝ ∞ (F.spaceTimeChartRep x₀)
@@ -266,11 +269,13 @@ theorem chartGramOnE_inducedMetricFamily [I.Boundaryless]
       frameGram (F.chartRep t x₀) (Tensor.Coordinates.chartModelBasis E₁) y i j :=
   (F.slice t).chartGramOnE_inducedMetric x₀ i j hy
 
+omit [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [T2Space M] in
 /-- The chart target, crossed with all times, is open. -/
 lemma isOpen_univ_prod_extChartAt_target [I.Boundaryless] (x₀ : M) :
     IsOpen ((Set.univ : Set ℝ) ×ˢ (extChartAt I x₀).target) :=
   isOpen_univ.prod (isOpen_extChartAt_target (I := I) x₀)
 
+omit [T2Space M] in
 /-- A spatial derivative of the chart representation is a partial derivative of the
 space-time chart representation, at points of the chart target. -/
 theorem fderiv_chartRep_eq_fderiv_spaceTimeChartRep [I.Boundaryless]
@@ -386,6 +391,7 @@ theorem hasDerivAt_chartGramMatrix_chartGramDeriv [I.Boundaryless]
     (hasDerivAt_fderiv_partial_time hΦ (Tensor.Coordinates.chartModelBasis E₁ i))
     (hasDerivAt_fderiv_partial_time hΦ (Tensor.Coordinates.chartModelBasis E₁ j))
 
+omit [T2Space M] in
 /-- **Joint continuity of the derivative.** The third field of
 `MetricFamilyRegularAt.of_chartGramOnE`. -/
 theorem continuousOn_chartGramDeriv [I.Boundaryless]

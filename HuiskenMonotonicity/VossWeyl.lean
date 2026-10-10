@@ -54,7 +54,8 @@ variable [T2Space M]
 
 /-- On the chart target, the library's inverse chart Gram matrix is an inverse metric for the
 model basis in the sense of `IsFrameInverse`. -/
-theorem isFrameInverse_chartInvGramOnE [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {z : E₁} (hz : z ∈ (extChartAt I α).target) :
+theorem isFrameInverse_chartInvGramOnE [I.Boundaryless] (f : SmoothImmersion I M E) (α : M)
+    {z : E₁} (hz : z ∈ (extChartAt I α).target) :
     IsFrameInverse (f.chartRep α) (chartModelBasis E₁) z
       (fun k l => chartInvGramOnE (f.inducedMetric) α k l z) := by
   have hmem : (extChartAt I α).symm z ∈ (extChartAt I α).source :=
@@ -74,7 +75,8 @@ theorem isFrameInverse_chartInvGramOnE [I.Boundaryless] (f : SmoothImmersion I M
 
 /-- The library's partial derivative of a chart Gram entry is the Fréchet derivative of the
 corresponding `frameGram` entry, since the two functions agree on the open chart target. -/
-theorem partialDeriv_chartGramOnE [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {y : E₁} (hy : y ∈ (extChartAt I α).target)
+theorem partialDeriv_chartGramOnE [I.Boundaryless] (f : SmoothImmersion I M E) (α : M)
+    {y : E₁} (hy : y ∈ (extChartAt I α).target)
     (i j k : Fin (Module.finrank ℝ E₁)) :
     partialDeriv k (chartGramOnE (f.inducedMetric) α i j) y =
       fderiv ℝ (fun z => frameGram (f.chartRep α) (chartModelBasis E₁) z i j) y
@@ -95,7 +97,8 @@ The left-hand side is the library's `localDivergence` written out; the right-han
 extrinsic divergence of `TangentialCalculus.lean`. Both reduce to
 `∂_i Z^i + Z^i · ½ g^{kl} ∂_i g_{kl}`: the left by the library's form of Jacobi's formula,
 the right by the contracted Christoffel identity. -/
-theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (f : SmoothImmersion I M E) (α : M) {y : E₁} (hy : y ∈ (extChartAt I α).target)
+theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (f : SmoothImmersion I M E) (α : M)
+    {y : E₁} (hy : y ∈ (extChartAt I α).target)
     {Z : Fin (Module.finrank ℝ E₁) → E₁ → ℝ} (hZ : ∀ k, DifferentiableAt ℝ (Z k) y) :
     (∑ i, partialDeriv i (fun z => Z i z * chartDensityOnE (f.inducedMetric) α z) y) /
         chartDensityOnE (f.inducedMetric) α y =
@@ -126,7 +129,7 @@ theorem vossWeyl_eq_tangentialDivergence [I.Boundaryless] (f : SmoothImmersion I
       (f.inducedMetric) α i hint
     rw [sum_chartChristoffel_diag_eq_half_trace (I := I) (f.inducedMetric) α i y] at hjac
     rw [partialDeriv, hmul]
-    simp only [ContinuousLinearMap.add_apply, ContinuousLinearMap.smul_apply, smul_eq_mul]
+    simp only [add_apply, smul_apply, smul_eq_mul]
     rw [show fderiv ℝ ρ y (chartModelBasis E₁ i) = partialDeriv i ρ y from rfl, hjac]
     simp only [partialDeriv]
     ring

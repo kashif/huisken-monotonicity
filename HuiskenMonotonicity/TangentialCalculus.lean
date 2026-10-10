@@ -1,5 +1,13 @@
 /-
-**Tangential divergence and the normal divergence identity.**
+Copyright (c) 2026 Kashif Rasul. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kashif Rasul
+-/
+
+import HuiskenMonotonicity.Weingarten
+
+/-!
+# Tangential divergence and the normal divergence identity
 
 The tangential divergence of a vector field along an immersion `F` is defined by
 contracting the ambient derivative against the inverse induced metric,
@@ -44,8 +52,6 @@ vector against a field normal along `F`, and a normal field annihilates `∂_k F
 anywhere, which is why this layer needs no connection.
 -/
 
-import HuiskenMonotonicity.Weingarten
-
 namespace HuiskenMonotonicity
 
 variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
@@ -58,6 +64,7 @@ variable {Idx : Type*} [Fintype Idx] [DecidableEq Idx]
 noncomputable def frameTangent (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i : Idx) : E :=
   fderiv ℝ F x (b i)
 
+omit [Fintype Idx] [DecidableEq Idx] in
 @[simp]
 lemma frameTangent_apply (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i : Idx) :
     frameTangent F b x i = fderiv ℝ F x (b i) :=
@@ -67,6 +74,7 @@ lemma frameTangent_apply (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i : Idx
 noncomputable def frameGram (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i j : Idx) : ℝ :=
   @inner ℝ E _ (frameTangent F b x i) (frameTangent F b x j)
 
+omit [Fintype Idx] [DecidableEq Idx] in
 lemma frameGram_symm (F : E₁ → E) (b : Idx → E₁) (x : E₁) (i j : Idx) :
     frameGram F b x i j = frameGram F b x j i :=
   real_inner_comm _ _
@@ -107,6 +115,7 @@ noncomputable def tangentialNormSq
 
 /-! ## The normal divergence identity -/
 
+omit [DecidableEq Idx] in
 /-- **The normal divergence identity**, the normal half of the divergence theorem.
 
 For a field `ξ` normal along `F`,
@@ -185,16 +194,19 @@ noncomputable def meanCurvatureNormal
 /-! The frame quantities see `F` only through its derivative, so they are unchanged by
 translating `F`. -/
 
+omit [DecidableEq Idx] in
 theorem tangentialPart_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
     (tangentialPart F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E → E) = tangentialPart G := by
   funext b gInv x v
   simp only [tangentialPart, frameTangent, h]
 
+omit [DecidableEq Idx] in
 theorem normalPart_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
     (normalPart F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E → E) = normalPart G := by
   funext b gInv x v
   simp only [normalPart, tangentialPart_congr h]
 
+omit [DecidableEq Idx] in
 theorem meanCurvatureNormal_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
     (meanCurvatureNormal F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E) =
       meanCurvatureNormal G := by
@@ -202,6 +214,7 @@ theorem meanCurvatureNormal_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv 
   simp only [meanCurvatureNormal, meanCurvatureVectorFrame, secondDerivative, h,
     normalPart_congr h]
 
+omit [DecidableEq Idx] in
 theorem tangentialNormSq_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ G) :
     (tangentialNormSq F : (Idx → E₁) → (Idx → Idx → ℝ) → E₁ → E → ℝ) = tangentialNormSq G := by
   funext b gInv x v
@@ -211,6 +224,7 @@ theorem tangentialNormSq_congr {F G : E₁ → E} (h : fderiv ℝ F = fderiv ℝ
 tangential and normal projections are unchanged, and the mean curvature vector scales by
 `c⁻¹`. -/
 
+omit [DecidableEq Idx] in
 theorem tangentialPart_smul_vec (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁)
     (a : ℝ) (v : E) :
     tangentialPart F b gInv x (a • v) = a • tangentialPart F b gInv x v := by
@@ -218,21 +232,24 @@ theorem tangentialPart_smul_vec (F : E₁ → E) (b : Idx → E₁) (gInv : Idx 
   refine Finset.sum_congr rfl fun k _ => Finset.sum_congr rfl fun l _ => ?_
   ring_nf
 
+omit [DecidableEq Idx] in
 theorem normalPart_smul_vec (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁)
     (a : ℝ) (v : E) :
     normalPart F b gInv x (a • v) = a • normalPart F b gInv x v := by
   rw [normalPart, normalPart, tangentialPart_smul_vec, smul_sub]
 
+omit [DecidableEq Idx] in
 theorem tangentialPart_dilate (F : E₁ → E) {c : ℝ} (hc : c ≠ 0) (b : Idx → E₁)
     (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) :
     tangentialPart (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x v =
       tangentialPart F b gInv x v := by
   simp only [tangentialPart, frameTangent, fderiv_const_smul_field, Pi.smul_apply,
-    ContinuousLinearMap.smul_apply, real_inner_smul_right, smul_smul]
+    smul_apply, real_inner_smul_right, smul_smul]
   refine Finset.sum_congr rfl fun k _ => Finset.sum_congr rfl fun l _ => ?_
   congr 1
   field_simp
 
+omit [DecidableEq Idx] in
 theorem meanCurvatureNormal_dilate (F : E₁ → E) {c : ℝ} (hc : c ≠ 0) (b : Idx → E₁)
     (gInv : Idx → Idx → ℝ) (x : E₁) :
     meanCurvatureNormal (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x =
@@ -240,7 +257,7 @@ theorem meanCurvatureNormal_dilate (F : E₁ → E) {c : ℝ} (hc : c ≠ 0) (b 
   have hH : meanCurvatureVectorFrame (c • F) b (fun i j => (c ^ 2)⁻¹ * gInv i j) x =
       c⁻¹ • meanCurvatureVectorFrame F b gInv x := by
     simp only [meanCurvatureVectorFrame, secondDerivative, fderiv_const_smul_field,
-      Pi.smul_apply, ContinuousLinearMap.smul_apply, Finset.smul_sum, smul_smul]
+      Pi.smul_apply, smul_apply, Finset.smul_sum, smul_smul]
     refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
     congr 1
     field_simp
@@ -263,7 +280,7 @@ theorem inner_tangentialPart_frameTangent
     rw [hsymm k l, frameGram]
     ring
   rw [hstep]
-  simp only [hinv _ j, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+  simp only [hinv _ j, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
 
 /-- The normal part is orthogonal to every frame vector. -/
 theorem inner_normalPart_frameTangent
@@ -298,11 +315,13 @@ noncomputable def normalPartₗ (F : E₁ → E) (b : Idx → E₁) (gInv : Idx 
     abel
   map_smul' a v := normalPart_smul_vec F b gInv x a v
 
+omit [DecidableEq Idx] in
 @[simp]
 theorem normalPartₗ_apply (F : E₁ → E) (b : Idx → E₁) (gInv : Idx → Idx → ℝ) (x : E₁) (v : E) :
     normalPartₗ F b gInv x v = normalPart F b gInv x v :=
   rfl
 
+omit [DecidableEq Idx] in
 /-- A vector orthogonal to every frame vector is its own normal part. -/
 theorem normalPart_eq_self {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁} {v : E}
     (hv : ∀ k, @inner ℝ E _ v (frameTangent F b x k) = 0) :
@@ -334,6 +353,7 @@ theorem inner_normalPart_tangentialPart
   simp only [tangentialPart, inner_sum, real_inner_smul_right,
     inner_normalPart_frameTangent hinv hsymm, mul_zero, Finset.sum_const_zero]
 
+omit [DecidableEq Idx] in
 /-- The squared tangential norm is the squared length of the tangential part. -/
 theorem inner_tangentialPart_self
     {F : E₁ → E} {b : Idx → E₁} {gInv : Idx → Idx → ℝ} {x : E₁}
@@ -376,15 +396,17 @@ divergence theorem for a submanifold: `F = Fᵀ + F^⊥`, with `div F = n` and, 
 The inverse metric is allowed to vary with the point, as it does in a chart; it must be an
 inverse metric near the point and have differentiable entries there. -/
 
+omit [DecidableEq Idx] in
 /-- The tangential divergence is additive in the field. -/
 theorem tangentialDivergence_sub (F : E₁ → E) {ξ₁ ξ₂ : E₁ → E} (b : Idx → E₁)
     (gInv : Idx → Idx → ℝ) {x : E₁} (h₁ : DifferentiableAt ℝ ξ₁ x)
     (h₂ : DifferentiableAt ℝ ξ₂ x) :
     tangentialDivergence F (fun y => ξ₁ y - ξ₂ y) b gInv x =
       tangentialDivergence F ξ₁ b gInv x - tangentialDivergence F ξ₂ b gInv x := by
-  simp only [tangentialDivergence, fderiv_fun_sub h₁ h₂, ContinuousLinearMap.sub_apply,
+  simp only [tangentialDivergence, fderiv_fun_sub h₁ h₂, sub_apply,
     inner_sub_left, mul_sub, Finset.sum_sub_distrib]
 
+omit [DecidableEq Idx] in
 /-- The tangential part of a differentiable field is differentiable, when the inverse metric
 is. -/
 theorem differentiableAt_tangentialPart {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x)

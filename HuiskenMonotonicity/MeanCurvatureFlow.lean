@@ -192,8 +192,7 @@ theorem inner_meanCurvature_fderiv_chartRep (f : SmoothImmersion I M E)
     (I := I) (J := 𝓘(ℝ, E)) f α (f x) x hx hfx hcont
   rw [extChartAt_model_space_eq_id, TangentBundle.continuousLinearMapAt_model_space] at h
   have happ := DFunLike.congr_fun h v
-  simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.one_apply,
-    PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
+  simp only [PartialEquiv.refl_coe, Function.comp_def, id_eq] at happ
   rw [hzx] at happ
   change @inner ℝ E _ _ (fderiv ℝ (fun y => f ((extChartAt I α).symm y)) z v) = 0
   rw [happ]
@@ -212,6 +211,7 @@ time `t`. The monotonicity formula at `t` needs the flow equation at `t` only. -
 def IsMeanCurvatureFlowAt (F : SmoothImmersionFamily I M E) (t : ℝ) : Prop :=
   ∀ p, HasDerivAt (fun s => F p s) ((F.slice t).meanCurvature p) t
 
+omit [T2Space M] in
 /-- The time velocity of the space-time chart representation is differentiable on the chart
 target. -/
 theorem differentiableAt_timeVelocity_spaceTimeChartRep (F : SmoothImmersionFamily I M E)

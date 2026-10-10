@@ -1,14 +1,7 @@
 /-
-The backward heat kernel used in Huisken's monotonicity formula.
-
-For a hypersurface dimension `n`, base time `t₀`, current time `t < t₀`, and ambient point
-`x` in an inner product space, define
-
-  ρ(x, t) = (4π(t₀ - t))^(-n/2) · exp(-‖x‖² / (4(t₀ - t))).
-
-Note that the exponent `-n/2` matches the *hypersurface* dimension, not the ambient
-dimension; this is what makes ∫ ρ dμ ≡ 1 over an `n`-plane through the origin and is the
-normalisation used in Huisken (1990), J. Differential Geom. 31, 285–299.
+Copyright (c) 2026 Kashif Rasul. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kashif Rasul
 -/
 
 import Mathlib.Analysis.InnerProductSpace.Basic
@@ -20,6 +13,21 @@ import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.FDeriv.Basic
+
+/-!
+# The backward heat kernel
+
+The backward heat kernel used in Huisken's monotonicity formula.
+
+For a hypersurface dimension `n`, base time `t₀`, current time `t < t₀`, and ambient point
+`x` in an inner product space, define
+
+  ρ(x, t) = (4π(t₀ - t))^(-n/2) · exp(-‖x‖² / (4(t₀ - t))).
+
+Note that the exponent `-n/2` matches the *hypersurface* dimension, not the ambient
+dimension; this is what makes ∫ ρ dμ ≡ 1 over an `n`-plane through the origin and is the
+normalisation used in Huisken (1990), J. Differential Geom. 31, 285–299.
+-/
 
 namespace HuiskenMonotonicity
 
@@ -115,7 +123,7 @@ theorem hasDerivAt_backwardHeatKernel_time {t : ℝ} (hτ : t < t₀) (x : E) :
         (-‖x‖ ^ 2 / (4 * (t₀ - t) ^ 2)) t := by
     have hc' : HasDerivAt (fun _ : ℝ => -‖x‖ ^ 2) (0 : ℝ) t := hasDerivAt_const _ _
     have hd := hc'.div hw hw_ne
-    convert hd using 1 <;> try rfl
+    convert hd using 1
     field_simp
     ring
   -- B(t') = exp(v(t')),  B'(t) = exp(v(t)) · v'(t).
@@ -134,7 +142,7 @@ theorem hasDerivAt_backwardHeatKernel_time {t : ℝ} (hτ : t < t₀) (x : E) :
             Real.exp (-‖x‖ ^ 2 / (4 * (t₀ - t'))) := by
     funext t'; rfl
   rw [h_fun]
-  convert h_prod using 1 <;> try rfl
+  convert h_prod using 1
   -- Reduce `(4π(t₀-t))^(c-1)` to `(4π(t₀-t))^c / (4π(t₀-t))`.
   have h_pow :
       (4 * π * (t₀ - t)) ^ (c - 1) =
@@ -319,7 +327,7 @@ theorem iteratedDeriv_two_backwardHeatKernel_along {t : ℝ} (hτ : t < t₀) (x
       ring
     rw [h_factor]
     have h_scaled := h_prod.const_mul (-1 / (2 * (t₀ - t)))
-    convert h_scaled using 1 <;> try rfl
+    convert h_scaled using 1
     -- value at 0: x + 0•v = x.
     simp only [zero_smul, add_zero]
     field_simp
@@ -654,9 +662,11 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 noncomputable def rescaledHeatKernel (x : E) : ℝ :=
   Real.exp (-‖x‖ ^ 2 / 2)
 
+omit [InnerProductSpace ℝ E] in
 lemma rescaledHeatKernel_pos (x : E) : 0 < rescaledHeatKernel x :=
   Real.exp_pos _
 
+omit [InnerProductSpace ℝ E] in
 /-- `ρ̃` is the backward heat kernel at `τ = 1/2`, up to the constant `(2π)^(n/2)`. -/
 theorem rescaledHeatKernel_eq (n : ℕ) (x : E) :
     rescaledHeatKernel x = (2 * Real.pi) ^ ((n : ℝ) / 2) * backwardHeatKernel n (1 / 2) 0 x := by

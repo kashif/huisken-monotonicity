@@ -46,6 +46,7 @@ variable [T2Space M] [I.Boundaryless]
 
 namespace SmoothImmersion
 
+omit [I.Boundaryless] in
 /-- A smooth immersion in mathlib's sense is a Riemannian isometric immersion of its induced
 metric into the Euclidean space. -/
 theorem isRiemannianIsometricImmersion (f : SmoothImmersion I M E)
@@ -53,12 +54,14 @@ theorem isRiemannianIsometricImmersion (f : SmoothImmersion I M E)
     IsRiemannianIsometricImmersion f.inducedMetric (euclideanMetric (E := E)) f :=
   ⟨hf, fun x u v => by rw [euclideanMetric_inner, inducedMetric_inner]; rfl⟩
 
+omit [T2Space M] [I.Boundaryless] in
 /-- The written-in-charts form of `f` at `p` is its chart representation. -/
 theorem writtenInExtChartAt_eq_chartRep (f : SmoothImmersion I M E) (p : M) :
     writtenInExtChartAt I 𝓘(ℝ, E) p f = f.chartRep p := by
   funext y
-  simp [writtenInExtChartAt, chartRep, extChartAt_model_space_eq_id]
+  simp [writtenInExtChartAt, chartRep]
 
+omit [T2Space M] in
 /-- The differential at `p`, read in the chart at `p`. -/
 theorem tangentLinearMapToModel_mfderiv (f : SmoothImmersion I M E) (p : M) (w : E₁) :
     tangentLinearMapToModel (mfderiv I 𝓘(ℝ, E) f p) w =
@@ -75,10 +78,12 @@ theorem secondFundamentalFormModelValue_eq (f : SmoothImmersion I M E) (p : M) (
         fderiv ℝ (f.chartRep p) (extChartAt I p p)
           (chartChristoffelContraction (I := I) f.inducedMetric p u v (extChartAt I p p)) := by
   simp only [secondFundamentalFormModelValue, euclideanMetric_chartChristoffelContraction,
-    add_zero, f.writtenInExtChartAt_eq_chartRep, secondDerivative, f.tangentLinearMapToModel_mfderiv]
+    add_zero, f.writtenInExtChartAt_eq_chartRep, secondDerivative,
+    f.tangentLinearMapToModel_mfderiv]
 
 variable [NeZero (Module.finrank ℝ E₁)] [NeZero (Module.finrank ℝ E)]
 
+omit [NeZero (Module.finrank ℝ E₁)] [NeZero (Module.finrank ℝ E)] in
 /-- **The mean curvature vector is the library's.** For a smooth immersion `f` into a Euclidean
 space, `SmoothImmersion.meanCurvature` is the metric trace of the library's second fundamental
 form of `f`, as a Riemannian isometric immersion of its induced metric. The tangent space of

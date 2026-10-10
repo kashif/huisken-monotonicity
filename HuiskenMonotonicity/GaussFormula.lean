@@ -33,6 +33,7 @@ variable {E₁ : Type*} [NormedAddCommGroup E₁] [NormedSpace ℝ E₁]
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable {Idx : Type*} [Fintype Idx] [DecidableEq Idx]
 
+omit [Fintype Idx] [DecidableEq Idx] in
 /-- **The derivative of a Gram entry**, by the product rule:
 
   `∂_v g_{jk} = ⟪D²F(v, ∂_j), ∂_k F⟫ + ⟪∂_j F, D²F(v, ∂_k)⟫`. -/
@@ -46,11 +47,12 @@ theorem fderiv_frameGram {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F x)
   have hfun : (fun y => frameGram F b y j k) =
       fun y => @inner ℝ E _ (fderiv ℝ F y (b j)) (fderiv ℝ F y (b k)) := rfl
   rw [hfun, hprod.fderiv]
-  simp only [ContinuousLinearMap.coe_comp', Function.comp_apply,
+  simp only [ContinuousLinearMap.coe_comp, Function.comp_apply,
     ContinuousLinearMap.prod_apply, fderivInnerCLM_apply, ContinuousLinearMap.flip_apply,
     frameTangent_apply, secondDerivative_eq_fderiv_fderiv]
   ring
 
+omit [DecidableEq Idx] [Fintype Idx] in
 /-- **The Koszul identity for the pullback metric.**
 
   `⟪D²F(∂_i, ∂_j), ∂_k F⟫ = ½ (∂_i g_{jk} + ∂_j g_{ik} - ∂_k g_{ij})`.
@@ -71,6 +73,7 @@ theorem inner_secondDerivative_frameTangent_eq_koszul {F : E₁ → E} {x : E₁
   rw [s1, s2, s3, real_inner_comm (frameTangent F b x j) (secondDerivative F x (b i) (b k))]
   ring
 
+omit [DecidableEq Idx] [Fintype Idx] in
 /-- The Gram matrix is symmetric as a function, so its directional derivatives are too. -/
 lemma fderiv_frameGram_comm (F : E₁ → E) (b : Idx → E₁) (x v : E₁) (j k : Idx) :
     fderiv ℝ (fun y => frameGram F b y j k) x v =
@@ -79,6 +82,7 @@ lemma fderiv_frameGram_comm (F : E₁ → E) (b : Idx → E₁) (x v : E₁) (j 
     funext fun y => frameGram_symm F b y j k
   rw [h]
 
+omit [DecidableEq Idx] in
 /-- **The contracted Christoffel symbol.**
 
   `g^{ij} ⟪D²F(∂_i, ∂_k), ∂_j F⟫ = ½ g^{ij} ∂_k g_{ij}`.
@@ -97,7 +101,8 @@ theorem sum_inner_secondDerivative_frameTangent_eq_half_trace {F : E₁ → E}
   have hcancel :
       ∑ i, ∑ j, gInv i j * fderiv ℝ (fun y => frameGram F b y k j) x (b i) =
         ∑ i, ∑ j, gInv i j * fderiv ℝ (fun y => frameGram F b y i k) x (b j) := by
-    rw [Finset.sum_comm (f := fun i j => gInv i j * fderiv ℝ (fun y => frameGram F b y i k) x (b j))]
+    rw [Finset.sum_comm
+      (f := fun i j => gInv i j * fderiv ℝ (fun y => frameGram F b y i k) x (b j))]
     refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
     rw [hsymm j i, fderiv_frameGram_comm F b x (b i) j k]
   have hterm : ∀ i j, gInv i j *
@@ -118,6 +123,7 @@ theorem sum_inner_secondDerivative_frameTangent_eq_half_trace {F : E₁ → E}
 noncomputable def tangentField (F : E₁ → E) (b : Idx → E₁) (Z : Idx → E₁ → ℝ) (y : E₁) : E :=
   ∑ k, Z k y • frameTangent F b y k
 
+omit [DecidableEq Idx] in
 /-- The derivative of a tangential field, by the product rule:
 
   `∂_v ξ = ∑ k, (∂_v Z^k) ∂_k F + Z^k D²F(v, ∂_k)`. -/
@@ -134,8 +140,8 @@ theorem fderiv_tangentField {F : E₁ → E} {x : E₁} (hF : ContDiffAt ℝ 2 F
   have hsum := HasFDerivAt.fun_sum hk
   have hfun : tangentField F b Z = fun y => ∑ k, Z k y • fderiv ℝ F y (b k) := rfl
   rw [hfun, hsum.fderiv]
-  simp only [ContinuousLinearMap.sum_apply, ContinuousLinearMap.add_apply,
-    ContinuousLinearMap.smul_apply, ContinuousLinearMap.flip_apply,
+  simp only [sum_apply, add_apply,
+    smul_apply, ContinuousLinearMap.flip_apply,
     ContinuousLinearMap.smulRight_apply, frameTangent_apply, secondDerivative_eq_fderiv_fderiv]
   refine Finset.sum_congr rfl fun k _ => ?_
   rw [add_comm]
@@ -186,7 +192,7 @@ theorem tangentialDivergence_tangentField {F : E₁ → E} {x : E₁} (hF : Cont
       _ = ∑ i, fderiv ℝ (Z i) x (b i) := by
           refine Finset.sum_congr rfl fun i _ => ?_
           simp only [hdelta, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ,
-            if_true]
+            ite_true]
   · -- the coefficient part is the contracted Christoffel symbol
     calc ∑ i, ∑ j, ∑ k, Z k x * (gInv i j *
             @inner ℝ E _ (secondDerivative F x (b i) (b k)) (frameTangent F b x j))
