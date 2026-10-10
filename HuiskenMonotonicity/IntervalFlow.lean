@@ -162,17 +162,26 @@ theorem slice_extendAt (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) :
   obtain ⟨_, h⟩ := (G.eventually_slice_extendAt ht).self_of_nhds
   exact h
 
+theorem extendAt_apply_self (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) (p : M) :
+    G.extendAt ht p t = G p t :=
+  ((G.eventually_extendAt ht).self_of_nhds).2 p
+
+/-- A time derivative of `G` at `t` is one of its extension. -/
+theorem hasDerivAt_extendAt (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) {p : M}
+    {v : E} (h : HasDerivAt (fun s ↦ G p s) v t) :
+    HasDerivAt (fun s ↦ G.extendAt ht p s) v t :=
+  h.congr_of_eventuallyEq <| by
+    filter_upwards [G.eventually_extendAt ht] with s hs
+    exact hs.2 p
+
 variable [T2Space M]
 
 /-- A mean curvature flow on `J` extends to a family moving by mean curvature at `t`. -/
 theorem IsMeanCurvatureFlow.extendAt {G : ImmersionFlowOn I M E J}
     (hmcf : G.IsMeanCurvatureFlow) {t : ℝ} (ht : t ∈ J) :
-    (G.extendAt ht).IsMeanCurvatureFlowAt t := by
-  intro p
+    (G.extendAt ht).IsMeanCurvatureFlowAt t := fun p ↦ by
   rw [G.slice_extendAt ht]
-  refine (hmcf t ht p).congr_of_eventuallyEq ?_
-  filter_upwards [G.eventually_extendAt ht] with s hs
-  exact hs.2 p
+  exact G.hasDerivAt_extendAt ht (hmcf t ht p)
 
 variable [SigmaCompactSpace M]
 
@@ -182,6 +191,22 @@ theorem eventually_surfaceMeasure_extendAt (G : ImmersionFlowOn I M E J) {t : �
     ∀ᶠ s in 𝓝 t, (G.extendAt ht).surfaceMeasure s = G.surfaceMeasure s := by
   filter_upwards [G.eventually_slice_extendAt ht] with s ⟨hs, h⟩
   rw [surfaceMeasure, dite_eq_left hs, SmoothImmersionFamily.surfaceMeasure, h]
+
+theorem surfaceMeasure_extendAt_self (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J) :
+    (G.extendAt ht).surfaceMeasure t = G.surfaceMeasure t :=
+  (G.eventually_surfaceMeasure_extendAt ht).self_of_nhds
+
+/-- The derivative at `t` of `s ↦ ∫ K(s, F_s) dμ_s` is the same for `G` and its extension:
+the two agree near `t`. -/
+theorem hasDerivAt_integral_of_extendAt (G : ImmersionFlowOn I M E J) {t : ℝ} (ht : t ∈ J)
+    {K : ℝ → E → ℝ} {D : ℝ}
+    (h : HasDerivAt (fun s ↦ ∫ p, K s (G.extendAt ht p s)
+      ∂((G.extendAt ht).surfaceMeasure s)) D t) :
+    HasDerivAt (fun s ↦ ∫ p, K s (G p s) ∂(G.surfaceMeasure s)) D t :=
+  h.congr_of_eventuallyEq <| by
+    filter_upwards [G.eventually_extendAt ht, G.eventually_surfaceMeasure_extendAt ht]
+      with s hs hμ
+    simp only [hs.2, hμ]
 
 variable [I.Boundaryless] [CompactSpace M]
 
@@ -200,18 +225,11 @@ theorem huisken_monotonicity (G : ImmersionFlowOn I M E J) (hmcf : G.IsMeanCurva
           ‖(G.slice t ht).meanCurvature p +
             (1 / (2 * (t₀ - t))) • (G.slice t ht).normalComponent p (G p t - x₀)‖ ^ 2
         ∂(G.surfaceMeasure t)) t := by
-  set F := G.extendAt ht with hF
-  have h := F.huisken_monotonicity x₀ t₀ hτ (hmcf.extendAt ht)
-  rw [G.slice_extendAt ht] at h
-  have hFt : ∀ p, F p t = G p t := fun p ↦ ((G.eventually_extendAt ht).self_of_nhds).2 p
-  have hμt : F.surfaceMeasure t = G.surfaceMeasure t :=
-    (G.eventually_surfaceMeasure_extendAt ht).self_of_nhds
-  simp only [hFt, hμt] at h
-  refine h.congr_of_eventuallyEq ?_
-  filter_upwards [G.eventually_extendAt ht, G.eventually_surfaceMeasure_extendAt ht]
-    with s hs hμ
-  rw [hF]
-  simp only [hs.2, hμ]
+  have h := (G.extendAt ht).huisken_monotonicity x₀ t₀ hτ (hmcf.extendAt ht)
+  simp only [G.slice_extendAt ht, G.extendAt_apply_self ht, G.surfaceMeasure_extendAt_self ht]
+    at h
+  exact G.hasDerivAt_integral_of_extendAt ht
+    (K := fun s x ↦ backwardHeatKernel (Module.finrank ℝ E₁) t₀ s (x - x₀)) h
 
 /-- A function with derivative `-(∫ ρ ‖·‖²)` at every point of a convex open set is
 non-increasing there. -/
@@ -253,12 +271,9 @@ omit [SigmaCompactSpace M] [I.Boundaryless] [CompactSpace M] in
 /-- A rescaled flow on `J` extends to a family satisfying the rescaled equation at `s`. -/
 theorem IsRescaledMeanCurvatureFlow.extendAt {G : ImmersionFlowOn I M E J}
     (hmcf : G.IsRescaledMeanCurvatureFlow) {s : ℝ} (hs : s ∈ J) :
-    (G.extendAt hs).IsRescaledMeanCurvatureFlowAt s := by
-  intro p
-  rw [G.slice_extendAt hs, ((G.eventually_extendAt hs).self_of_nhds).2 p]
-  refine (hmcf s hs p).congr_of_eventuallyEq ?_
-  filter_upwards [G.eventually_extendAt hs] with r hr
-  exact hr.2 p
+    (G.extendAt hs).IsRescaledMeanCurvatureFlowAt s := fun p ↦ by
+  rw [G.slice_extendAt hs, G.extendAt_apply_self hs]
+  exact G.hasDerivAt_extendAt hs (hmcf s hs p)
 
 /-- **The rescaled monotonicity formula** (Huisken 1990, Corollary 3.2) for a rescaled flow
 of a closed manifold on an open set of times `J`: at every `s ∈ J`,
@@ -270,18 +285,10 @@ theorem huisken_monotonicity_rescaled (G : ImmersionFlowOn I M E J)
       (-∫ p, rescaledHeatKernel (G p s) *
           ‖(G.slice s hs).meanCurvature p + (G.slice s hs).normalPosition p‖ ^ 2
         ∂(G.surfaceMeasure s)) s := by
-  set F := G.extendAt hs with hF
-  have h := F.huisken_monotonicity_rescaled (hmcf.extendAt hs)
-  rw [G.slice_extendAt hs] at h
-  have hFs : ∀ p, F p s = G p s := fun p ↦ ((G.eventually_extendAt hs).self_of_nhds).2 p
-  have hμs : F.surfaceMeasure s = G.surfaceMeasure s :=
-    (G.eventually_surfaceMeasure_extendAt hs).self_of_nhds
-  simp only [hFs, hμs] at h
-  refine h.congr_of_eventuallyEq ?_
-  filter_upwards [G.eventually_extendAt hs, G.eventually_surfaceMeasure_extendAt hs]
-    with r hr hμ
-  rw [hF]
-  simp only [hr.2, hμ]
+  have h := (G.extendAt hs).huisken_monotonicity_rescaled (hmcf.extendAt hs)
+  simp only [G.slice_extendAt hs, G.extendAt_apply_self hs, G.surfaceMeasure_extendAt_self hs]
+    at h
+  exact G.hasDerivAt_integral_of_extendAt hs (K := fun _ x ↦ rescaledHeatKernel x) h
 
 /-- **Monotonicity under the rescaled flow**: on an interval `J` of times,
 `s ↦ ∫_M ρ̃(F) dμ_s` is non-increasing. This is the form in which Huisken studies the
