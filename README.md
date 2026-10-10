@@ -113,7 +113,7 @@ leanblueprint web          # builds blueprint/web/ HTML site
 leanblueprint checkdecls   # verifies every \lean{...} ref exists in the build
 ```
 
-## Reference
+## References
 
 Gerhard Huisken, *Asymptotic behavior for singularities of the mean curvature flow*,
 J. Differential Geom. **31** (1990), no. 1, 285–299.
@@ -131,6 +131,33 @@ J. Differential Geom. **31** (1990), no. 1, 285–299.
   publisher = {Lehigh University},
   doi       = {10.4310/jdg/1214444099},
   url       = {https://doi.org/10.4310/jdg/1214444099}
+}
+```
+
+The formalization builds on mathlib and on the `DifferentialGeometry` library (the entry below
+follows the library's `CITATION.cff`).
+
+```bibtex
+@inproceedings{mathlib2020,
+  author    = {{The mathlib Community}},
+  title     = {The {L}ean {M}athematical {L}ibrary},
+  booktitle = {Proceedings of the 9th {ACM} {SIGPLAN} International Conference
+               on Certified Programs and Proofs},
+  series    = {CPP 2020},
+  publisher = {ACM},
+  address   = {New Orleans, LA, USA},
+  year      = {2020},
+  month     = jan,
+  doi       = {10.1145/3372885.3373824},
+  url       = {https://doi.org/10.1145/3372885.3373824}
+}
+
+@software{qin_differential_geometry,
+  author  = {Qin, Ziyang},
+  title   = {{differential-geometry}: Differential Geometry in {L}ean 4},
+  version = {0.1.5},
+  license = {Apache-2.0},
+  url     = {https://github.com/qinz1yang/differential-geometry}
 }
 ```
 
