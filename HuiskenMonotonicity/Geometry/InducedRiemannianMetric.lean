@@ -215,12 +215,6 @@ def spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M) : ℝ × E₁
   fun p ↦ F.chartRep p.1 x₀ p.2
 
 omit [T2Space M] in
-@[simp]
-theorem spaceTimeChartRep_apply (F : SmoothImmersionFamily I M E) (x₀ : M) (p : ℝ × E₁) :
-    F.spaceTimeChartRep x₀ p = F ((extChartAt I x₀).symm p.2) p.1 :=
-  rfl
-
-omit [T2Space M] in
 /-- The space-time chart representation is smooth on the chart target. -/
 theorem contDiffOn_spaceTimeChartRep (F : SmoothImmersionFamily I M E) (x₀ : M) :
     ContDiffOn ℝ ∞ (F.spaceTimeChartRep x₀)

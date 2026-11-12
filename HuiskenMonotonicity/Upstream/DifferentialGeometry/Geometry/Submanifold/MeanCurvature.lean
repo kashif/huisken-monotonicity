@@ -25,7 +25,6 @@ this is new API rather than a restatement.
 * `meanCurvatureVectorAt h x` — the mean curvature vector, obtained by instantiating the
   above at the chart frame `chartFrameBasisAt x` and the library's inverse chart Gram matrix,
   the convention of the library's chart Gram matrix, Voss-Weyl divergence and Laplacian.
-* `meanCurvatureVectorAmbientAt h x` — the same vector read in the ambient tangent space.
 
 ## Conventions
 
@@ -116,30 +115,6 @@ def chartFrameBasisAt (x : N) : Module.Basis (Fin (Module.finrank ℝ EN)) ℝ (
   (Tensor.Coordinates.chartModelBasis EN).map
     (tangentSpaceModelContinuousLinearEquiv (I := IN) x).symm.toLinearEquiv
 
-omit [NeZero (Module.finrank ℝ EN)] [IN.Boundaryless] in
-theorem chartFrameBasisAt_apply (x : N) (i : Fin (Module.finrank ℝ EN)) :
-    chartFrameBasisAt (IN := IN) x i = Tensor.Coordinates.chartBasisVecFiber (I := IN) x i x := by
-  rw [chartFrameBasisAt, Module.Basis.map_apply, Tensor.Coordinates.chartBasisVecFiber,
-    TangentBundle.symmL_trivializationAt_eq_core (mem_chart_source HN x)]
-  exact (tangentCoordChange_self (I := IN) (mem_extChartAt_source x)).symm
-
-omit [NeZero (Module.finrank ℝ EN)] [IN.Boundaryless] in
-/-- The library's inverse chart Gram matrix at the centre is the inverse metric in the chart
-frame. -/
-theorem metricInverseInBasis_chartInvGramMatrix (gN : SmoothRiemannianMetric IN N) (x : N) :
-    Tensor0SBundle.MetricInverseInBasis (I := IN) gN x (chartFrameBasisAt x)
-      (fun i j ↦ Operator.chartInvGramMatrix (I := IN) gN x x i j) := by
-  have hx : x ∈ (trivializationAt EN (TangentSpace IN) x).baseSet :=
-    FiberBundle.mem_baseSet_trivializationAt' x
-  have h₁ := Operator.chartInvGramMatrix_mul_chartGramMatrix (I := IN) gN x hx
-  have h₂ := Operator.chartGramMatrix_mul_chartInvGramMatrix (I := IN) gN x hx
-  intro i j
-  have e₁ := congrFun (congrFun h₁ i) j
-  have e₂ := congrFun (congrFun h₂ i) j
-  simp only [Matrix.mul_apply, Matrix.one_apply, Tensor.Coordinates.chartGramMatrix_apply] at e₁ e₂
-  simp only [chartFrameBasisAt_apply]
-  exact ⟨e₁, e₂⟩
-
 /-- The **mean curvature vector** of an isometric immersion at `x`: the metric trace of the
 second fundamental form, taken in the chart frame at `x` against the library's inverse chart
 Gram matrix.
@@ -152,12 +127,6 @@ def meanCurvatureVectorAt
   meanCurvatureVectorInBasis h (chartFrameBasisAt x)
     (fun i j ↦ Operator.chartInvGramMatrix (I := IN) gN x x i j)
 
-/-- The mean curvature vector regarded as an ambient tangent vector at `iota x`. -/
-def meanCurvatureVectorAmbientAt
-    (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) :
-    TangentSpace I (iota x) :=
-  (meanCurvatureVectorAt h x : TangentSpace I (iota x))
-
 omit [NeZero (Module.finrank ℝ EN)] [NeZero (Module.finrank ℝ E)]
     [IN.Boundaryless] [I.Boundaryless] in
 @[simp]
@@ -167,33 +136,6 @@ theorem meanCurvatureVectorAt_eq_inBasis
       meanCurvatureVectorInBasis h (chartFrameBasisAt x)
         (fun i j ↦ Operator.chartInvGramMatrix (I := IN) gN x x i j) :=
   rfl
-
-omit [NeZero (Module.finrank ℝ EN)] [NeZero (Module.finrank ℝ E)]
-    [IN.Boundaryless] [I.Boundaryless] in
-@[simp]
-theorem meanCurvatureVectorAmbientAt_coe
-    (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) :
-    meanCurvatureVectorAmbientAt h x =
-      (meanCurvatureVectorAt h x : TangentSpace I (iota x)) :=
-  rfl
-
-omit [NeZero (Module.finrank ℝ EN)] [NeZero (Module.finrank ℝ E)]
-    [IN.Boundaryless] [I.Boundaryless] in
-/-- The mean curvature vector is normal to the immersed submanifold. Immediate from its
-type; stated in ambient form, which is how extrinsic computations use it. -/
-theorem meanCurvatureVectorAmbientAt_mem_normalSpaceAt
-    (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) :
-    meanCurvatureVectorAmbientAt h x ∈ h.normalSpaceAt x :=
-  (meanCurvatureVectorAt h x).2
-
-omit [NeZero (Module.finrank ℝ EN)] [NeZero (Module.finrank ℝ E)]
-    [IN.Boundaryless] [I.Boundaryless] in
-/-- The mean curvature vector is `gM`-orthogonal to every pushed-forward tangent vector. -/
-theorem inner_meanCurvatureVectorAmbientAt_mfderiv_eq_zero
-    (h : IsRiemannianIsometricImmersion gN gM iota) (x : N) (u : TangentSpace IN x) :
-    gM.inner (iota x) (meanCurvatureVectorAmbientAt h x) (mfderiv IN I iota x u) = 0 :=
-  (h.mem_normalSpaceAt_iff x (meanCurvatureVectorAmbientAt h x)).mp
-    (meanCurvatureVectorAt h x).2 u
 
 end MeanCurvature
 

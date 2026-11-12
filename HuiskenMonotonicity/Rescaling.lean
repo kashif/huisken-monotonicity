@@ -66,11 +66,6 @@ def dilate (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠ 0) : SmoothImmersio
       (DFunLike.congr_fun (f.mvfderiv_const_smul c p) v).symm.trans
         (hvw.trans (DFunLike.congr_fun (f.mvfderiv_const_smul c p) w))⟩
 
-@[simp]
-theorem dilate_apply (f : SmoothImmersion I M E) {c : ℝ} (hc : c ≠ 0) (p : M) :
-    f.dilate hc p = c • f p :=
-  rfl
-
 variable [T2Space M]
 
 /-- The chart Gram matrix of a dilate is `c²` times that of the immersion. -/
