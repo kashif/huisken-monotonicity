@@ -152,8 +152,17 @@ follows the library's `CITATION.cff`).
   url       = {https://doi.org/10.1145/3372885.3373824}
 }
 
-@software{qin_differential_geometry,
-  author  = {Qin, Ziyang},
+@software{liao_differential_geometry,
+  author  = {Liao, Yuan and
+             Qin, Ziyang and
+             Chung, Jui-Hui and
+             Khaitan, Ayush and
+             Zhang, Zhengyang and
+             Lin, Hongzhou and
+             Zhang, Zijian and
+             Zhu, Ligeng and
+             Lu, Peng and
+             Chow, Bennett},
   title   = {{differential-geometry}: Differential Geometry in {L}ean 4},
   version = {0.1.5},
   license = {Apache-2.0},
