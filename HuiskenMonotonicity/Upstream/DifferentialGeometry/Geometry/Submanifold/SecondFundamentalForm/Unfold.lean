@@ -5,7 +5,7 @@ Authors: Kashif Rasul
 -/
 
 import DifferentialGeometry.Geometry.Submanifold.SecondFundamentalForm.Pointwise
-import DifferentialGeometry.Geometry.Metric.Euclidean
+import DifferentialGeometry.Geometry.Metric.Euclidean.Curvature
 import DifferentialGeometry.Geometry.Connection.ChartBridge.Connection.Christoffel
 
 /-!
@@ -19,11 +19,11 @@ with the same body, and proves the unfolding by `rfl`:
 
 in the charts at `x` and `ι x`, where `F` is `ι` written in those charts.
 
-It also restates, publicly, that the Christoffel symbols of the Euclidean metric vanish in
-the identity chart (private in `DifferentialGeometry/Geometry/Metric/RicciSoliton/Models.lean`).
+It also records that the Christoffel contraction of the Euclidean metric vanishes, from the
+library's `euclideanMetric_chartChristoffel_eq_zero`.
 
-Intended upstream: make `gaussDefectModelValue`, `secondFundamentalFormAmbientAt_apply`,
-`euclideanMetric_chartGramOnE` and `euclideanMetric_chartChristoffel` public.
+Intended upstream: make `gaussDefectModelValue` and `secondFundamentalFormAmbientAt_apply`
+public.
 -/
 
 set_option autoImplicit false
@@ -86,31 +86,11 @@ open DifferentialGeometry.Tensor.Coordinates DifferentialGeometry.Geometry.Opera
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
 
-/-- The chart Gram entries of the Euclidean metric are constant. -/
-theorem euclideanMetric_chartGramOnE' (x : V) (i j : Fin (Module.finrank ℝ V)) :
-    chartGramOnE (I := 𝓘(ℝ, V)) (euclideanMetric (E := V)) x i j =
-      fun _ ↦ inner ℝ (chartModelBasis V i) (chartModelBasis V j) := by
-  funext y
-  simp only [chartGramOnE, chartGramMatrix, Matrix.of_apply, chartBasisVecFiber]
-  simp only [TangentBundle.symmL_model_space]
-  rw [DifferentialGeometry.euclideanMetric_inner]
-  change inner ℝ ((1 : V →L[ℝ] V) (chartModelBasis V i))
-      ((1 : V →L[ℝ] V) (chartModelBasis V j)) = _
-  rfl
-
-/-- The Christoffel symbols of the Euclidean metric vanish. -/
-theorem euclideanMetric_chartChristoffel' (x : V) (i j k : Fin (Module.finrank ℝ V)) :
-    chartChristoffel (I := 𝓘(ℝ, V)) (euclideanMetric (E := V)) x i j k = 0 := by
-  funext y
-  rw [chartChristoffel_def]
-  simp_rw [euclideanMetric_chartGramOnE']
-  simp [partialDeriv]
-
 /-- The Christoffel contraction of the Euclidean metric vanishes. -/
 theorem euclideanMetric_chartChristoffelContraction (x : V) (v w y : V) :
     chartChristoffelContraction (I := 𝓘(ℝ, V)) (euclideanMetric (E := V)) x v w y = 0 := by
   have h0 : ∀ i j k, chartChristoffel (I := 𝓘(ℝ, V)) (euclideanMetric (E := V)) x i j k y = 0 :=
-    fun i j k ↦ congrFun (euclideanMetric_chartChristoffel' x i j k) y
+    fun i j k ↦ congrFun (euclideanMetric_chartChristoffel_eq_zero x i j k) y
   simp only [chartChristoffelContraction, h0, zero_mul, Finset.sum_const_zero, zero_smul]
 
 end Euclidean
