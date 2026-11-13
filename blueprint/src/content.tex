@@ -142,6 +142,21 @@ theorem depends only on Lean's standard axioms.
 \end{theorem}
 \begin{proof}\leanok Verified in Lean. \end{proof}
 
+Figure~\ref{fig:kernel} shows the kernel. As $t \to t_0$ it concentrates at the centre while
+keeping unit mass, so $\int_M \rho\,d\mu_t$ measures the area of $M_t$ at the scale
+$\sqrt{t_0 - t}$ around $x_0$, normalised so that a plane through $x_0$ has density $1$.
+
+\begin{figure}[htbp]
+\centering
+\figimage{figures/kernel}
+\caption{The backward heat kernel \texttt{backwardHeatKernel}. (a) In dimension $n = 1$:
+every profile has mass one (\texttt{integral\_backwardHeatKernel}) and the profiles concentrate
+as $t \to t_0$. (b) In dimension $n = 2$: the dashed circle $|x|^2 = 2n(t_0 - t)$ is the sphere
+that the shrinking sphere occupies at time $t$ when it vanishes at $(0, t_0)$; see
+Figure~\ref{fig:sphere}.}
+\label{fig:kernel}
+\end{figure}
+
 \section{Immersions and the induced metric}
 
 \begin{definition}[smooth immersion, smooth immersion family]
@@ -426,6 +441,23 @@ is applied to the chart representation of a time slice.
   As in Huisken: Theorem~\ref{thm:transport} with Theorem~\ref{thm:volume-evolution} and Lemma~\ref{lem:kernel-curve}, then Lemma~\ref{lem:pointwise-identity}; the first-variation term integrates to zero by Theorem~\ref{thm:first-variation}. The centre is reduced to the origin by a translation.
 \end{proof}
 
+The integrand on the right is the square of $\vec H + (F - x_0)^\perp / 2(t_0 - t)$. It
+vanishes exactly when the surface at time $t$ is a self-shrinker: a surface that moves by
+mean curvature only by shrinking homothetically towards $x_0$, and vanishes at $t_0$.
+Figure~\ref{fig:integrand} compares the two vectors on a circle and on an ellipse.
+
+\begin{figure}[htbp]
+\centering
+\figimage{figures/integrand}
+\caption{The two vectors of Theorem~\ref{thm:huisken-monotonicity} for curves in the plane,
+with $x_0 = 0$. (a) On the circle of radius $\sqrt{2(t_0 - t)}$, $\vec H$ and
+$x^\perp/2(t_0 - t)$ cancel and the integrand is zero. (b) On the ellipse of
+Figure~\ref{fig:monotone}, with the kernel centred where the ellipse vanishes, they do not
+cancel; their sum (green) is largest at the ends of the axes. The square of the sum is
+the integrand in \texttt{huisken\_pointwise\_identity}.}
+\label{fig:integrand}
+\end{figure}
+
 \section{Flows on a time interval, and monotonicity}
 
 A mean curvature flow of a closed manifold exists only on a bounded time interval.
@@ -466,6 +498,23 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   \leanok
   The derivative is $-\int \rho \|\cdot\|^2 \le 0$ on the convex open set $J \cap (-\infty, t_0)$, since $\rho > 0$ there (Lemma~\ref{lem:rho-pos}).
 \end{proof}
+
+Figure~\ref{fig:monotone} shows the formula and the monotonicity for a curve in the plane,
+where mean curvature flow is the curve shortening flow.
+
+\begin{figure}[htbp]
+\centering
+\figimage{figures/monotone}
+\caption{An ellipse with semi-axes $2$ and $1$ under curve shortening flow, computed
+numerically. A closed curve loses area at rate $2\pi$, so the ellipse vanishes at time
+$T \approx 1$, becoming round as it does. The kernel is centred at $(x_0, t_0) = (0, T)$.
+(a) The curves. (b) The Gaussian density $\int \rho\,d\mu_t$ is non-increasing
+(\texttt{ImmersionFlowOn.antitoneOn\_integral}) and approaches the value $\sqrt{2\pi/e}$ of a
+circle shrinking to $(0, T)$. (c) The two sides of
+\texttt{SmoothImmersionFamily.huisken\_monotonicity}: the derivative of the density (line) and
+the integral of $-\rho\,|\vec H + x^\perp/2(t_0 - t)|^2$ (dots).}
+\label{fig:monotone}
+\end{figure}
 
 \section{The rescaled flow}
 
@@ -523,6 +572,22 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   The chain rule in time and the product rule with the factor $e^s/\sqrt2$, together with $\vec H(cF) = c^{-1}\vec H(F)$: the metric scales by $c^2$, its inverse by $c^{-2}$, the second derivative by $c$, and the normal projection is unchanged.
 \end{proof}
 
+The rescaling magnifies the flow at the rate at which it shrinks, so a self-shrinker becomes
+a stationary solution of $\partial_s \tilde F = \tilde H + \tilde F$, and the density of
+Theorem~\ref{thm:huisken-monotonicity} centred at $(0, T)$ becomes $\int \tilde\rho\,d\tilde\mu_s$
+up to the constant $(2\pi)^{-n/2}$. Figure~\ref{fig:rescaled} shows this for the ellipse.
+
+\begin{figure}[htbp]
+\centering
+\figimage{figures/rescaled}
+\caption{The ellipse of Figure~\ref{fig:monotone} after Huisken's rescaling
+(\texttt{ImmersionFlowOn.rescale}). (a) The rescaled curves converge to the unit circle, the
+self-shrinker $|y| = \sqrt n$, which is stationary for the rescaled flow. (b) The rescaled
+density is non-increasing (\texttt{ImmersionFlowOn.antitoneOn\_integral\_rescale}) and
+approaches its value $2\pi e^{-1/2}$ on the unit circle.}
+\label{fig:rescaled}
+\end{figure}
+
 \section{The shrinking sphere}
 
 \begin{lemma}[mean curvature of a sphere]
@@ -552,6 +617,23 @@ A mean curvature flow of a closed manifold exists only on a bounded time interva
   \leanok
   By Lemma~\ref{lem:sphere-mean-curvature}, $\vec H = -\frac{n}{R}\,p$ on the sphere of radius $R(t) = \sqrt{1 - 2nt}$, and $\partial_t(R\,p) = -\frac{n}{R}\,p$. Corollary~\ref{cor:antitone} applies.
 \end{proof}
+
+The shrinking sphere is a self-shrinker for the centre $(0, T)$, $T = 1/(2n)$, where it
+vanishes: there $|F|^2 = 2n(T - t)$, the integrand of Theorem~\ref{thm:huisken-monotonicity}
+vanishes identically, and the density is constant. For every other centre it strictly
+decreases (Figure~\ref{fig:sphere}).
+
+\begin{figure}[htbp]
+\centering
+\figimage{figures/sphere}
+\caption{The shrinking sphere \texttt{shrinkingSphere} for $n = 1$. (a) The circles
+$R(t) = \sqrt{1 - 2nt}$ and their mean curvature vector $\vec H = -\frac{n}{R^2}F$
+(\texttt{meanCurvature\_eq\_of\_norm\_eq}). (b) The density $\int \rho_{x_0,t_0}\,d\mu_t$ for
+four centres. It is non-increasing for each (\texttt{shrinkingSphere\_antitoneOn\_integral}),
+and constant, equal to $\sqrt{2\pi/e}$, only for the centre $(0, T)$ where the circle
+vanishes.}
+\label{fig:sphere}
+\end{figure}
 
 \begin{thebibliography}{3}
 \bibitem{huisken1990} G.~Huisken, \emph{Asymptotic behavior for singularities of the mean
