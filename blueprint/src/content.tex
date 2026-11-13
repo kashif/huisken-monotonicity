@@ -31,10 +31,13 @@ Figure~\ref{fig:proof-route} shows the route of the proof, which follows Huisken
 \begin{figure}[htbp]
 \centering
 \input{figures/proof-route}
-\caption{The route of the proof. The volume element and the kernel are differentiated
-along the flow; the square is completed pointwise, and the first variation formula removes
-the remaining divergence term. Every box is formalized. The dashed line marks the
-identification of the mean curvature vector with the library's.}
+\caption{The route of the proof, with the Lean module (under \texttt{HuiskenMonotonicity})
+that proves each step. The transport formula differentiates $\int \rho\,d\mu_t$ through the
+library's volume variation; the volume element and the kernel are differentiated along the
+flow; the square is completed pointwise, and the first variation formula removes the
+remaining divergence term. The theorem is proved at the origin and moved to any centre by a
+translation. Every box is formalized. The dashed line marks the identification of the mean
+curvature vector with the library's.}
 \label{fig:proof-route}
 \end{figure}
 

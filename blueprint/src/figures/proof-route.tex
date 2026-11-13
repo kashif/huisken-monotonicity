@@ -1,47 +1,53 @@
 \begin{tikzpicture}[
-  font=\small,
+  font=\footnotesize,
   stage/.style={draw=black!55, rounded corners=2pt, fill=black!3,
-    align=center, text width=3.05cm, minimum height=1.15cm, inner sep=4pt},
-  lib/.style={stage, fill=black!9, text width=3.05cm, minimum height=0.85cm},
-  main/.style={stage, fill=black!12, text width=6.9cm, minimum height=1.3cm},
+    align=center, text width=2.6cm, minimum height=1.45cm, inner sep=3pt},
+  lib/.style={stage, fill=black!9, minimum height=0.85cm},
+  main/.style={stage, fill=black!12, text width=5.85cm, minimum height=1.45cm},
   link/.style={-{Stealth[length=2mm]}, semithick, draw=black!70},
   same/.style={semithick, dashed, draw=black!55}]
+  \newcommand{\leanmodule}[1]{\\[2pt]{\scriptsize\ttfamily #1}}
   % libraries
   \node[lib] (mathlib) at (0, 0) {mathlib\\derivatives, integrals};
-  \node[lib, text width=10.3cm] (dg) at (7.4, 0)
+  \node[lib, text width=8.3cm] (dg) at (7.375, 0)
     {\texttt{DifferentialGeometry}: volume variation, divergence theorem,\\
-     second fundamental form};
+     second fundamental form, mean curvature vector};
   % ingredients
-  \node[stage] (kernel) at (0, -1.9)
-    {Backward heat kernel\\along the flow\routeref{Lemma}{lem:kernel-curve}};
-  \node[stage] (volume) at (3.7, -1.9)
-    {$\partial_t\,d\mu = -|\vec H|^2 d\mu$\routeref{Theorem}{thm:volume-evolution}};
-  \node[stage] (firstvar) at (7.4, -1.9)
-    {First variation\\\mbox{\footnotesize$\int \operatorname{div}_M X = -\int \langle \vec H, X\rangle$}\routeref{Theorem}{thm:first-variation}};
-  \node[stage] (bridge) at (11.1, -1.9)
-    {$\vec H$ is the trace\\of the library's $\mathrm{II}$\routeref{Theorem}{thm:mean-curvature-bridge}};
+  \node[stage] (kernel) at (0, -2.35)
+    {Kernel along\\the flow\routeref{Lemma}{lem:kernel-curve}\leanmodule{MeanCurvatureFlow}};
+  \node[stage] (transport) at (2.95, -2.35)
+    {Transport formula\\for $\int \rho\,d\mu_t$\routeref{Theorem}{thm:transport}\leanmodule{TransportFormula}};
+  \node[stage] (volume) at (5.9, -2.35)
+    {$\partial_t\,d\mu = -|\vec H|^2 d\mu$\routeref{Theorem}{thm:volume-evolution}\leanmodule{MeanCurvatureFlow}};
+  \node[stage] (firstvar) at (8.85, -2.35)
+    {First variation\routeref{Theorem}{thm:first-variation}\leanmodule{FirstVariation}\\{\scriptsize\ttfamily Integral}};
+  \node[stage] (bridge) at (11.8, -2.35)
+    {$\vec H$ is the library's\routeref{Theorem}{thm:mean-curvature-bridge}\leanmodule{MeanCurvatureBridge}};
   % assembly
-  \node[stage] (pointwise) at (0, -3.9)
-    {Pointwise identity:\\complete the square\routeref{Lemma}{lem:pointwise-identity}};
-  \node[main] (huisken) at (5.55, -3.9)
-    {\textbf{Huisken's Theorem 3.1}\routerefinline{Theorem}{thm:huisken-monotonicity}\\[3pt]
+  \node[stage] (pointwise) at (0, -4.85)
+    {Complete the square\routeref{Lemma}{lem:pointwise-identity}\leanmodule{MeanCurvatureFlow}};
+  \node[main] (huisken) at (5.9, -4.85)
+    {\textbf{Huisken's Theorem 3.1}\routeref{Theorem}{thm:huisken-monotonicity}\\[3pt]
      $\frac{d}{dt}\int_M \rho\,d\mu_t
-       = -\int_M \rho\,\bigl|\vec H + \tfrac{F^\perp}{2(t_0 - t)}\bigr|^2 d\mu_t$};
+       = -\int_M \rho\,\bigl|\vec H + \tfrac{F^\perp}{2(t_0 - t)}\bigr|^2 d\mu_t$\\[2pt]
+     {\scriptsize\ttfamily MeanCurvatureFlow} {\scriptsize (centre $0$)}\\
+     {\scriptsize\ttfamily Translation} {\scriptsize (any centre)}};
   % consequences
-  \node[stage] (sphere) at (0, -5.9)
-    {Shrinking sphere\routeref{Theorem}{thm:shrinking-sphere}};
-  \node[stage] (interval) at (3.7, -5.9)
-    {Flows on an interval,\\monotonicity\routeref{Corollary}{cor:antitone}};
-  \node[stage] (rescaled) at (7.4, -5.9)
-    {Rescaled flow,\\Corollary 3.2\routeref{Corollary}{cor:rescaled}};
-  \node[stage] (rescaling) at (11.1, -5.9)
-    {Rescaling, \S 2\routeref{Theorem}{thm:rescaling}};
+  \node[stage] (sphere) at (0, -7.35)
+    {Shrinking sphere\routeref{Theorem}{thm:shrinking-sphere}\leanmodule{Examples.}\\{\scriptsize\ttfamily ShrinkingSphere}};
+  \node[stage] (interval) at (3.93, -7.35)
+    {Flows on an\\interval, monotonicity\routeref{Corollary}{cor:antitone}\leanmodule{IntervalFlow}};
+  \node[stage] (rescaled) at (7.87, -7.35)
+    {Rescaled flow, Corollary 3.2\routeref{Corollary}{cor:rescaled}\leanmodule{RescaledFlow}};
+  \node[stage] (rescaling) at (11.8, -7.35)
+    {Rescaling, \S 2\routeref{Theorem}{thm:rescaling}\leanmodule{Rescaling}};
   \draw[link] (mathlib) -- (kernel);
-  \draw[link] (dg.south -| volume) -- (volume);
+  \draw[link] (dg.south -| transport) -- (transport);
   \draw[link] (dg.south -| firstvar) -- (firstvar);
   \draw[link] (dg.south -| bridge) -- (bridge);
   \draw[link] (kernel) -- (pointwise);
   \draw[link] (pointwise) -- (huisken);
+  \draw[link] (transport) -- (transport |- huisken.north);
   \draw[link] (volume) -- (volume |- huisken.north);
   \draw[link] (firstvar) -- (firstvar |- huisken.north);
   \draw[same] (bridge) |- (huisken.east);
