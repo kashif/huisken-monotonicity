@@ -294,11 +294,11 @@ def fig_integrand(hist) -> None:
     arrows(ax, pts, h, PALETTE["red_strong"], scale=0.45)
     callout(ax, (0, -2.25), r"$\vec H + \frac{x^\perp}{2(t_0 - t)} = 0$: the integrand vanishes", GREEN,
             fontsize=14)
-    callout(ax, (1.2, 2.0), r"$x^\perp / 2(t_0 - t)$ pushes out", PALETTE["blue_main"], fontsize=13)
+    callout(ax, (0.0, 2.45), r"$x^\perp / 2(t_0 - t)$ pushes out", PALETTE["blue_main"], fontsize=13)
     callout(ax, (0.0, 0.0), r"$\vec H$ pulls in" + "\nby the same amount", PALETTE["red_strong"], fontsize=13)
     lim = 2.05
     ax.set_xlim(-lim, lim)
-    ax.set_ylim(-2.45, lim)
+    ax.set_ylim(-2.45, 2.7)
     blank(ax)
     ax.set_title(r"(a) the sphere of radius $\sqrt{2n(t_0 - t)}$", fontsize=15)
 
