@@ -5,8 +5,8 @@ Authors: Kashif Rasul
 -/
 
 import HuiskenMonotonicity.FirstVariationIntegral
-import HuiskenMonotonicity.Upstream.DifferentialGeometry.Geometry.Submanifold.MeanCurvature
-import HuiskenMonotonicity.Upstream.DifferentialGeometry.Geometry.Submanifold.SecondFundamentalForm.Unfold
+import DifferentialGeometry.Geometry.Submanifold.MeanCurvature
+import DifferentialGeometry.Geometry.Metric.Euclidean.Curvature
 
 /-!
 # The mean curvature vector is the library's
@@ -19,7 +19,7 @@ immersion into the Euclidean space (`meanCurvatureVectorAt`).
 
 In the charts at `p` and `f p` the library's ambient second fundamental form is
 `∂²F(u, v) + Γ_E(dF u, dF v) - dF(Γ_M(u, v))`
-(`secondFundamentalFormAmbientAt_eq_modelValue`). The Euclidean Christoffel symbols vanish, and
+(`secondFundamentalFormAmbientAt_apply`). The Euclidean Christoffel symbols vanish, and
 the library proves the result normal, so it is the normal part of `∂²F(u, v)`: the term
 `dF(Γ_M(u, v))` is tangent. Both traces are taken in the chart frame against the library's
 inverse chart Gram matrix.
@@ -43,6 +43,13 @@ variable {M : Type v} [TopologicalSpace M] [ChartedSpace H M]
 variable {E : Type w} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 variable [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [FiniteDimensional ℝ E]
 variable [T2Space M] [I.Boundaryless]
+
+/-- The Christoffel contraction of the Euclidean metric vanishes. -/
+theorem euclideanMetric_chartChristoffelContraction (x v w y : E) :
+    chartChristoffelContraction (I := 𝓘(ℝ, E)) (euclideanMetric (E := E)) x v w y = 0 := by
+  have h0 : ∀ i j k, chartChristoffel (I := 𝓘(ℝ, E)) (euclideanMetric (E := E)) x i j k y = 0 :=
+    fun i j k ↦ congrFun (euclideanMetric_chartChristoffel_eq_zero x i j k) y
+  simp only [chartChristoffelContraction, h0, zero_mul, Finset.sum_const_zero, zero_smul]
 
 namespace SmoothImmersion
 
@@ -122,7 +129,7 @@ theorem meanCurvatureVectorAt_eq (f : SmoothImmersion I M E)
     have hval : eE (secondFundamentalFormAmbientAt f.inducedMetric (euclideanMetric (E := E))
         f p u v) = secondFundamentalFormModelValue f.inducedMetric (euclideanMetric (E := E))
           f p (eN u) (eN v) := by
-      rw [secondFundamentalFormAmbientAt_eq_modelValue]
+      rw [secondFundamentalFormAmbientAt_apply]
       exact eE.apply_symm_apply _
     have hnorm : ∀ k, ⟪secondFundamentalFormModelValue f.inducedMetric
         (euclideanMetric (E := E)) f p (eN u) (eN v), frameTangent Fc b y k⟫ = 0 := by

@@ -11,7 +11,7 @@ import DifferentialGeometry.Topology.Manifold.ChartDifferential
 import DifferentialGeometry.Geometry.Metric.Euclidean
 import DifferentialGeometry.Geometry.Metric.Pullback.Immersion
 import DifferentialGeometry.Analysis.Integration.Measure.Family.VolumeVariation
-import HuiskenMonotonicity.Upstream.DifferentialGeometry.Analysis.Integration.Measure.Family.Regularity
+import DifferentialGeometry.Analysis.Integration.Measure.Family.Regularity
 
 /-!
 # The induced Riemannian metric and surface measure of an immersion family

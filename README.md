@@ -54,7 +54,6 @@ mathlib; the extrinsic calculus of an immersion into a Euclidean space is develo
 | [`IntervalFlow`](HuiskenMonotonicity/IntervalFlow.lean) | flows on an open set of times; monotonicity |
 | [`Rescaling`](HuiskenMonotonicity/Rescaling.lean) | `H(cF) = c⁻¹ H(F)`; Huisken's rescaling and equation (4) |
 | [`Examples/ShrinkingSphere`](HuiskenMonotonicity/Examples/ShrinkingSphere.lean) | the shrinking sphere |
-| [`Upstream`](HuiskenMonotonicity/Upstream/) | API intended for `DifferentialGeometry` |
 
 ### The proof
 
