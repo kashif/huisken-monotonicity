@@ -149,11 +149,12 @@ $\sqrt{t_0 - t}$ around $x_0$, normalised so that a plane through $x_0$ has dens
 \begin{figure}[htbp]
 \centering
 \figimage{figures/kernel}
-\caption{The backward heat kernel \texttt{backwardHeatKernel}. (a) In dimension $n = 1$:
-every profile has mass one (\texttt{integral\_backwardHeatKernel}) and the profiles concentrate
-as $t \to t_0$. (b) In dimension $n = 2$: the dashed circle $|x|^2 = 2n(t_0 - t)$ is the sphere
-that the shrinking sphere occupies at time $t$ when it vanishes at $(0, t_0)$; see
-Figure~\ref{fig:sphere}.}
+\caption{What the backward heat kernel \texttt{backwardHeatKernel} measures. (a) In
+dimension $n = 1$ every profile has area one (\texttt{integral\_backwardHeatKernel}); as
+$t \to t_0$ the profiles concentrate at the centre. (b) The kernel is a spotlight at $x_0$ of
+radius about $\sqrt{t_0 - t}$, and $\int \rho\,d\mu$ is the area that the spotlight sees.
+(c) A line through $x_0$ has density one at every scale; a line missing $x_0$ leaves the
+spotlight as it shrinks, and its density tends to zero.}
 \label{fig:kernel}
 \end{figure}
 
@@ -449,12 +450,14 @@ Figure~\ref{fig:integrand} compares the two vectors on a circle and on an ellips
 \begin{figure}[htbp]
 \centering
 \figimage{figures/integrand}
-\caption{The two vectors of Theorem~\ref{thm:huisken-monotonicity} for curves in the plane,
-with $x_0 = 0$. (a) On the circle of radius $\sqrt{2(t_0 - t)}$, $\vec H$ and
-$x^\perp/2(t_0 - t)$ cancel and the integrand is zero. (b) On the ellipse of
-Figure~\ref{fig:monotone}, with the kernel centred where the ellipse vanishes, they do not
-cancel; their sum (green) is largest at the ends of the axes. The square of the sum is
-the integrand in \texttt{huisken\_pointwise\_identity}.}
+\caption{When the integrand of Theorem~\ref{thm:huisken-monotonicity} vanishes, with
+$x_0 = 0$. (a) On the sphere of radius $\sqrt{2n(t_0 - t)}$ (here $n = 2$), $\vec H$ and
+$x^\perp/2(t_0 - t)$ have the same length and opposite directions, so the integrand is zero:
+the sphere is a self-shrinker. (b) On the ellipse of Figure~\ref{fig:monotone} at $t = 0.6$,
+with the kernel centred where the ellipse vanishes, they do not cancel. The sum (green,
+enlarged) points inwards at the tips, which are more curved than a shrinker, and outwards
+at the flat sides. Its square, weighted by $\rho$, is the integrand in
+\texttt{huisken\_pointwise\_identity}.}
 \label{fig:integrand}
 \end{figure}
 
@@ -508,11 +511,12 @@ where mean curvature flow is the curve shortening flow.
 \caption{An ellipse with semi-axes $2$ and $1$ under curve shortening flow, computed
 numerically. A closed curve loses area at rate $2\pi$, so the ellipse vanishes at time
 $T \approx 1$, becoming round as it does. The kernel is centred at $(x_0, t_0) = (0, T)$.
-(a) The curves. (b) The Gaussian density $\int \rho\,d\mu_t$ is non-increasing
-(\texttt{ImmersionFlowOn.antitoneOn\_integral}) and approaches the value $\sqrt{2\pi/e}$ of a
-circle shrinking to $(0, T)$. (c) The two sides of
-\texttt{SmoothImmersionFamily.huisken\_monotonicity}: the derivative of the density (line) and
-the integral of $-\rho\,|\vec H + x^\perp/2(t_0 - t)|^2$ (dots).}
+(a) The curves, coloured by the local loss $\rho\,|\vec H + x^\perp/2(t_0 - t)|^2$: the loss
+sits at the tips and dies out as the curve rounds. (b) The Gaussian density
+$\int \rho\,d\mu_t$ is non-increasing (\texttt{ImmersionFlowOn.antitoneOn\_integral}) and
+approaches the value $\sqrt{2\pi/e}$ of a circle shrinking to $(0, T)$. (c) The two sides
+of \texttt{SmoothImmersionFamily.huisken\_monotonicity}: the derivative of the density
+(line) and the total loss (dots).}
 \label{fig:monotone}
 \end{figure}
 
@@ -580,11 +584,12 @@ up to the constant $(2\pi)^{-n/2}$. Figure~\ref{fig:rescaled} shows this for the
 \begin{figure}[htbp]
 \centering
 \figimage{figures/rescaled}
-\caption{The ellipse of Figure~\ref{fig:monotone} after Huisken's rescaling
-(\texttt{ImmersionFlowOn.rescale}). (a) The rescaled curves converge to the unit circle, the
-self-shrinker $|y| = \sqrt n$, which is stationary for the rescaled flow. (b) The rescaled
-density is non-increasing (\texttt{ImmersionFlowOn.antitoneOn\_integral\_rescale}) and
-approaches its value $2\pi e^{-1/2}$ on the unit circle.}
+\caption{Huisken's rescaling (\texttt{ImmersionFlowOn.rescale}) of the ellipse of
+Figure~\ref{fig:monotone}. (a) The flow shrinks to the point $(0, T)$. (b) Magnified by
+$1/\sqrt{2(T - t)}$, the same curves converge to the unit circle, the self-shrinker
+$|y| = \sqrt n$, which is stationary for the rescaled flow. (c) The rescaled density is
+non-increasing (\texttt{ImmersionFlowOn.antitoneOn\_integral\_rescale}) and approaches its
+value $2\pi e^{-1/2}$ on the unit circle.}
 \label{fig:rescaled}
 \end{figure}
 
@@ -626,12 +631,14 @@ decreases (Figure~\ref{fig:sphere}).
 \begin{figure}[htbp]
 \centering
 \figimage{figures/sphere}
-\caption{The shrinking sphere \texttt{shrinkingSphere} for $n = 1$. (a) The circles
-$R(t) = \sqrt{1 - 2nt}$ and their mean curvature vector $\vec H = -\frac{n}{R^2}F$
-(\texttt{meanCurvature\_eq\_of\_norm\_eq}). (b) The density $\int \rho_{x_0,t_0}\,d\mu_t$ for
-four centres. It is non-increasing for each (\texttt{shrinkingSphere\_antitoneOn\_integral}),
-and constant, equal to $\sqrt{2\pi/e}$, only for the centre $(0, T)$ where the circle
-vanishes.}
+\caption{The shrinking sphere \texttt{shrinkingSphere} for $n = 1$, the equality case.
+(a) Space-time. The circle $|F| = R(t) = \sqrt{1 - 2nt}$ (blue) moves by
+$\vec H = -\frac{n}{R^2}F$ (\texttt{meanCurvature\_eq\_of\_norm\_eq}). It coincides with the
+scale $|x|^2 = 2n(T - t)$ of the kernel centred at $(0, T)$ (green, dashed), so the
+spotlight always sees the same fraction of it. For the centre $(0, 0.7)$ the spotlight is
+wider than the circle (teal, dotted). (b) The density is non-increasing for every centre
+(\texttt{shrinkingSphere\_antitoneOn\_integral}), and constant, equal to $\sqrt{2\pi/e}$, only
+for the centre $(0, T)$ where the circle vanishes.}
 \label{fig:sphere}
 \end{figure}
 
