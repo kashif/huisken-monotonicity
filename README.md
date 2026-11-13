@@ -112,6 +112,24 @@ leanblueprint web          # builds blueprint/web/ HTML site
 leanblueprint checkdecls   # verifies every \lean{...} ref exists in the build
 ```
 
+## Citation
+
+If you use this formalization, please cite it (see also [`CITATION.cff`](CITATION.cff)):
+
+```bibtex
+@software{rasul_huisken_monotonicity,
+  author  = {Rasul, Kashif},
+  title   = {{huisken-monotonicity}: Formalization of {H}uisken's Monotonicity Formula in {L}ean 4},
+  version = {0.1.0},
+  license = {Apache-2.0},
+  url     = {https://github.com/kashif/huisken-monotonicity}
+}
+```
+
+## License
+
+Apache 2.0; see [`LICENSE`](LICENSE).
+
 ## References
 
 Gerhard Huisken, *Asymptotic behavior for singularities of the mean curvature flow*,

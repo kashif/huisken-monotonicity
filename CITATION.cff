@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: huisken-monotonicity
+message: Formalization of Huisken's Monotonicity Formula in Lean 4
+type: software
+authors:
+  - given-names: Kashif
+    family-names: Rasul
+repository-code: 'https://github.com/kashif/huisken-monotonicity'
+license: Apache-2.0
+version: 0.1.0
