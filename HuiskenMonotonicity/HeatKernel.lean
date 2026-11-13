@@ -66,15 +66,18 @@ These are the analytic facts Huisken uses in §3:
 
 * the gradient in the spatial variable is `∇_x ρ = -ρ · x / (2τ)`;
 * the partial time derivative is `∂_t ρ = ρ · (n/(2τ) - ‖x‖²/(4τ²))`;
-* hence `ρ` satisfies the *backward* heat equation `∂_t ρ + Δ_x ρ = 0`.
+* when the ambient dimension equals `n`, `ρ` satisfies the *backward* heat equation
+  `∂_t ρ + Δ_x ρ = 0`. In ambient dimension `d`, the expression instead equals
+  `(n - d) ρ / (2τ)`.
 
-The combinatorial identity used in the rescaled monotonicity formula (Corollary 3.2) is
-the algebraic content
+The combinatorial identity behind Theorem 3.1 (and, at `τ = 1/2`, Corollary 3.2) is the
+algebraic content
 
-  `∂_t ρ + ⟨H, ∇_x ρ⟩ - H² ρ = -ρ · |H + F^⊥/(2τ)|² + ρ · |F^T|²/(4τ²) - ρ · n/(2τ)`,
+  `∂_t ρ + ⟨H, ∇_x ρ⟩ - |H|² ρ
+    = -ρ · |H + F^⊥/(2τ)|² + ρ/(2τ) · (n - |F^T|²/(2τ) + ⟨H, F⟩)`,
 
-evaluated along the immersed surface; the tangential `|F^T|²/(4τ²)` is then absorbed by
-the divergence theorem on `M_t` (first variation formula) to leave the clean form
+evaluated along the immersed surface, with `H` the mean curvature vector. The integral of
+the second term vanishes by the first variation formula on the closed surface `M_t`, leaving
 
   `(d/dt) ∫_{M_t} ρ dμ_t = -∫_{M_t} ρ · |H + F^⊥/(2τ)|² dμ_t`.
 

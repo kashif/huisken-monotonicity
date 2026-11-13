@@ -45,9 +45,10 @@ structure SmoothImmersion [IsManifold I ∞ M] [FiniteDimensional ℝ E₁] [Fin
   toFun : M → E
   /-- Smoothness. -/
   contMDiff : ContMDiff I 𝓘(ℝ, E) ∞ toFun
-  /-- The immersion condition: the differential is injective at every point. In finite
-  dimensions this is equivalent to mathlib's `IsImmersion` (see `ofIsImmersion`), and it is
-  exactly what the induced metric needs. -/
+  /-- The immersion condition: the differential is injective at every point, which is exactly
+  what the induced metric needs. Every immersion in the sense of mathlib's `IsImmersion` gives
+  one (`ofIsImmersion`); the converse, that an injective differential makes `f` an immersion in
+  finite dimensions, is not yet in mathlib. -/
   mfderiv_injective : ∀ p, Function.Injective (mfderiv I 𝓘(ℝ, E) toFun p)
 
 /-- A smooth family of immersions `F_t : M → E`, indexed by all real times. -/
