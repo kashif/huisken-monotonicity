@@ -1,8 +1,8 @@
 name: Lean Action CI
 
+# Building compiles the DifferentialGeometry dependency from source, which takes hours,
+# so the build runs only when started by hand.
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 permissions:
